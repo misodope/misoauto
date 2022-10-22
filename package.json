@@ -1,0 +1,11 @@
+{
+  "name": "misoauto",
+  "version": "1.0.0",
+  "description": "Automate TikTok to YouTube",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "MisoDope",
+  "license": "ISC"
+}
