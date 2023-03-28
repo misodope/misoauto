@@ -5,19 +5,20 @@
 	"type": "module",
 	"scripts": {
 		"compile": "tsc",
-		"start": "npm run compile && node ./dist/index.js"
+		"start": "concurrently 'nodemon dist/index.js' 'tsc --watch --preserveWatchOutput' -n node,ts -c green.bgBlack,white.bgBlue"
 	},
 	"dependencies": {
 		"@apollo/server": "^4.5.0",
 		"body-parser": "^1.20.2",
+		"concurrently": "^7.6.0",
 		"cors": "^2.8.5",
 		"express": "^4.18.2",
 		"graphql": "^16.6.0",
-		"graphql-tag": "^2.12.6"
+		"graphql-tag": "^2.12.6",
+		"nodemon": "^2.0.22"
 	},
 	"devDependencies": {
 		"@types/node": "^18.15.10",
-		"nodemon": "^2.0.22",
 		"typescript": "^5.0.2"
 	}
 }
