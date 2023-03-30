@@ -16,8 +16,8 @@ RUN npm install -g pnpm
 # Install app dependencies
 RUN pnpm install
 
-# Expose port 8000 for the server to listen on
-EXPOSE 8000
+# Expose port 5173 for the server to listen on
+EXPOSE 5173
 
 # Start the server using npm start
 CMD ["pnpm", "dev"]

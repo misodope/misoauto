@@ -9,3 +9,12 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app/backend
+  frontend:
+    container_name: react-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.local
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app/frontend
