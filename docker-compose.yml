@@ -1,0 +1,11 @@
+version: '3'
+services:
+  backend:
+    container_name: graphql-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.local
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
