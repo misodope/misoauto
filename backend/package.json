@@ -5,12 +5,16 @@
 	"type": "module",
 	"scripts": {
 		"compile": "tsc",
-		"start": "concurrently 'nodemon dist/index.js' 'tsc --watch --preserveWatchOutput' -n node,ts -c green.bgBlack,white.bgBlue"
+		"dev": "nodemon"
 	},
 	"dependencies": {
 		"@apollo/server": "^4.5.0",
+		"@graphql-tools/graphql-file-loader": "^7.5.16",
+		"@graphql-tools/load": "^7.8.13",
+		"@graphql-tools/merge": "^8.4.0",
+		"@graphql-tools/schema": "^9.0.17",
+		"@types/express": "^4.17.17",
 		"body-parser": "^1.20.2",
-		"concurrently": "^7.6.0",
 		"cors": "^2.8.5",
 		"express": "^4.18.2",
 		"graphql": "^16.6.0",
@@ -18,7 +22,8 @@
 		"nodemon": "^2.0.22"
 	},
 	"devDependencies": {
-		"@types/node": "^18.15.10",
+		"@types/node": "^18.15.11",
+		"ts-node": "^10.9.1",
 		"typescript": "^5.0.2"
 	}
 }

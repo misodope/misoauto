@@ -1,9 +1,6 @@
 {
-  "verbose": true,
-  "ignore": ["src"],
-  "execMap": {
-    "js": "node"
-  },
-  "watch": ["dist"],
-  "ext": "ts,js,json,html"
+  "watch": ["src"],
+  "ext": ".ts,.js,.graphql",
+  "ignore": ["node_modules"],
+  "exec": "ts-node-esm src/index.ts"
 }
