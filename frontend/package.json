@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "vercel-build": "pnpm install && pnpm build",
     "preview": "vite preview"
   },
   "dependencies": {
