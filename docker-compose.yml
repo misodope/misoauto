@@ -8,7 +8,9 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app/backend
+      - type: bind
+        source: ./backend
+        target: /app
   frontend:
     container_name: react-frontend
     build:
@@ -17,4 +19,6 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app/frontend
+      - type: bind
+        source: ./frontend
+        target: /app

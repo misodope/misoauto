@@ -46,6 +46,7 @@ const main = async () => {
       context: async ({ req }) => ({ token: req.headers.token }),
     })
   );
+
   app.get("/oauth/tiktok", (req, res) => {
     const csrfState = Math.random().toString(36).substring(2);
     res.cookie("csrfState", csrfState, { maxAge: 60000 });

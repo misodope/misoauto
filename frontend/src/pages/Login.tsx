@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 export const Login = () => {
   const handleTikTokLogin = async () => {
     const response = await fetch("http://localhost:8000/oauth/tiktok");
