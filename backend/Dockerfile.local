@@ -4,14 +4,17 @@ FROM node:18
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the rest of the application code to the container
-COPY . .
+# Copy the package.json and package-lock.json to the container
+COPY package.json pnpm-lock.yaml ./
 
 # Install pnpm globally
 RUN npm install -g pnpm
 
 # Install app dependencies
 RUN pnpm i --force
+
+# Copy the rest of the application code to the container
+COPY . /app
 
 # Expose port 8000 for the server to listen on
 EXPOSE 8000
