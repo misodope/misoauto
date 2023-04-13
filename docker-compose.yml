@@ -2,25 +2,18 @@ version: '3'
 services:
   backend:
     container_name: graphql-backend
-    build:
+    build: 
       context: ./backend
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile.prod
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 8000
     ports:
       - "8000:8000"
     volumes:
-      - type: bind
-        source: ./backend
+      - type: volume
+        source: backend-volume
         target: /app
-      - /app/node_modules
-  frontend:
-    container_name: react-frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.local
-    ports:
-      - "5173:5173"
-    volumes:
-      - type: bind
-        source: ./frontend
-        target: /app
-      - /app/node_modules
+volumes:
+  backend-volume:

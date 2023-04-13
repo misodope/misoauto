@@ -1,13 +1,23 @@
 # MisoAuto
 
-A project to automate the content creation upload workflow.
+MisoAuto is a cutting-edge tool designed to automate the content creation and upload workflow, enabling users to streamline their content creation process and focus on the creative aspects of their work.
 
 ## Development
 
-1. Make sure you have `docker` installed on your machine.
+### Docker Installation Instructions
 
-2. Run `docker-compose build` in your terminal to build the Docker images for the app.
+To get started with MisoAuto, follow these instructions if you have Docker installed on your machine:
 
-3. Run `docker-compose up` to start the app in development mode.
+1. Ensure that you have Docker installed on your machine.
+2. Open a terminal and run `docker-compose build` to build the Docker images for the application.
+3. Run `docker-compose up` to start the application in development mode.
 
-That's it! You should now be able to access the app at http://localhost:8000 for the backend and http://localhost:5173 for the frontend.
+### Normal Setup Instructions
+
+If you prefer not to use Docker, follow these steps to set up the application:
+
+1. Install the PNPM package manager globally by running `npm i -g pnpm`.
+2. Install the application dependencies by running `pnpm i`.
+3. Start the application by running `pnpm start`.
+
+That's it! You can now access the application at http://localhost:8000 for the backend and http://localhost:5173 for the frontend.
