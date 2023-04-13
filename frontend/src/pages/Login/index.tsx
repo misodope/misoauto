@@ -1,6 +1,8 @@
 export const Login = () => {
   const handleTikTokLogin = async () => {
-    const response = await fetch("https://localhost/oauth/tiktok", {});
+    const response = await fetch(
+      "https://misoauto.up.railway.app/oauth/tiktok"
+    );
     console.log(response);
   };
 
