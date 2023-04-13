@@ -13,7 +13,7 @@ RUN npm install -g pnpm
 # Install app dependencies
 RUN pnpm install --force
 
-RUN pnpm build
+RUN npx tsc
 
 # Copy the rest of the application code to the container
 COPY . /app
@@ -22,4 +22,4 @@ COPY . /app
 EXPOSE 8000
 
 # Start the server using pnpm start
-CMD ["pnpm", "start"]
+CMD ["node", "dist/index.js"]
