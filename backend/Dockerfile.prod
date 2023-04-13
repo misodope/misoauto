@@ -20,4 +20,4 @@ COPY . /app
 EXPOSE 8000
 
 # Start the server using pnpm start
-CMD ["node", "dist/index.js"]
+CMD ["pnpm", "start"]
