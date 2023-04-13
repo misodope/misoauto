@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 // AuthController class
 export class AuthController {
   async getAuthorizationCode(_: Request, res: Response) {
-    const url = this.getAuthorizationUrl();
+    const url = AuthController.getAuthorizationUrl();
 
     try {
       const response = await fetch(url);
@@ -81,7 +81,7 @@ export class AuthController {
     }
   }
 
-  getAuthorizationUrl() {
+  static getAuthorizationUrl() {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
 
