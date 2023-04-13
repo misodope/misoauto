@@ -13,7 +13,7 @@ RUN npm install -g pnpm
 # Install app dependencies
 RUN pnpm install --prod --force --no-frozen-lockfile 
 
-RUN pnpm run build
+RUN npx tsc
 
 # Copy the rest of the application code to the container
 COPY . /app
