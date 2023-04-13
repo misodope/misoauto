@@ -23,15 +23,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const envFilePath = path.join(__dirname, "..", "..", ".env");
 // Get the private key and certificate for HTTPS
-const key = fs.readFileSync(
-  path.resolve(__dirname, "bin/localhost-key.pem"),
-  "utf-8"
-);
-const cert = fs.readFileSync(
-  path.resolve(__dirname, "bin/localhost.pem"),
-  "utf-8"
-);
-const httpsServer = https.createServer({ key, cert }, app);
+let httpsServer: https.Server;
+if (process.env.NODE_ENV !== "production") {
+  const key = fs.readFileSync(
+    path.resolve(__dirname, "bin/localhost-key.pem"),
+    "utf-8"
+  );
+  const cert = fs.readFileSync(
+    path.resolve(__dirname, "bin/localhost.pem"),
+    "utf-8"
+  );
+
+  httpsServer = https.createServer({ key, cert }, app);
+}
+
 const httpServer = http.createServer(app);
 
 const schemaPaths = [
@@ -66,13 +71,15 @@ const main = async () => {
   app.get("/oauth/redirect", authController.getAccessToken);
   app.get("/oauth/refresh", authController.getRefreshToken);
 
-  await new Promise<void>((resolve) => {
-    httpsServer.listen({ port: 8080 }, () => {
-      console.log(`🚀 Server ready at https://localhost:8080/graphql`);
+  if (process.env.NODE_ENV !== "production") {
+    await new Promise<void>((resolve) => {
+      httpsServer.listen({ port: 8080 }, () => {
+        console.log(`🚀 Server ready at https://localhost:8080/graphql`);
 
-      resolve();
+        resolve();
+      });
     });
-  });
+  }
 
   await new Promise<void>((resolve) => {
     httpServer.listen({ port: 8000 }, () => {
