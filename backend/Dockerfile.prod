@@ -13,7 +13,7 @@ RUN npm install -g pnpm
 # Install app dependencies
 RUN pnpm install --force
 
-RUN pnpm run build
+RUN cd backend && pnpm run build
 
 # Copy the rest of the application code to the container
 COPY . /app
