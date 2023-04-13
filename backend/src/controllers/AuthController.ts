@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import fetch from "node-fetch";
 
-// AuthController class
 export class AuthController {
   async getAuthorizationCode(_: Request, res: Response) {
     const url = AuthController.getAuthorizationUrl();
@@ -53,7 +52,6 @@ export class AuthController {
     }
   }
 
-  // Get the refresh token
   async getRefreshToken(req: Request, res: Response) {
     const { refresh_token } = req.query;
 
@@ -89,7 +87,7 @@ export class AuthController {
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
     url += "&scope=user.info.basic,video.list";
     url += "&response_type=code";
-    url += `&redirect_uri=https://misoauto.vercel.app`;
+    url += `&redirect_uri=https://misoauto.up.railway.app/oauth/tiktok`;
     url += "&state=" + csrfState;
 
     return url;
