@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "tsc",
     "dev": "nodemon",
-    "start": "node dist/index.js",
+    "start": "ts-node --esm ./src/index.ts",
     "build": "tsc"
   },
   "dependencies": {
