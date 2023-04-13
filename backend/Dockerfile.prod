@@ -11,9 +11,9 @@ COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm
 
 # Install app dependencies
-RUN pnpm install --prod --force
+RUN pnpm install --force
 
-RUN npm run build
+RUN pnpm build
 
 # Copy the rest of the application code to the container
 COPY . /app
