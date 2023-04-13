@@ -7,7 +7,7 @@
     "compile": "tsc",
     "dev": "nodemon",
     "start": "node dist/index.js",
-    "build": "tsc -p ."
+    "build": "tsc -p ./tsconfig.json"
   },
   "dependencies": {
     "@apollo/server": "^4.5.0",
