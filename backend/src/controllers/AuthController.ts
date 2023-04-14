@@ -15,7 +15,7 @@ export class AuthController {
     // // Add the 'Access-Control-Allow-Origin' header to allow requests from all domains
     // res.setHeader("Access-Control-Allow-Origin", "*");
     // res.redirect(url);
-    res.redirect("https://misoauto.up.railway.app/oauth/redirect");
+    res.redirect("https://google.com");
   }
 
   // Get the access token
