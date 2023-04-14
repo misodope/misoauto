@@ -3,30 +3,40 @@ import fetch from "node-fetch";
 
 export class AuthController {
   async getAuthorizationCode(_: Request, res: Response) {
-    const url = AuthController.getAuthorizationUrl();
+    // Generate a random string for the state parameter to prevent CSRF
+    const csrfState = Math.random().toString(36).substring(2);
+    res.cookie("csrfState", csrfState, { maxAge: 60000 });
 
-    try {
-      const response = await fetch(url);
+    let url = "https://www.tiktok.com/auth/authorize/";
+    url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
+    url += "&scope=user.info.basic,video.list";
+    url += "&response_type=code";
+    url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
+    url += "&state=" + csrfState;
 
-      if (response.ok) {
-        const loginUrl = response.url;
-        console.log("LOGIN URL", loginUrl);
-        res.redirect(loginUrl);
-      }
-    } catch (error) {
-      console.log(error);
-    }
+    res.redirect(url);
+
+    // try {
+    //   const response = await fetch(url);
+
+    //   if (response.ok) {
+    //     const loginUrl = response.url;
+    //     console.log("LOGIN URL", loginUrl);
+    //   }
+    // } catch (error) {
+    //   console.log(error);
+    // }
   }
 
   // Get the access token
   async getAccessToken(req: Request, res: Response) {
     const { code, state } = req.query;
-    const { csrfState } = req.cookies;
+    // const { csrfState } = req.cookies;
 
-    if (state !== csrfState) {
-      res.status(422).send("Invalid state");
-      return;
-    }
+    // if (state !== csrfState) {
+    //   res.status(422).send("Invalid state");
+    //   return;
+    // }
 
     const url = "https://open-api.tiktok.com/oauth/access_token/";
     const body = {
@@ -77,19 +87,5 @@ export class AuthController {
     } catch (error) {
       console.log(error);
     }
-  }
-
-  static getAuthorizationUrl() {
-    // Generate a random string for the state parameter to prevent CSRF
-    const csrfState = Math.random().toString(36).substring(2);
-
-    let url = "https://www.tiktok.com/auth/authorize/";
-    url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
-    url += "&scope=user.info.basic,video.list";
-    url += "&response_type=code";
-    url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
-    url += "&state=" + csrfState;
-
-    return url;
   }
 }
