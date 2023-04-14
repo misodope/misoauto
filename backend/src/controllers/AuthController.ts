@@ -13,19 +13,20 @@ interface TikTokResponse {
   };
 }
 
+export interface RequestSession extends Request {
+  session: {
+    csrfState: string;
+  };
+}
+
 const prisma = new PrismaClient();
 
 export class AuthController {
-  async getAuthorizationCode(_: Request, res: Response) {
+  async getAuthorizationCode(req: RequestSession, res: Response) {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
-    res.cookie("csrfState", csrfState, {
-      secure: true,
-      httpOnly: false,
-      sameSite: "none",
-      domain: "misoauto.vercel.app",
-      maxAge: 60000,
-    });
+    req.session.csrfState = csrfState;
+
     let url = "https://www.tiktok.com/auth/authorize/";
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
     url += "&scope=user.info.basic,video.list";
@@ -37,13 +38,11 @@ export class AuthController {
   }
 
   // Get the access token
-  async getAccessToken(req: Request, res: Response) {
+  async getAccessToken(req: RequestSession, res: Response) {
     const { code, state } = req.query;
-    // TODO: Figure out how to set csrfState in cookie since it's coming from a different domain.
-    // Setting the cookie currently in the above won't work as it sets for the current domain: misoauto.up.railway.app
-    // const { csrfState } = req.cookies;
-    console.log("Cookies", req.cookies);
-    console.log("STate", state);
+    const { csrfState } = req.session;
+    console.log("State: ", state);
+    console.log("CSRF State: ", csrfState);
     // if (state !== csrfState) {
     //   res.status(422).send("Invalid state");
     //   return;
@@ -104,7 +103,7 @@ export class AuthController {
     }
   }
 
-  async getRefreshToken(req: Request, res: Response) {
+  async getRefreshToken(req: RequestSession, res: Response) {
     const { refresh_token } = req.query;
 
     const url = "https://open-api.tiktok.com/oauth/access_token/";

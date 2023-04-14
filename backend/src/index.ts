@@ -15,6 +15,7 @@ import path from "path";
 import fs from "fs";
 import https from "https";
 import { AuthController } from "./controllers/AuthController.js";
+import session from "express-session";
 
 const app = express();
 const { json } = bodyParser;
@@ -56,6 +57,18 @@ const main = async () => {
 
   await server.start();
 
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      cookie: {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        maxAge: 3600000, // Time is in miliseconds
+      },
+      // resave: false,
+    })
+  );
   app.use(cors<cors.CorsRequest>());
   app.use(json());
   app.use(
@@ -66,7 +79,6 @@ const main = async () => {
   );
 
   const authController = new AuthController();
-
   app.get("/oauth/tiktok", authController.getAuthorizationCode);
   app.get("/oauth/redirect", authController.getAccessToken);
   app.get("/oauth/refresh", authController.getRefreshToken);
