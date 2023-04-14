@@ -70,7 +70,7 @@ const main = async () => {
       cookie: {
         httpOnly: true,
         secure: true,
-        sameSite: false,
+        sameSite: "none",
         maxAge: 3600000, // Time is in miliseconds
       },
       resave: false,

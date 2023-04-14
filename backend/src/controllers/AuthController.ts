@@ -38,6 +38,7 @@ export class AuthController {
   async getAccessToken(req: Express.Request & Request, res: Response) {
     const { code, state } = req.query;
     const { csrfState } = req.session;
+    console.log("REQUEST SESSION", req.session);
     console.log("State: ", state);
     console.log("CSRF State: ", csrfState);
     // if (state !== csrfState) {
