@@ -3,12 +3,14 @@ import fetch from "node-fetch";
 import { PrismaClient } from "@prisma/client";
 
 interface TikTokResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  open_id: string;
-  scope: string;
-  refresh_expires_in: number;
+  data: {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    open_id: string;
+    scope: string;
+    refresh_expires_in: number;
+  };
 }
 
 const prisma = new PrismaClient();
@@ -58,7 +60,7 @@ export class AuthController {
       });
 
       if (response.ok) {
-        const data = (await response.json()) as TikTokResponse;
+        const { data } = (await response.json()) as TikTokResponse;
         console.log("Access Token TikTok Data: ", data);
         // Check if user exists in database
         const user = await prisma.user.findUnique({
