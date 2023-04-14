@@ -3,7 +3,9 @@ import { useEffect } from "react";
 export const Dashboard = () => {
   useEffect(() => {
     (async () => {
-      const res = await fetch("https://misoauto.up.railway.app/api/user");
+      const res = await fetch("https://misoauto.up.railway.app/api/user", {
+        credentials: "include",
+      });
       const data = await res.json();
       console.log(data);
     })();
