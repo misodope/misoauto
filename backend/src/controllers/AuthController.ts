@@ -19,8 +19,13 @@ export class AuthController {
   async getAuthorizationCode(_: Request, res: Response) {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
-    res.cookie("csrfState", csrfState, { maxAge: 60000 });
-
+    res.cookie("csrfState", csrfState, {
+      secure: true,
+      httpOnly: false,
+      sameSite: "none",
+      domain: "misoauto.vercel.app",
+      maxAge: 60000,
+    });
     let url = "https://www.tiktok.com/auth/authorize/";
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
     url += "&scope=user.info.basic,video.list";
@@ -61,17 +66,28 @@ export class AuthController {
 
       if (response.ok) {
         const { data } = (await response.json()) as TikTokResponse;
-        console.log("Access Token TikTok Data: ", data);
         // Check if user exists in database
         const user = await prisma.user.findUnique({
           where: { openId: data.open_id },
         });
-        console.log("User: ", user);
-        // If user doesn't exist, create a new user
+
         if (!user) {
+          // If user doesn't exist, create a new user
           await prisma.user.create({
             data: {
               openId: data.open_id,
+              accessToken: data.access_token,
+              refreshToken: data.refresh_token,
+              expiresIn: data.expires_in,
+              scope: data.scope,
+              refreshExpiresIn: data.refresh_expires_in,
+            },
+          });
+        } else {
+          // If user exists, update the user with the new access token
+          await prisma.user.update({
+            where: { openId: data.open_id },
+            data: {
               accessToken: data.access_token,
               refreshToken: data.refresh_token,
               expiresIn: data.expires_in,
