@@ -28,7 +28,7 @@ export const Dashboard = () => {
           alt="Profile"
         />
         <div className="flex flex-col items-center">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm font-bold text-gray-600 mb-4">
             {userData.bio_description}
           </div>
           <a
