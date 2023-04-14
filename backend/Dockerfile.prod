@@ -19,6 +19,9 @@ COPY . /app
 # Generate Prisma client
 RUN pnpm prisma-generate
 
+# Run migrations
+RUN pnpm prisma-migrate
+
 # Expose port 8000 for the server to listen on
 EXPOSE 8000
 
