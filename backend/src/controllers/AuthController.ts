@@ -11,17 +11,13 @@ interface TikTokResponse {
   refresh_expires_in: number;
 }
 
+const prisma = new PrismaClient();
+
 export class AuthController {
-  prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
-
   async getAuthorizationCode(_: Request, res: Response) {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
-    res.cookie("", csrfState, { maxAge: 60000 });
+    res.cookie("csrfState", csrfState, { maxAge: 60000 });
 
     let url = "https://www.tiktok.com/auth/authorize/";
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
@@ -65,13 +61,13 @@ export class AuthController {
         const data = (await response.json()) as TikTokResponse;
         console.log("Access Token TikTok Data: ", data);
         // Check if user exists in database
-        const user = await this.prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { openId: data.open_id },
         });
         console.log("User: ", user);
         // If user doesn't exist, create a new user
         if (!user) {
-          await this.prisma.user.create({
+          await prisma.user.create({
             data: {
               openId: data.open_id,
               accessToken: data.access_token,
