@@ -61,9 +61,9 @@ const main = async () => {
     schema: makeExecutableSchema({ typeDefs: schema, resolvers }),
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   });
-
   await server.start();
 
+  app.set("trust proxy", 1); // trust first proxy
   app.use(
     session({
       secret: process.env.SESSION_SECRET,
