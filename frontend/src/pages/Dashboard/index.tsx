@@ -23,11 +23,11 @@ export const Dashboard = () => {
           Hello, {userData.display_name || "Welcome!"}
         </h1>
         <img
-          className="w-20 h-20 rounded-full mr-4"
+          className="w-20 h-20 rounded-full mb-4"
           src={(userData.avatar_url as string) || ""}
           alt="Profile"
         />
-        <div>
+        <div className="flex flex-col items-center">
           <div className="text-sm text-gray-600">
             {userData.bio_description}
           </div>
@@ -37,7 +37,7 @@ export const Dashboard = () => {
             }
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 text-sm hover:text-blue-700"
+            className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
           >
             View profile
           </a>
