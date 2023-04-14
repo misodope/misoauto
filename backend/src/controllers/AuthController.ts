@@ -14,29 +14,20 @@ export class AuthController {
     url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
     url += "&state=" + csrfState;
 
+    // Add the 'Access-Control-Allow-Origin' header to allow requests from all domains
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.redirect(url);
-
-    // try {
-    //   const response = await fetch(url);
-
-    //   if (response.ok) {
-    //     const loginUrl = response.url;
-    //     console.log("LOGIN URL", loginUrl);
-    //   }
-    // } catch (error) {
-    //   console.log(error);
-    // }
   }
 
   // Get the access token
   async getAccessToken(req: Request, res: Response) {
     const { code, state } = req.query;
-    // const { csrfState } = req.cookies;
+    const { csrfState } = req.cookies;
 
-    // if (state !== csrfState) {
-    //   res.status(422).send("Invalid state");
-    //   return;
-    // }
+    if (state !== csrfState) {
+      res.status(422).send("Invalid state");
+      return;
+    }
 
     const url = "https://open-api.tiktok.com/oauth/access_token/";
     const body = {
