@@ -1,10 +1,15 @@
 export const Login = () => {
   const handleTikTokLogin = async () => {
-    const response = await fetch(
-      "https://misoauto.up.railway.app/oauth/tiktok"
-    );
-
-    console.log(response);
+    try {
+      const response = await fetch(
+        "https://misoauto.up.railway.app/oauth/tiktok"
+      );
+      const data = await response.json();
+      console.log(data);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
