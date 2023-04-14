@@ -13,10 +13,11 @@ RUN npm install -g pnpm
 # Install app dependencies
 RUN pnpm install --force --no-frozen-lockfile 
 
-RUN npx prisma generate
-
 # Copy the rest of the application code to the container
 COPY . /app
+
+# Generate Prisma client
+RUN pnpm prisma generate --schema=./src/prisma/schema.prisma
 
 # Expose port 8000 for the server to listen on
 EXPOSE 8000
