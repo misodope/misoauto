@@ -72,7 +72,14 @@ const main = async () => {
       saveUninitialized: true,
     })
   );
-  app.use(cors<cors.CorsRequest>());
+  app.use(
+    process.env.NODE_ENV === "production"
+      ? cors({
+          origin: "https://misoauto.vercel.app",
+          credentials: true,
+        })
+      : cors()
+  );
   app.use(json());
   app.use(
     "/graphql",
