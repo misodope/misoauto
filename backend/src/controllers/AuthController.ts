@@ -87,7 +87,7 @@ export class AuthController {
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
     url += "&scope=user.info.basic,video.list";
     url += "&response_type=code";
-    url += `&redirect_uri=https://misoauto.up.railway.app/oauth/tiktok`;
+    url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
     url += "&state=" + csrfState;
 
     return url;
