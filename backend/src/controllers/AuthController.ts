@@ -4,18 +4,17 @@ import fetch from "node-fetch";
 export class AuthController {
   async getAuthorizationCode(_: Request, res: Response) {
     // Generate a random string for the state parameter to prevent CSRF
-    // const csrfState = Math.random().toString(36).substring(2);
-    // res.cookie("csrfState", csrfState, { maxAge: 60000 });
-    // let url = "https://www.tiktok.com/auth/authorize/";
-    // url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
-    // url += "&scope=user.info.basic,video.list";
-    // url += "&response_type=code";
-    // url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
-    // url += "&state=" + csrfState;
-    // // Add the 'Access-Control-Allow-Origin' header to allow requests from all domains
-    // res.setHeader("Access-Control-Allow-Origin", "*");
-    // res.redirect(url);
-    res.redirect("https://google.com");
+    const csrfState = Math.random().toString(36).substring(2);
+    res.cookie("csrfState", csrfState, { maxAge: 60000 });
+    let url = "https://www.tiktok.com/auth/authorize/";
+    url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
+    url += "&scope=user.info.basic,video.list";
+    url += "&response_type=code";
+    url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
+    url += "&state=" + csrfState;
+    // Add the 'Access-Control-Allow-Origin' header to allow requests from all domains
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.redirect(url);
   }
 
   // Get the access token
