@@ -76,7 +76,7 @@ export class AuthController {
 
         req.session.accessToken = data.access_token;
         req.session.user = data.open_id;
-
+        console.log("SESSION", req.session);
         if (!user) {
           // If user doesn't exist, create a new user
           await prisma.user.create({
