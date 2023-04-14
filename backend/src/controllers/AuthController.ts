@@ -6,26 +6,26 @@ export class AuthController {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
     res.cookie("csrfState", csrfState, { maxAge: 60000 });
+
     let url = "https://www.tiktok.com/auth/authorize/";
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
     url += "&scope=user.info.basic,video.list";
     url += "&response_type=code";
     url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
     url += "&state=" + csrfState;
-    // Add the 'Access-Control-Allow-Origin' header to allow requests from all domains
-    res.setHeader("Access-Control-Allow-Origin", "*");
+
     res.redirect(url);
   }
 
   // Get the access token
   async getAccessToken(req: Request, res: Response) {
     const { code, state } = req.query;
-    // const { csrfState } = req.cookies;
+    const { csrfState } = req.cookies;
 
-    // if (state !== csrfState) {
-    //   res.status(422).send("Invalid state");
-    //   return;
-    // }
+    if (state !== csrfState) {
+      res.status(422).send("Invalid state");
+      return;
+    }
 
     const url = "https://open-api.tiktok.com/oauth/access_token/";
     const body = {
@@ -44,7 +44,8 @@ export class AuthController {
 
       if (response.ok) {
         const data = await response.json();
-        res.send(data);
+        console.log("Access Token TikTok Data: ", data);
+        res.redirect("https://misoauto.vercel.app/dashboard");
       }
     } catch (error) {
       console.log(error);

@@ -1,20 +1,4 @@
 export const Login = () => {
-  // const handleTikTokLogin = async () => {
-  //   try {
-  //     const response = await fetch(
-  //       "https://misoauto.up.railway.app/oauth/tiktok",
-  //       {
-  //         method: "GET",
-  //         mode: "no-cors",
-  //       }
-  //     );
-
-  //     console.log(response);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
   return (
     <div className="container mx-auto flex flex-col items-center">
       <h1 className="text-3xl font-bold  mb-10">Login</h1>
