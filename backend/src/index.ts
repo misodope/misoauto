@@ -29,7 +29,7 @@ const { json } = bodyParser;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const envFilePath = path.join(__dirname, "..", "..", ".env");
-// Get the private key and certificate for HTTPS
+// Get the private key and certificate for local HTTPS server
 let httpsServer: https.Server;
 if (process.env.NODE_ENV !== "production") {
   const key = fs.readFileSync(
@@ -46,6 +46,7 @@ if (process.env.NODE_ENV !== "production") {
 
 const httpServer = http.createServer(app);
 
+// Load GraphQL schema into Apollo Server
 const schemaPaths = [
   fileURLToPath(new URL("./schema/hello.graphql", import.meta.url)),
 ];

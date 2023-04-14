@@ -28,7 +28,10 @@ export class AuthController {
     url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
     url += "&state=" + csrfState;
 
-    res.redirect(url);
+    req.session.save(() => {
+      console.log("Session saved");
+      res.redirect(url);
+    });
   }
 
   // Get the access token
