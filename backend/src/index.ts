@@ -17,6 +17,12 @@ import https from "https";
 import { AuthController } from "./controllers/AuthController.js";
 import session from "express-session";
 
+declare module "express-session" {
+  interface SessionData {
+    csrfState: string;
+  }
+}
+
 const app = express();
 const { json } = bodyParser;
 // Path to the .env file
@@ -66,7 +72,8 @@ const main = async () => {
         sameSite: true,
         maxAge: 3600000, // Time is in miliseconds
       },
-      // resave: false,
+      resave: false,
+      saveUninitialized: true,
     })
   );
   app.use(cors<cors.CorsRequest>());

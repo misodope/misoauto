@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response, Request } from "express";
 import fetch from "node-fetch";
 import { PrismaClient } from "@prisma/client";
 
@@ -13,16 +13,10 @@ interface TikTokResponse {
   };
 }
 
-export interface RequestSession extends Request {
-  session: {
-    csrfState: string;
-  };
-}
-
 const prisma = new PrismaClient();
 
 export class AuthController {
-  async getAuthorizationCode(req: RequestSession, res: Response) {
+  async getAuthorizationCode(req: Express.Request & Request, res: Response) {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
     req.session.csrfState = csrfState;
@@ -38,7 +32,7 @@ export class AuthController {
   }
 
   // Get the access token
-  async getAccessToken(req: RequestSession, res: Response) {
+  async getAccessToken(req: Express.Request & Request, res: Response) {
     const { code, state } = req.query;
     const { csrfState } = req.session;
     console.log("State: ", state);
@@ -103,7 +97,7 @@ export class AuthController {
     }
   }
 
-  async getRefreshToken(req: RequestSession, res: Response) {
+  async getRefreshToken(req: Express.Request & Request, res: Response) {
     const { refresh_token } = req.query;
 
     const url = "https://open-api.tiktok.com/oauth/access_token/";
