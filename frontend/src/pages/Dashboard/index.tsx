@@ -1,4 +1,13 @@
+import { useEffect } from "react";
+
 export const Dashboard = () => {
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("https://misoauto.up.railway.app/api/user");
+      const data = await res.json();
+      console.log(data);
+    })();
+  }, []);
   return (
     <div>
       <h1 className="text-3xl font-bold mb-10 text-center">Dashboard</h1>

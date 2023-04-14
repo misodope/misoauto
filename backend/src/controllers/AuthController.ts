@@ -1,6 +1,14 @@
-import { Response, Request } from "express";
+import { Response, Request, NextFunction } from "express";
 import fetch from "node-fetch";
 import { PrismaClient } from "@prisma/client";
+
+declare module "express-session" {
+  interface SessionData {
+    csrfState: string;
+    accessToken: string;
+    user: string;
+  }
+}
 
 interface TikTokResponse {
   data: {
@@ -16,7 +24,7 @@ interface TikTokResponse {
 const prisma = new PrismaClient();
 
 export class AuthController {
-  async getAuthorizationCode(req: Express.Request & Request, res: Response) {
+  async getAuthorizationCode(req: Request, res: Response) {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
     req.session.csrfState = csrfState;
@@ -35,16 +43,14 @@ export class AuthController {
   }
 
   // Get the access token
-  async getAccessToken(req: Express.Request & Request, res: Response) {
+  async getAccessToken(req: Request, res: Response) {
     const { code, state } = req.query;
     const { csrfState } = req.session;
-    console.log("REQUEST SESSION", req.session);
-    console.log("State: ", state);
-    console.log("CSRF State: ", csrfState);
-    // if (state !== csrfState) {
-    //   res.status(422).send("Invalid state");
-    //   return;
-    // }
+
+    if (state !== csrfState) {
+      res.status(422).send("Invalid state");
+      return;
+    }
 
     const url = "https://open-api.tiktok.com/oauth/access_token/";
     const body = {
@@ -67,6 +73,9 @@ export class AuthController {
         const user = await prisma.user.findUnique({
           where: { openId: data.open_id },
         });
+
+        req.session.accessToken = data.access_token;
+        req.session.user = data.open_id;
 
         if (!user) {
           // If user doesn't exist, create a new user
@@ -101,7 +110,7 @@ export class AuthController {
     }
   }
 
-  async getRefreshToken(req: Express.Request & Request, res: Response) {
+  async getRefreshToken(req: Request, res: Response) {
     const { refresh_token } = req.query;
 
     const url = "https://open-api.tiktok.com/oauth/access_token/";
@@ -120,11 +129,35 @@ export class AuthController {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        res.send(data);
+        const { data } = (await response.json()) as TikTokResponse;
+
+        await prisma.user.update({
+          where: { openId: data.open_id },
+          data: {
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
+            expiresIn: data.expires_in,
+            scope: data.scope,
+            refreshExpiresIn: data.refresh_expires_in,
+          },
+        });
+
+        res.redirect("https://misoauto.vercel.app/dashboard");
       }
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async logout(req: Request, res: Response, next: NextFunction) {
+    req.session.destroy((err) => {
+      if (err) next(err);
+
+      req.session.regenerate((err) => {
+        if (err) next(err);
+
+        res.redirect("https://misoauto.vercel.app/");
+      });
+    });
   }
 }

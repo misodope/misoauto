@@ -4,7 +4,7 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { loadSchemaSync } from "@graphql-tools/load";
 import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import http from "http";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -16,12 +16,7 @@ import fs from "fs";
 import https from "https";
 import { AuthController } from "./controllers/AuthController.js";
 import session from "express-session";
-
-declare module "express-session" {
-  interface SessionData {
-    csrfState: string;
-  }
-}
+import fetch from "node-fetch";
 
 const app = express();
 const { json } = bodyParser;
@@ -86,10 +81,43 @@ const main = async () => {
     })
   );
 
+  const isAuthenticated = (req: Request, _: Response, next: NextFunction) => {
+    if (req.session.user) {
+      next();
+    } else {
+      next("/oauth/logout");
+    }
+  };
+
   const authController = new AuthController();
   app.get("/oauth/tiktok", authController.getAuthorizationCode);
   app.get("/oauth/redirect", authController.getAccessToken);
   app.get("/oauth/refresh", authController.getRefreshToken);
+  app.get("/oauth/logout", authController.logout);
+
+  app.get("/api/user", isAuthenticated, async (req: Request, res: Response) => {
+    const url = new URL("https://open.tiktokapis.com/v2/user/info/");
+    const params = {
+      fields:
+        "open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count",
+    };
+    const urlParams = new URLSearchParams(url.search);
+    Object.keys(params).forEach((key) => {
+      urlParams.append(key, params[key]);
+    });
+    console.log("URL", url);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${req.session.accessToken}`,
+      },
+    });
+
+    const data = await response.json();
+    console.log(data);
+    res.json(data);
+  });
 
   if (process.env.NODE_ENV !== "production") {
     await new Promise<void>((resolve) => {
