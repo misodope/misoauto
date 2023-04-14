@@ -16,6 +16,7 @@ export class AuthController {
     // res.setHeader("Access-Control-Allow-Origin", "*");
     // res.redirect(url);
     res.send("TESTTTT");
+    res.redirect("https://misoauto.up.railway.app/oauth/redirect");
   }
 
   // Get the access token
