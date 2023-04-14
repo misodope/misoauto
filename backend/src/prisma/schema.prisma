@@ -16,8 +16,8 @@ model User {
   scope            String
   accessToken      String
   refreshToken     String
-  refreshExpiresIn String
-  expiresIn        String
+  refreshExpiresIn Int
+  expiresIn        Int
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }

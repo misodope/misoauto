@@ -17,7 +17,7 @@ RUN pnpm install --force --no-frozen-lockfile
 COPY . /app
 
 # Generate Prisma client
-RUN pnpm prisma generate --schema=./src/prisma/schema.prisma
+RUN pnpm prisma-generate
 
 # Expose port 8000 for the server to listen on
 EXPOSE 8000

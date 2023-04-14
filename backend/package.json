@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "compile": "tsc",
     "dev": "nodemon",
     "start": "ts-node --esm ./src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "prisma-generate": "prisma generate --schema=./src/prisma/schema.prisma"
   },
   "dependencies": {
     "@apollo/server": "^4.5.0",
