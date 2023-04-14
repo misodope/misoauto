@@ -20,12 +20,13 @@ export class AuthController {
   // Get the access token
   async getAccessToken(req: Request, res: Response) {
     const { code, state } = req.query;
-    const { csrfState } = req.cookies;
-
-    if (state !== csrfState) {
-      res.status(422).send("Invalid state");
-      return;
-    }
+    // const { csrfState } = req.cookies;
+    console.log("Cookies", req.cookies);
+    console.log("STate", state);
+    // if (state !== csrfState) {
+    //   res.status(422).send("Invalid state");
+    //   return;
+    // }
 
     const url = "https://open-api.tiktok.com/oauth/access_token/";
     const body = {
