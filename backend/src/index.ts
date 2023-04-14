@@ -82,6 +82,7 @@ const main = async () => {
   );
 
   const isAuthenticated = (req: Request, _: Response, next: NextFunction) => {
+    console.log("INSIDE IS AUTHENTICATED", req.session);
     if (req.session.user) {
       next();
     } else {
