@@ -4,8 +4,6 @@ export const Login = () => {
       "https://misoauto.up.railway.app/oauth/tiktok"
     );
 
-    const data = await response.json();
-    console.log(data);
     console.log(response);
   };
 
