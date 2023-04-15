@@ -1,0 +1,3 @@
+{
+  "routes": [{ "frontend/src": "/[^.]+", "dest": "/", "status": 200 }]
+}

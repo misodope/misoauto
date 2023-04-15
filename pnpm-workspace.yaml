@@ -1,5 +1,5 @@
 packages:
   - "frontend/**"
-  - "backend/**"
+  - "services/**"
   # exclude packages that are inside test directories
   - "!**/test/**"

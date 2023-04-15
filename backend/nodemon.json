@@ -1,6 +1,0 @@
-{
-  "watch": ["src"],
-  "ext": ".ts,.js,.graphql",
-  "ignore": ["node_modules"],
-  "exec": "ts-node-esm src/index.ts"
-}
