@@ -3,7 +3,11 @@ import {
   TikTokSuccessResponse,
 } from "../../services/auth/AuthController.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import UserQueries from "@services/prisma/queries/user.js";
+import UserQueries from "../../services/prisma/queries/user.js";
+import {
+  getCurrentRequestEnv,
+  getRedirectUrl,
+} from "../../services/utils/env.js";
 
 const handler = async (req: VercelRequest, res: VercelResponse) => {
   const { code, state } = req.query as { code: string; state: string };
@@ -16,11 +20,16 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   try {
     const authController = new AuthController();
     const userQueries = new UserQueries();
+    const currentEnv = getCurrentRequestEnv(req);
+    const redirectUri = getRedirectUrl(currentEnv);
+
     const response: TikTokSuccessResponse = await authController.getAccessToken(
-      code
+      code,
+      redirectUri
     );
-    console.log("WHAT IS THIS NODE ENV", process.env.NODE_ENV);
+    console.log("This is response in redirect: ", response);
     const user = await userQueries.getUser(response.open_id);
+    console.log("This is user: ", user);
     if (!user) {
       await userQueries.createUser(response);
     } else {

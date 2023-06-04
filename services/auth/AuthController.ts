@@ -15,7 +15,7 @@ interface TikTokErrorResponse {
 }
 
 export class AuthController {
-  getAuthorizationUrl() {
+  getAuthorizationUrl(redirectUri: string) {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
 
@@ -23,7 +23,7 @@ export class AuthController {
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
     url += "&scope=user.info.basic,video.list";
     url += "&response_type=code";
-    url += `&redirect_uri=https://misoauto-misodope-misodope-s-team.vercel.app/api/auth/redirect`;
+    url += `&redirect_uri=${redirectUri}`;
     url += "&state=" + csrfState;
 
     return {
@@ -32,15 +32,17 @@ export class AuthController {
     };
   }
 
-  async getAccessToken(code: string): Promise<TikTokSuccessResponse> {
+  async getAccessToken(
+    code: string,
+    redirectUri: string
+  ): Promise<TikTokSuccessResponse> {
     const url = "https://open.tiktokapis.com/v2/oauth/token/";
     const body = new URLSearchParams({
       client_key: process.env.TIKTOK_CLIENT_KEY,
       client_secret: process.env.TIKTOK_CLIENT_SECRET,
       grant_type: "authorization_code",
       code: code,
-      redirect_uri:
-        "https://misoauto-misodope-misodope-s-team.vercel.app/api/auth/redirect",
+      redirect_uri: redirectUri,
     });
     const fetchConfig = {
       method: "POST",

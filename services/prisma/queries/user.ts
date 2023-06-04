@@ -1,4 +1,4 @@
-import { TikTokSuccessResponse } from "@services/auth/AuthController.js";
+import { TikTokSuccessResponse } from "../../auth/AuthController.js";
 import prisma from "../index.js";
 import { add } from "date-fns";
 

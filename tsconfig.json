@@ -1,11 +1,6 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": {
-      "@api/*": ["api/*"],
-      "@types/*": ["types/*"],
-      "@services/*": ["services/*"],
-    },
     "outDir": "dist",
     "lib": ["ESnext", "DOM"],
     "target": "ESNext",
