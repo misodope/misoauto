@@ -27,3 +27,4 @@ dist-ssr
 
 .pnpm-debug.log
 .pnpm-store
+.vercel

@@ -1,163 +1,124 @@
-import { Response, Request, NextFunction } from "express";
-import fetch from "node-fetch";
-import { PrismaClient } from "@prisma/client";
-
-declare module "express-session" {
-  interface SessionData {
-    csrfState: string;
-    accessToken: string;
-    user: string;
-  }
+export interface TikTokSuccessResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  open_id: string;
+  scope: string;
+  refresh_expires_in: number;
+  token_type: string;
 }
 
-interface TikTokResponse {
-  data: {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-    open_id: string;
-    scope: string;
-    refresh_expires_in: number;
-  };
+interface TikTokErrorResponse {
+  error: string;
+  error_description: string;
+  log_id: string;
 }
-
-const prisma = new PrismaClient();
 
 export class AuthController {
-  async getAuthorizationCode(req: Request, res: Response) {
+  getAuthorizationUrl() {
     // Generate a random string for the state parameter to prevent CSRF
     const csrfState = Math.random().toString(36).substring(2);
-    req.session.csrfState = csrfState;
 
-    let url = "https://www.tiktok.com/auth/authorize/";
+    let url = "https://www.tiktok.com/v2/auth/authorize/";
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
     url += "&scope=user.info.basic,video.list";
     url += "&response_type=code";
-    url += `&redirect_uri=https://misoauto.up.railway.app/oauth/redirect`;
+    url += `&redirect_uri=https://misoauto-misodope-misodope-s-team.vercel.app/api/auth/redirect`;
     url += "&state=" + csrfState;
 
-    req.session.save(() => {
-      console.log("Session saved");
-      res.redirect(url);
-    });
+    return {
+      url,
+      csrfState,
+    };
   }
 
-  // Get the access token
-  async getAccessToken(req: Request, res: Response) {
-    const { code, state } = req.query;
-    const { csrfState } = req.session;
-
-    if (state !== csrfState) {
-      res.status(422).send("Invalid state");
-      return;
-    }
-
-    const url = "https://open-api.tiktok.com/oauth/access_token/";
-    const body = {
+  async getAccessToken(code: string): Promise<TikTokSuccessResponse> {
+    const url = "https://open.tiktokapis.com/v2/oauth/token/";
+    const body = new URLSearchParams({
       client_key: process.env.TIKTOK_CLIENT_KEY,
       client_secret: process.env.TIKTOK_CLIENT_SECRET,
       grant_type: "authorization_code",
-      code,
+      code: code,
+      redirect_uri:
+        "https://misoauto-misodope-misodope-s-team.vercel.app/api/auth/redirect",
+    });
+    const fetchConfig = {
+      method: "POST",
+      body: body,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cache-Control": "no-cache",
+      },
     };
 
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: JSON.stringify(body),
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(url, fetchConfig);
 
       if (response.ok) {
-        const { data } = (await response.json()) as TikTokResponse;
-        // Check if user exists in database
-        const user = await prisma.user.findUnique({
-          where: { openId: data.open_id },
-        });
+        const data: TikTokSuccessResponse & TikTokErrorResponse =
+          await response.json();
 
-        req.session.accessToken = data.access_token;
-        req.session.user = data.open_id;
-        console.log("SESSION", req.session);
-        if (!user) {
-          // If user doesn't exist, create a new user
-          await prisma.user.create({
-            data: {
-              openId: data.open_id,
-              accessToken: data.access_token,
-              refreshToken: data.refresh_token,
-              expiresIn: data.expires_in,
-              scope: data.scope,
-              refreshExpiresIn: data.refresh_expires_in,
-            },
-          });
-        } else {
-          // If user exists, update the user with the new access token
-          await prisma.user.update({
-            where: { openId: data.open_id },
-            data: {
-              accessToken: data.access_token,
-              refreshToken: data.refresh_token,
-              expiresIn: data.expires_in,
-              scope: data.scope,
-              refreshExpiresIn: data.refresh_expires_in,
-            },
-          });
+        if (data.error) {
+          throw Error(
+            `Error fetching access token! error: ${data.error}, message: ${data.error_description}`
+          );
         }
 
-        res.redirect("https://misoauto.vercel.app/dashboard");
+        return data;
       }
     } catch (error) {
-      console.log(error);
+      return error;
     }
   }
 
-  async getRefreshToken(req: Request, res: Response) {
-    const { refresh_token } = req.query;
+  // async getRefreshToken(req: Request, res: VercelResponse) {
+  //   const { refresh_token } = req.query;
 
-    const url = "https://open-api.tiktok.com/oauth/access_token/";
-    const body = {
-      client_key: process.env.TIKTOK_CLIENT_KEY,
-      client_secret: process.env.TIKTOK_CLIENT_SECRET,
-      grant_type: "refresh_token",
-      refresh_token,
-    };
+  //   const url = "https://open-api.tiktok.com/oauth/access_token/";
+  //   const body = {
+  //     client_key: process.env.TIKTOK_CLIENT_KEY,
+  //     client_secret: process.env.TIKTOK_CLIENT_SECRET,
+  //     grant_type: "refresh_token",
+  //     refresh_token,
+  //   };
 
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: JSON.stringify(body),
-        headers: { "Content-Type": "application/json" },
-      });
+  //   try {
+  //     const response = await fetch(url, {
+  //       method: "POST",
+  //       body: JSON.stringify(body),
+  //       headers: { "Content-Type": "application/json" },
+  //     });
 
-      if (response.ok) {
-        const { data } = (await response.json()) as TikTokResponse;
+  //     if (response.ok) {
+  //       const { data } = (await response.json()) as TikTokResponse;
 
-        await prisma.user.update({
-          where: { openId: data.open_id },
-          data: {
-            accessToken: data.access_token,
-            refreshToken: data.refresh_token,
-            expiresIn: data.expires_in,
-            scope: data.scope,
-            refreshExpiresIn: data.refresh_expires_in,
-          },
-        });
+  //       await prisma.user.update({
+  //         where: { openId: data.open_id },
+  //         data: {
+  //           accessToken: data.access_token,
+  //           refreshToken: data.refresh_token,
+  //           expiresIn: data.expires_in,
+  //           scope: data.scope,
+  //           refreshExpiresIn: data.refresh_expires_in,
+  //         },
+  //       });
 
-        res.redirect("https://misoauto.vercel.app/dashboard");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
+  //       res.redirect("https://misoauto.vercel.app/dashboard");
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
 
-  async logout(req: Request, res: Response, next: NextFunction) {
-    req.session.destroy((err) => {
-      if (err) next(err);
+  // async logout(req: Request, res: VercelResponse, next: NextFunction) {
+  //   req.session.destroy((err) => {
+  //     if (err) next(err);
 
-      req.session.regenerate((err) => {
-        if (err) next(err);
+  //     req.session.regenerate((err) => {
+  //       if (err) next(err);
 
-        res.redirect("https://misoauto.vercel.app/");
-      });
-    });
-  }
+  //       res.redirect("https://misoauto.vercel.app/");
+  //     });
+  //   });
+  // }
 }

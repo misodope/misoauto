@@ -10,11 +10,11 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
-import { resolvers } from "../api/graphql/resolvers/index.js";
+import { resolvers } from "../services/graphql/resolvers";
 import path from "path";
 import fs from "fs";
 import https from "https";
-import { AuthController } from "../services/auth/AuthController.js";
+import { AuthController } from "../services/auth/AuthController";
 import session from "express-session";
 import fetch from "node-fetch";
 

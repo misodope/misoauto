@@ -4,17 +4,16 @@ export const Dashboard = () => {
   const [userData, setUserData] = useState<Record<string, string | number>>({});
 
   useEffect(() => {
-    (async () => {
-      const res = await fetch("https://misoauto.up.railway.app/api/user", {
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const { data } = await res.json();
-        setUserData(data.user);
-        console.log(data);
-      }
-    })();
+    // (async () => {
+    //   const res = await fetch("https://misoauto.up.railway.app/api/user", {
+    //     credentials: "include",
+    //   });
+    //   if (res.ok) {
+    //     const { data } = await res.json();
+    //     setUserData(data.user);
+    //     console.log(data);
+    //   }
+    // })();
   }, []);
   return (
     <div>

@@ -21,3 +21,21 @@ If you prefer not to use Docker, follow these steps to set up the application:
 3. Start the application by running `pnpm start`.
 
 That's it! You can now access the application at http://localhost:8000 for the backend and http://localhost:5173 for the frontend.
+
+### Vercel Deployment
+
+To deploy to dev enviornments run `vercel deploy`
+
+Deploy to prod run `vercel --prod`
+
+Notes:
+
+- Importing code from other files for `Vercel Serverless Functions` you must specify `.js` to resolve correctly.
+
+### Working with Prisma ORM
+
+#### Migrations
+
+After modifying any schemas or models in `prisma` you must run a migration: `pnpm prisa-migrate --name title_of_migration`
+
+When successfully migrated run `pnpm prisma-generate` to re-generate the types for `PrismaClient`

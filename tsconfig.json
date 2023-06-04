@@ -1,12 +1,19 @@
 {
   "compilerOptions": {
-    "rootDirs": ["src"],
+    "baseUrl": ".",
+    "paths": {
+      "@api/*": ["api/*"],
+      "@types/*": ["types/*"],
+      "@services/*": ["services/*"],
+    },
     "outDir": "dist",
-    "lib": ["es2020"],
+    "lib": ["ESnext", "DOM"],
     "target": "ESNext",
     "module": "esnext",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "types": ["node"],
-  }
+  },
+  "include": ["api", "types", "services"],
+  "exclude": ["node_modules", "dist", "frontend"],
 }

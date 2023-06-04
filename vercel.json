@@ -1,3 +1,16 @@
 {
-  "routes": [{ "frontend/src": "/[^.]+", "dest": "/", "status": 200 }]
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }, 
+    { "source": "/api/(.*)", "destination": "/api/*" }
+  ],
+  "functions": {
+    "api/auth/redirect.ts": {
+      "memory": 128,
+      "maxDuration": 10
+    },
+    "api/auth/tiktok.ts": {
+      "memory": 128,
+      "maxDuration": 10
+    }
+  }
 }
