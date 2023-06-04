@@ -19,7 +19,7 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     const response: TikTokSuccessResponse = await authController.getAccessToken(
       code
     );
-
+    console.log("WHAT IS THIS NODE ENV", process.env.NODE_ENV);
     const user = await userQueries.getUser(response.open_id);
     if (!user) {
       await userQueries.createUser(response);
