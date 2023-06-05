@@ -55,3 +55,14 @@ export const getAuthUrl = () => {
       return "https://misoauto-misodope-misodope-s-team.vercel.app/api/auth/tiktok";
   }
 };
+
+export const getApiUrl = () => {
+  switch (getCurrentEnv()) {
+    case ENV.DEVELOPMENT:
+      return "http://localhost:3000/api";
+    case ENV.PRODUCTION:
+      return "https://misoauto.vercel.app/api";
+    case ENV.STAGING:
+      return "https://misoauto-misodope-misodope-s-team.vercel.app/api";
+  }
+};

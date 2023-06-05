@@ -5,8 +5,12 @@
   ],
   "functions": {
     "api/auth/redirect.ts": {
-      "memory": 128,
+      "memory": 512,
       "maxDuration": 10
+    },
+    "api/auth/get.ts": {
+      "memory": 512,
+      "maxDuration": 15
     },
     "api/auth/tiktok.ts": {
       "memory": 128,

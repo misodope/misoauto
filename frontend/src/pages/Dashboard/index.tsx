@@ -1,20 +1,10 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
 
 export const Dashboard = () => {
   const [userData, setUserData] = useState<Record<string, string | number>>({});
-
-  useEffect(() => {
-    // (async () => {
-    //   const res = await fetch("https://misoauto.up.railway.app/api/user", {
-    //     credentials: "include",
-    //   });
-    //   if (res.ok) {
-    //     const { data } = await res.json();
-    //     setUserData(data.user);
-    //     console.log(data);
-    //   }
-    // })();
-  }, []);
+  const auth = useAuth();
+  console.log("AUTH", auth);
   return (
     <div>
       <div className="mt-8 flex items-center flex-col">

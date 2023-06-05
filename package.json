@@ -2,10 +2,9 @@
   "name": "misoauto",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "start": "ts-node --esm ./src/index.ts",
-    "build":  "pnpm prisma-generate && prisma migrate deploy --schema=./services/prisma/schema.prisma && cd frontend && pnpm build",
+    "build": "cd frontend && pnpm build",
     "prisma-generate": "prisma generate --schema=./services/prisma/schema.prisma",
     "prisma-migrate": "prisma migrate dev --schema=./services/prisma/schema.prisma",
     "dev": "cd frontend && pnpm build"
@@ -16,7 +15,7 @@
     "@graphql-tools/load": "^7.8.13",
     "@graphql-tools/merge": "^8.4.0",
     "@graphql-tools/schema": "^9.0.17",
-    "@prisma/client": "^4.12.0",
+    "@prisma/client": "^4.15.0",
     "@types/express": "^4.17.17",
     "@types/express-session": "^1.17.7",
     "@vercel/edge": "^0.3.2",
@@ -28,13 +27,13 @@
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "graphql": "^16.6.0",
-    "graphql-tag": "^2.12.6"
+    "graphql-tag": "^2.12.6",
+    "prisma": "^4.15.0"
   },
   "devDependencies": {
     "@edge-runtime/cookies": "^3.0.6",
     "@playwright/test": "^1.32.2",
     "@types/node": "^18.15.11",
-    "prisma": "^4.12.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.2"
   }

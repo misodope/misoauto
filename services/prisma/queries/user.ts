@@ -1,11 +1,18 @@
 import { TikTokSuccessResponse } from "../../auth/AuthController.js";
-import prisma from "../index.js";
 import { add } from "date-fns";
 
+import { PrismaClient, User } from "@prisma/client";
+
 export default class UserQueries {
-  async getUser(openId: string) {
+  prisma: PrismaClient;
+
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma;
+  }
+
+  async getUser(openId: string): Promise<User> {
     try {
-      const user = await prisma.user.findUnique({
+      const user = this.prisma.user.findUnique({
         where: { openId },
       });
 
@@ -17,7 +24,7 @@ export default class UserQueries {
 
   async createUser(data: TikTokSuccessResponse) {
     try {
-      const user = await prisma.user.create({
+      const user = await this.prisma.user.create({
         data: {
           openId: data.open_id,
           accessToken: data.access_token,
@@ -38,7 +45,7 @@ export default class UserQueries {
 
   async updateUser(openId: string, data: TikTokSuccessResponse) {
     try {
-      const user = await prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { openId },
         data: {
           accessToken: data.access_token,

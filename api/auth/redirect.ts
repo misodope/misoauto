@@ -9,6 +9,41 @@ import {
   getRedirectUrl,
 } from "../../services/utils/env.js";
 
+import { PrismaClient } from "@prisma/client";
+import { User } from "@prisma/client";
+
+const prisma = new PrismaClient({
+  log: [
+    {
+      emit: "event",
+      level: "query",
+    },
+    {
+      emit: "stdout",
+      level: "error",
+    },
+    {
+      emit: "stdout",
+      level: "info",
+    },
+    {
+      emit: "stdout",
+      level: "warn",
+    },
+  ],
+});
+
+prisma.$on("query", (e: any) => {
+  console.log("Query: " + e.query);
+  console.log("Params: " + e.params);
+  console.log("Duration: " + e.duration + "ms");
+  console.log("------------------------------------------------------");
+});
+
+prisma.$on("beforeExit", (e: any) => {
+  console.log("beforeExit hook", e);
+});
+
 const handler = async (req: VercelRequest, res: VercelResponse) => {
   const { code, state } = req.query as { code: string; state: string };
   const { csrfState } = req.cookies;
@@ -17,9 +52,10 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     return;
   }
 
+  let user: User;
   try {
     const authController = new AuthController();
-    const userQueries = new UserQueries();
+    const userQueries = new UserQueries(prisma);
     const currentEnv = getCurrentRequestEnv(req);
     const redirectUri = getRedirectUrl(currentEnv);
 
@@ -27,19 +63,19 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
       code,
       redirectUri
     );
-    console.log("This is response in redirect: ", response);
-    const user = await userQueries.getUser(response.open_id);
-    console.log("This is user: ", user);
+
+    user = await userQueries.getUser(response.open_id);
+
     if (!user) {
-      await userQueries.createUser(response);
+      user = await userQueries.createUser(response);
     } else {
-      await userQueries.updateUser(response.open_id, response);
+      user = await userQueries.updateUser(response.open_id, response);
     }
   } catch (error) {
     console.error(error);
   }
 
-  return res.redirect("/dashboard");
+  return res.redirect(`/dashboard/?user=${user.openId}`);
 };
 
 export default handler;

@@ -39,3 +39,17 @@ Notes:
 After modifying any schemas or models in `prisma` you must run a migration: `pnpm prisa-migrate --name title_of_migration`
 
 When successfully migrated run `pnpm prisma-generate` to re-generate the types for `PrismaClient`
+
+### Working with Vercel and Vercel Serverless Functions
+
+Serverless function configuration matters.
+
+For free plans:
+Max Execution Time: 10 seconds
+Max Memory: 1028mb or 1gb
+
+For pro plans:
+Max Execution Time: 60 seconds
+Max Memory: 1028mb or 1gb
+
+More intensive processes may require more memory, so adjust as necessary.
