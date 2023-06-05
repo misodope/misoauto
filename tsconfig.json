@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "lib": ["ESnext", "DOM"],
+    "target": "ES2018",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "types": ["node"],
+    "strict": false,
+  },
+  "include": ["api", "types", "services"],
+  "exclude": ["node_modules", "dist", "frontend", "services/prisma"],
+}

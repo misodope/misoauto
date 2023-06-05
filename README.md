@@ -21,3 +21,37 @@ If you prefer not to use Docker, follow these steps to set up the application:
 3. Start the application by running `pnpm start`.
 
 That's it! You can now access the application at http://localhost:8000 for the backend and http://localhost:5173 for the frontend.
+
+### Vercel Deployment
+
+To deploy to dev enviornments run `vercel deploy`
+
+Deploy to prod run `vercel --prod`
+
+Notes:
+
+- Importing code from other files for `Vercel Serverless Functions` you must specify `.js` to resolve correctly.
+
+### Working with Prisma ORM
+
+#### Migrations
+
+After modifying any schemas or models in `prisma` you must run a migration: `pnpm prisa-migrate --name title_of_migration`
+
+When successfully migrated run `pnpm prisma-generate` to re-generate the types for `PrismaClient`
+
+### Working with Vercel and Vercel Serverless Functions
+
+Serverless function configuration matters.
+
+For free plans:
+Max Execution Time: 10 seconds
+Max Memory: 1028mb or 1gb
+
+For pro plans:
+Max Execution Time: 60 seconds
+Max Memory: 1028mb or 1gb
+
+More intensive processes may require more memory, so adjust as necessary.
+
+All functions are located here: `./api`

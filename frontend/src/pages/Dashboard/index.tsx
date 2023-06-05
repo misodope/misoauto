@@ -1,21 +1,52 @@
 import { useEffect, useState } from "react";
+import { useAuthContext } from "../../hooks/useAuth";
+import { getApiUrl } from "../../../../services/utils/env";
+import Loader from "../../components/Loader";
 
 export const Dashboard = () => {
-  const [userData, setUserData] = useState<Record<string, string | number>>({});
+  const [userData, setUserData] = useState<Record<
+    string,
+    string | number
+  > | null>(null);
+  const { authData } = useAuthContext();
 
   useEffect(() => {
-    (async () => {
-      const res = await fetch("https://misoauto.up.railway.app/api/user", {
-        credentials: "include",
-      });
+    const fetchUserData = async () => {
+      try {
+        const url = `${getApiUrl()}/tiktok/user`;
+        const fetchConfig: RequestInit = {
+          method: "POST",
+          body: JSON.stringify({ accessToken: authData?.accessToken }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
 
-      if (res.ok) {
-        const { data } = await res.json();
-        setUserData(data.user);
-        console.log(data);
+        const response = await fetch(url, fetchConfig);
+
+        if (!response.ok) {
+          throw new Error(
+            `Network response was not ok:  ${response?.statusText}`
+          );
+        }
+
+        const data = await response.json();
+        console.log("USER DATA: ", data);
+        setUserData(data);
+      } catch (error: unknown) {
+        console.error(error);
       }
-    })();
-  }, []);
+    };
+
+    if (authData) {
+      fetchUserData();
+    }
+  }, [authData]);
+
+  if (!userData) {
+    return <Loader />;
+  }
+
   return (
     <div>
       <div className="mt-8 flex items-center flex-col">

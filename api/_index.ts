@@ -10,11 +10,11 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
-import { resolvers } from "./resolvers/index.js";
+import { resolvers } from "../services/graphql/resolvers";
 import path from "path";
 import fs from "fs";
 import https from "https";
-import { AuthController } from "./controllers/AuthController.js";
+import { AuthController } from "../services/auth/AuthController";
 import session from "express-session";
 import fetch from "node-fetch";
 
@@ -107,15 +107,7 @@ const main = async () => {
     const url = new URL(
       "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count"
     );
-    // const params = {
-    //   fields:
-    //     "open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count",
-    // };
-    // const urlParams = new URLSearchParams(url.search);
-    // Object.keys(params).forEach((key) => {
-    //   urlParams.append(key, params[key]);
-    // });
-    // console.log("URL", url);
+
     const response = await fetch(url, {
       method: "GET",
       headers: {
