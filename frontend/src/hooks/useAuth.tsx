@@ -120,7 +120,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("No auth data in cookie, but in state, setting cookie...");
         // Set auth data in cookie for 1 day
         const expires = `; expires=${authData.expiresIn}`;
-        document.cookie = `authData=${JSON.stringify(authData)}${expires};`;
+        document.cookie = `authData=${JSON.stringify(
+          authData
+        )}${expires}; path=/`;
       }
     }
   }, [authData]);
@@ -131,15 +133,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .split(";")
       .find((c) => c.trim().startsWith("authData="));
 
-    if (!cookie) {
+    if (!cookie && !authData) {
       return false;
     }
 
-    const cookieAuthData = JSON.parse(cookie.split("=")[1]);
-    const expires = new Date(cookieAuthData.expiresAt);
-    const now = new Date();
+    if (authData && cookie) {
+      const cookieAuthData = JSON.parse(cookie.split("=")[1]);
+      const expires = new Date(cookieAuthData.expiresAt);
+      const now = new Date();
 
-    return expires > now;
+      return expires > now;
+    }
+
+    if (!cookie && authData) {
+      const expires = new Date(authData.expiresAt);
+      const now = new Date();
+
+      return expires > now;
+    }
+
+    return false;
   };
 
   const value = {

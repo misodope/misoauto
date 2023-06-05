@@ -31,7 +31,7 @@ export const Dashboard = () => {
         }
 
         const data = await response.json();
-        console.log("USER DATA: ", data);
+
         setUserData(data);
       } catch (error: unknown) {
         console.error(error);
