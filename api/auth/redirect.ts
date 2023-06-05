@@ -52,7 +52,6 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     return;
   }
 
-  let user: User;
   try {
     const authController = new AuthController();
     const userQueries = new UserQueries(prisma);
@@ -64,18 +63,19 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
       redirectUri
     );
 
-    user = await userQueries.getUser(response.open_id);
+    let user: User = await userQueries.getUser(response.open_id);
 
     if (!user) {
       user = await userQueries.createUser(response);
     } else {
       user = await userQueries.updateUser(response.open_id, response);
     }
+
+    return res.redirect(`/dashboard/?user=${user.openId}`);
   } catch (error) {
     console.error(error);
+    return res.status(500).send("Internal server error");
   }
-
-  return res.redirect(`/dashboard/?user=${user.openId}`);
 };
 
 export default handler;

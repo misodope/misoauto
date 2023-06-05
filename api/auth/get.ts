@@ -42,15 +42,14 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
 
   const userQueries = new UserQueries(prisma);
 
-  let user: User;
   try {
-    user = await userQueries.getUser(openId);
+    const user = await userQueries.getUser(openId);
+
+    return res.status(200).json(user);
   } catch {
     // Return error message if user is not found
     return res.status(404).send("User not found");
   }
-
-  return res.status(200).json(user);
 };
 
 export default handler;

@@ -7,7 +7,7 @@
     "build": "cd frontend && pnpm build",
     "prisma-generate": "prisma generate --schema=./services/prisma/schema.prisma",
     "prisma-migrate": "prisma migrate dev --schema=./services/prisma/schema.prisma",
-    "dev": "cd frontend && pnpm build"
+    "dev": "cd frontend && pnpm dev"
   },
   "dependencies": {
     "@apollo/server": "^4.5.0",

@@ -1,10 +1,52 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuthContext } from "../../hooks/useAuth";
+import { getApiUrl } from "../../../../services/utils/env";
+import Loader from "../../components/Loader";
 
 export const Dashboard = () => {
-  const [userData, setUserData] = useState<Record<string, string | number>>({});
-  const auth = useAuth();
-  console.log("AUTH", auth);
+  const [userData, setUserData] = useState<Record<
+    string,
+    string | number
+  > | null>(null);
+  const { authData } = useAuthContext();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const url = `${getApiUrl()}/tiktok/user`;
+        const fetchConfig: RequestInit = {
+          method: "POST",
+          body: JSON.stringify({ accessToken: authData?.accessToken }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+
+        const response = await fetch(url, fetchConfig);
+
+        if (!response.ok) {
+          throw new Error(
+            `Network response was not ok:  ${response?.statusText}`
+          );
+        }
+
+        const data = await response.json();
+        console.log("USER DATA: ", data);
+        setUserData(data);
+      } catch (error: unknown) {
+        console.error(error);
+      }
+    };
+
+    if (authData) {
+      fetchUserData();
+    }
+  }, [authData]);
+
+  if (!userData) {
+    return <Loader />;
+  }
+
   return (
     <div>
       <div className="mt-8 flex items-center flex-col">

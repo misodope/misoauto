@@ -53,3 +53,5 @@ Max Execution Time: 60 seconds
 Max Memory: 1028mb or 1gb
 
 More intensive processes may require more memory, so adjust as necessary.
+
+All functions are located here: `./api`

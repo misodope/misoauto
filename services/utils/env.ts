@@ -9,7 +9,10 @@ enum ENV {
 const getCurrentEnv = () => {
   const currentUrl = window.location.href;
 
-  if (currentUrl.includes("localhost")) {
+  if (
+    currentUrl.includes("localhost") ||
+    currentUrl.includes("192.168.139.173")
+  ) {
     return ENV.DEVELOPMENT;
   }
   if (currentUrl.includes("misoauto-misodope-misodope-s-team.vercel.app")) {
@@ -23,7 +26,10 @@ const getCurrentEnv = () => {
 export const getCurrentRequestEnv = (req: VercelRequest) => {
   const currentUrl = req.headers.host;
 
-  if (currentUrl?.includes("localhost")) {
+  if (
+    currentUrl?.includes("localhost") ||
+    currentUrl?.includes("192.168.139.173")
+  ) {
     return ENV.DEVELOPMENT;
   }
   if (currentUrl?.includes("misoauto-misodope-misodope-s-team.vercel.app")) {
