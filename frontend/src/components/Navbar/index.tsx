@@ -5,9 +5,9 @@ const Navbar = () => {
   const { setAuthData, isLoggedIn } = useAuthContext();
 
   const onLogout = () => {
-    console.log("Inside Logout");
     // Destroy cookie
-    document.cookie = "authData=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie =
+      "authData=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
     // Force Logout
     setAuthData(null);
     <Navigate to="/" />;
@@ -21,13 +21,21 @@ const Navbar = () => {
         </Link>
         {isLoggedIn ? (
           <>
-            <Link
-              className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
-              onClick={onLogout}
-              to="/"
-            >
-              Logout
-            </Link>
+            <div>
+              <Link
+                className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded mr-3"
+                to="/dashboard"
+              >
+                Dashboard
+              </Link>
+              <Link
+                className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
+                onClick={onLogout}
+                to="/"
+              >
+                Logout
+              </Link>
+            </div>
           </>
         ) : (
           <Link

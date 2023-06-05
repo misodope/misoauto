@@ -4,11 +4,6 @@ import Loader from "../components/Loader";
 
 const ProtectedLayout = () => {
   const { isLoggedIn, authLoading, authStarted, authData } = useAuthContext();
-  console.log("Inside Protected Layout", "Logged In", isLoggedIn);
-  console.log("Auth Data", authData);
-  console.log("Auth Loading", authLoading);
-  console.log("Auth Started", authStarted);
-  console.log("--------------------");
 
   if (authLoading && authStarted && !isLoggedIn) {
     return <Loader />;
