@@ -4,14 +4,16 @@ import {
   Route,
 } from "react-router-dom";
 
+import ProtectedLayout from "../layouts/ProtectedLayout";
+import HomeLayout from "../layouts/HomeLayout";
+import Layout from "../layouts/Layout";
+
 import { Dashboard } from "../pages/Dashboard";
 import { Landing } from "../pages/Landing";
 import { Login } from "../pages/Login";
 import { Privacy } from "../pages/Privacy";
 import { Terms } from "../pages/Terms";
-import ProtectedLayout from "../layouts/ProtectedLayout";
-import HomeLayout from "../layouts/HomeLayout";
-import Layout from "../layouts/Layout";
+import { Videos } from "../pages/Videos";
 
 export const publicRoutes = [
   {
@@ -36,6 +38,10 @@ const authedRoutes = [
   {
     path: "/dashboard",
     element: <Dashboard />,
+  },
+  {
+    path: "/videos",
+    element: <Videos />,
   },
 ];
 

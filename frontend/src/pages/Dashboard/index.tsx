@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuth";
 import { getApiUrl } from "../../../../services/utils/env";
 import Loader from "../../components/Loader";
@@ -62,16 +63,14 @@ export const Dashboard = () => {
           <div className="text-sm font-bold text-gray-600 mb-4">
             {userData.bio_description}
           </div>
-          <a
-            href={
-              (userData.profile_deep_link as string) || "https://tiktok.com"
-            }
+          <Link
+            to={(userData.profile_deep_link as string) || "https://tiktok.com"}
             target="_blank"
             rel="noopener noreferrer"
             className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
           >
             View profile
-          </a>
+          </Link>
         </div>
       </div>
       <div className="grid grid-cols-2 grid-rows-2 gap-4 mt-8">
@@ -95,6 +94,14 @@ export const Dashboard = () => {
           <div className="text-2xl font-bold">0</div>
           <div className="text-sm">Comments</div>
         </div>
+      </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white p-4">
+        <Link
+          to="/video"
+          className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
+        >
+          Go to Video Page
+        </Link>
       </div>
     </div>
   );
