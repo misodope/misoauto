@@ -21,7 +21,7 @@ export interface TikTokSuccessResponse {
   error: TikTokErrorObj;
 }
 
-interface TikTokVideo {
+export interface TikTokVideo {
   id: string;
   create_time: number;
   cover_image_url: string;
@@ -50,7 +50,9 @@ export interface TikTokVideoListResponse {
 
 export class TikTokController {
   // Fetch user info from TikTok API
-  async getUserInfo(accessToken: string): Promise<TikTokUserInfo> {
+  async getUserInfo(
+    accessToken: string
+  ): Promise<TikTokUserInfo | TikTokErrorObj> {
     try {
       const url =
         "https://open.tiktokapis.com/v2/user/info/?fields=avatar_url,bio_description,display_name,follower_count,following_count,likes_count,profile_deep_link";
@@ -71,20 +73,22 @@ export class TikTokController {
       console.log("responseData", responseData);
       return responseData.data.user;
     } catch (error: unknown) {
-      console.error(error);
+      return error as TikTokErrorObj;
     }
   }
 
   async getVideos(
     accessToken: string,
-    cursor: number = null,
+    cursor: number | null = null,
     maxCount: number = 20
-  ): Promise<TikTokVideoListResponse> {
+  ): Promise<TikTokVideoListResponse | TikTokErrorObj> {
     try {
       const url =
         "https://open.tiktokapis.com/v2/video/list/?fields=id,create_time,cover_image_url,share_url,video_description,duration,height,width,title,embed_html,embed_link,like_count,comment_count,share_count,view_count";
 
-      const body: { cursor?: number; count?: number } = { count: maxCount };
+      const body: { cursor?: number; max_count?: number } = {
+        max_count: maxCount,
+      };
 
       if (cursor) {
         body.cursor = cursor;
@@ -108,7 +112,7 @@ export class TikTokController {
 
       return responseData;
     } catch (error: unknown) {
-      console.error(error);
+      return error as TikTokErrorObj;
     }
   }
 }

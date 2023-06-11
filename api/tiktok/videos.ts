@@ -12,7 +12,8 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     const videoListResponse = await tiktokController.getVideos(accessToken);
 
     return res.status(200).json(videoListResponse);
-  } catch {
+  } catch (error) {
+    console.error(error);
     return res.status(404).send("Sorry, we're having trouble fetching videos");
   }
 };

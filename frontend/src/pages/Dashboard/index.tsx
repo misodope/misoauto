@@ -95,10 +95,10 @@ export const Dashboard = () => {
           <div className="text-sm">Comments</div>
         </div>
       </div>
-      <div className="fixed bottom-0 left-0 right-0 bg-white p-4">
+      <div className="mt-8">
         <Link
-          to="/video"
-          className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
+          to="/videos"
+          className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded block w-full text-center"
         >
           Go to Video Page
         </Link>
