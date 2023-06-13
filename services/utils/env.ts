@@ -43,7 +43,7 @@ export const getCurrentRequestEnv = (req: VercelRequest) => {
 export const getRedirectUrl = (env: ENV) => {
   switch (env) {
     case ENV.DEVELOPMENT:
-      return "http://localhost:3000/api/auth/redirect";
+      return "https://localhost:5173/api/auth/redirect";
     case ENV.PRODUCTION:
       return "https://misoauto.vercel.app/api/auth/redirect";
     case ENV.STAGING:
@@ -54,7 +54,7 @@ export const getRedirectUrl = (env: ENV) => {
 export const getAuthUrl = () => {
   switch (getCurrentEnv()) {
     case ENV.DEVELOPMENT:
-      return "http://localhost:3000/api/auth/tiktok";
+      return "https://localhost:5173/api/auth/tiktok";
     case ENV.PRODUCTION:
       return "https://misoauto.vercel.app/api/auth/tiktok";
     case ENV.STAGING:
@@ -65,7 +65,7 @@ export const getAuthUrl = () => {
 export const getApiUrl = () => {
   switch (getCurrentEnv()) {
     case ENV.DEVELOPMENT:
-      return "http://localhost:3000/api";
+      return "https://localhost:5173/api";
     case ENV.PRODUCTION:
       return "https://misoauto.vercel.app/api";
     case ENV.STAGING:
