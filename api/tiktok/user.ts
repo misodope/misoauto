@@ -8,6 +8,10 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     return res.status(422).send("No token provided");
   }
 
+  // TODO: Possibly use cookie to get accessToken?
+  const cookie = req.headers.cookie;
+  console.log("This is the cookie", cookie);
+
   try {
     const userInfo = await tiktokController.getUserInfo(accessToken);
     return res.status(200).json(userInfo);

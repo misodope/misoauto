@@ -70,7 +70,6 @@ export class TikTokController {
       }
 
       const responseData: TikTokSuccessResponse = await response.json();
-      console.log("responseData", responseData);
       return responseData.data.user;
     } catch (error: unknown) {
       return error as TikTokErrorObj;
