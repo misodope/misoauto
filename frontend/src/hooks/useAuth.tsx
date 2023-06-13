@@ -75,7 +75,7 @@ export const useAuth = (): AuthProps => {
   };
 };
 
-interface AuthContextProps {
+interface AuthContextState {
   authData: AuthData | null;
   authLoading: boolean;
   authStarted: boolean;
@@ -84,7 +84,7 @@ interface AuthContextProps {
 }
 
 // Create Context for Auth Data
-export const AuthContext = createContext<AuthContextProps>({
+export const AuthContext = createContext<AuthContextState>({
   authData: null,
   authLoading: false,
   authStarted: false,
@@ -166,7 +166,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuthContext = (): AuthContextProps => {
+export const useAuthContext = (): AuthContextState => {
   const authData = React.useContext(AuthContext);
   return authData;
 };
