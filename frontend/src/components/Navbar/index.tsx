@@ -1,12 +1,31 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuth";
 import { useState } from "react";
+import { SideNavigation } from "../SideNavigation";
 
-const Navbar = () => {
+interface HamburgerProps {
+  onClick: () => void;
+}
+const Hamburger: React.FC<HamburgerProps> = ({ onClick }) => {
+  return (
+    <button
+      className="mx-4 flex flex-col w-6 h-6 justify-around items-center bg-transparent focus:outline-none"
+      onClick={onClick}
+    >
+      <span className="w-full h-1 bg-gray-800"></span>
+      <span className="w-full h-1 bg-gray-800"></span>
+      <span className="w-full h-1 bg-gray-800"></span>
+    </button>
+  );
+};
+
+const Navbar: React.FC = () => {
   const { setAuthData, isLoggedIn } = useAuthContext();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [sideNavOpen, setSideNavOpen] = useState(false);
+
   const navigate = useNavigate();
-  
+
   const onLogout = () => {
     // Destroy cookie
     document.cookie =
@@ -19,19 +38,28 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow py-4">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <Link className="text-lg font-bold text-gray-800" to="/">
-          MisoAuto
-        </Link>
+      {isLoggedIn && (
+        <SideNavigation
+          open={sideNavOpen}
+          onClose={() => setSideNavOpen(false)}
+          onLogout={() => setShowLogoutModal(true)}
+        />
+      )}
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="flex items-center">
+          {isLoggedIn && (
+            <Hamburger
+              onClick={() => setSideNavOpen((prevOpen) => !prevOpen)}
+            />
+          )}
+          <Link className="text-lg font-bold text-gray-800" to="/">
+            MisoAuto
+          </Link>
+        </div>
         {isLoggedIn ? (
           <>
             <div>
-              <Link
-                className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded mr-3"
-                to="/dashboard"
-              >
-                Dashboard
-              </Link>
               <Link
                 className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
                 onClick={() => setShowLogoutModal(true)}
