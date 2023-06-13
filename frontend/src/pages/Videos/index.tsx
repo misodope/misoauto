@@ -59,7 +59,7 @@ export const Videos = () => {
 
   return (
     <div className="container mx-auto flex flex-col items-center">
-      <h1 className="text-3xl font-bold  mb-10">Videos</h1>
+      <h1 className="text-3xl font-bold mb-10">Videos</h1>
       <div className="grid grid-cols-3 gap-4">
         {videos.map((video) => (
           <div key={video.id} className="max-h-80">
@@ -69,12 +69,12 @@ export const Videos = () => {
               onMouseLeave={handleMouseLeave}
             >
               <img
-                className="w-80 h-80 rounded mb-4"
+                className="max-w-[12rem] h-80 rounded mb-4"
                 src={video.cover_image_url}
                 alt="Video"
               />
               {hoveredVideo?.id === video.id && (
-                <div className="relative bottom-[336px] bg-gray-100 p-2 text-sm text-center opacity-75 transition-opacity max-h-80 max-w-80 overflow-ellipsis">
+                <div className="h-80 max-w-[12rem] relative bottom-[336px] bg-gray-100 p-2 text-sm text-center opacity-75 transition-opacity overflow-ellipsis">
                   {video.title}
                 </div>
               )}
