@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export const Landing = () => {
   return (
     <div className="flex flex-col justify-center py-6">
@@ -8,12 +10,12 @@ export const Landing = () => {
         Automating your workflow with ease.
       </p>
       <div className="mt-6">
-        <a
-          href="/login"
+        <Link
+          to="/login"
           className="inline-block px-6 py-3 text-lg font-medium leading-6 text-center text-white uppercase transition bg-indigo-600 rounded-md shadow hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           Get started
-        </a>
+        </Link>
       </div>
     </div>
   );

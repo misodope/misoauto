@@ -19,6 +19,10 @@
     "api/tiktok/user.ts": {
       "memory": 512,
       "maxDuration": 10
+    },
+    "api/tiktok/videos.ts": {
+      "memory": 512,
+      "maxDuration": 10
     }
   },
   "headers":  [
