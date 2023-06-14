@@ -1,38 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import UserQueries from "../../services/prisma/queries/user.js";
+import UserQueries from "../../services/prisma/queries/user";
 import { PrismaClient, User } from "@prisma/client";
 
-const prisma = new PrismaClient({
-  log: [
-    {
-      emit: "event",
-      level: "query",
-    },
-    {
-      emit: "stdout",
-      level: "error",
-    },
-    {
-      emit: "stdout",
-      level: "info",
-    },
-    {
-      emit: "stdout",
-      level: "warn",
-    },
-  ],
-});
-
-prisma.$on("query", (e: any) => {
-  console.log("Query: " + e.query);
-  console.log("Params: " + e.params);
-  console.log("Duration: " + e.duration + "ms");
-  console.log("------------------------------------------------------");
-});
-
-prisma.$on("beforeExit", (e: any) => {
-  console.log("beforeExit hook", e);
-});
+const prisma = new PrismaClient();
 
 const handler = async (req: VercelRequest, res: VercelResponse) => {
   const { openId } = req.query as { openId: string };

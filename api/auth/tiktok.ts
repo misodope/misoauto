@@ -1,8 +1,5 @@
-import {
-  getCurrentRequestEnv,
-  getRedirectUrl,
-} from "../../services/utils/env.js";
-import { AuthController } from "../../services/auth/AuthController.js";
+import { getCurrentRequestEnv, getRedirectUrl } from "../../services/utils/env";
+import { AuthController } from "../../services/auth/AuthController";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const handler = (req: VercelRequest, res: VercelResponse) => {
