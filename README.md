@@ -4,23 +4,27 @@ MisoAuto is a cutting-edge tool designed to automate the content creation and up
 
 ## Development
 
-### Docker Installation Instructions
+### Local Development Setup
 
-To get started with MisoAuto, follow these instructions if you have Docker installed on your machine:
+Follow these steps to set up the application:
 
-1. Ensure that you have Docker installed on your machine.
-2. Open a terminal and run `docker-compose build` to build the Docker images for the application.
-3. Run `docker-compose up` to start the application in development mode.
+1. Install the PNPM package manager globally
 
-### Normal Setup Instructions
+- `npm i -g pnpm`
 
-If you prefer not to use Docker, follow these steps to set up the application:
+2. Install `vercel` the PaaS we use to deploy.
 
-1. Install the PNPM package manager globally by running `npm i -g pnpm`.
-2. Install the application dependencies by running `pnpm i`.
-3. Start the application by running `pnpm start`.
+- `npm i -g vercel`
 
-That's it! You can now access the application at http://localhost:8000 for the backend and http://localhost:5173 for the frontend.
+2. Install the application dependencies
+
+- `pnpm i`
+
+3. Start the application.
+
+- `pnpm vdev`
+
+That's it! You can now access the application at http://localhost:3000
 
 ### Vercel Deployment
 
