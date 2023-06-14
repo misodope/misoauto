@@ -1,19 +1,37 @@
 version: '3'
 services:
-  backend:
-    container_name: graphql-backend
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile.prod
+  # backend:
+  #   container_name: graphql-backend
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile.local
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - type: bind
+  #       source: ./backend
+  #       target: /app
+  #     - /app/node_modules
+  # frontend:
+  #   container_name: react-frontend
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile.local
+  #   ports:
+  #     - "5173:5173"
+  #   volumes:
+  #     - type: bind
+  #       source: ./frontend
+  #       target: /app
+  #     - /app/node_modules
+  misoauto:
+    container_name: misoauto-app
+    build:
+      context: ./
+      dockerfile: Dockerfile
     restart: always
-    environment:
-      NODE_ENV: production
-      PORT: 8000
     ports:
-      - "8000:8000"
-    volumes:
-      - type: volume
-        source: backend-volume
-        target: /app
-volumes:
-  backend-volume:
+      - 3000:3000
+    environment:
+      - VERCEL_ACCESS_TOKEN=${VERCEL_ACCESS_TOKEN}
+
