@@ -1,13 +1,14 @@
 import {
   AuthController,
   TikTokSuccessResponse,
-} from "../../services/auth/AuthController.js";
+} from "../../services/auth/AuthController";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import UserQueries from "../../services/prisma/queries/user.js";
+import UserQueries from "../../services/prisma/queries/user";
 import {
+  ENV,
   getCurrentRequestEnv,
   getRedirectUrl,
-} from "../../services/utils/env.js";
+} from "../../services/utils/env";
 
 import { PrismaClient } from "@prisma/client";
 import { User } from "@prisma/client";
@@ -47,7 +48,7 @@ prisma.$on("beforeExit", (e: any) => {
 const handler = async (req: VercelRequest, res: VercelResponse) => {
   const { code, state } = req.query as { code: string; state: string };
   const { csrfState } = req.cookies;
-  if (state !== csrfState) {
+  if (state !== csrfState && process.env.NODE_ENV !== ENV.DEVELOPMENT) {
     res.status(422).send("Invalid state");
     return;
   }

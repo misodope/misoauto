@@ -69,12 +69,12 @@ export const Videos = () => {
               onMouseLeave={handleMouseLeave}
             >
               <img
-                className="max-w-[12rem] h-80 rounded mb-4"
+                className="max-w-80 h-80 rounded mb-4"
                 src={video.cover_image_url}
                 alt="Video"
               />
               {hoveredVideo?.id === video.id && (
-                <div className="h-80 max-w-[12rem] relative bottom-[336px] bg-gray-100 p-2 text-sm text-center opacity-75 transition-opacity overflow-ellipsis">
+                <div className="h-80 max-w-[15rem] relative bottom-[336px] bg-gray-100 p-2 text-sm text-center opacity-75 transition-opacity overflow-ellipsis">
                   {video.title}
                 </div>
               )}

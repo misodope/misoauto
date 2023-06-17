@@ -1,6 +1,6 @@
 import type { VercelRequest } from "@vercel/node";
 
-enum ENV {
+export enum ENV {
   DEVELOPMENT = "development",
   STAGING = "staging",
   PRODUCTION = "production",
@@ -25,11 +25,8 @@ const getCurrentEnv = () => {
 
 export const getCurrentRequestEnv = (req: VercelRequest) => {
   const currentUrl = req.headers.host;
-
-  if (
-    currentUrl?.includes("localhost") ||
-    currentUrl?.includes("192.168.139.173")
-  ) {
+  console.log("CURRENT URL", currentUrl);
+  if (currentUrl?.includes("localhost") || currentUrl?.includes("127.0.0.1")) {
     return ENV.DEVELOPMENT;
   }
   if (currentUrl?.includes("misoauto-misodope-misodope-s-team.vercel.app")) {
@@ -43,7 +40,7 @@ export const getCurrentRequestEnv = (req: VercelRequest) => {
 export const getRedirectUrl = (env: ENV) => {
   switch (env) {
     case ENV.DEVELOPMENT:
-      return "http://localhost:3000/api/auth/redirect";
+      return "https://192.168.139.173:5173/api/auth/redirect";
     case ENV.PRODUCTION:
       return "https://misoauto.vercel.app/api/auth/redirect";
     case ENV.STAGING:
@@ -54,7 +51,7 @@ export const getRedirectUrl = (env: ENV) => {
 export const getAuthUrl = () => {
   switch (getCurrentEnv()) {
     case ENV.DEVELOPMENT:
-      return "http://localhost:3000/api/auth/tiktok";
+      return "http://192.168.139.173:5173/api/auth/tiktok";
     case ENV.PRODUCTION:
       return "https://misoauto.vercel.app/api/auth/tiktok";
     case ENV.STAGING:
@@ -65,7 +62,7 @@ export const getAuthUrl = () => {
 export const getApiUrl = () => {
   switch (getCurrentEnv()) {
     case ENV.DEVELOPMENT:
-      return "http://localhost:3000/api";
+      return "http://192.168.139.173:5173/api";
     case ENV.PRODUCTION:
       return "https://misoauto.vercel.app/api";
     case ENV.STAGING:

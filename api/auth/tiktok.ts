@@ -14,7 +14,7 @@ const handler = (req: VercelRequest, res: VercelResponse) => {
   }`;
 
   res.setHeader("Set-Cookie", cookieValue);
-
+  console.log("COOKIEEE", url, redirectUri);
   return res.redirect(url);
 };
 
