@@ -1,7 +1,7 @@
 import {
   AuthController,
   TikTokSuccessResponse,
-} from "../../services/auth/AuthController.js";
+} from "../../services/api/AuthController.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import UserQueries from "../../services/prisma/queries/user.js";
 import {
