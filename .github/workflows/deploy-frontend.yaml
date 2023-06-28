@@ -1,7 +1,7 @@
-name: Deploy UI
+name: Misoauto Frontend
 on: [push]
 jobs:
-  lambdas:
+  deploy-ui:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -13,14 +13,29 @@ jobs:
           node-version: 16
 
       - name: Install Dependencies
+        working-directory: ./frontend
         run: |
           npm install -g pnpm
           pnpm -v
           pnpm install --no-frozen-lockfile
-        working-directory: ./frontend
 
       - name: Build
-        run: |
-          pnpm build
-          ls dist
         working-directory: ./frontend
+        run: pnpm build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-duration-seconds: 900 #15m
+          aws-region: us-east-1
+
+      - name: Upload Build to S3
+        env:
+          S3_BUCKET: "s3://misoauto"
+          UI_PATH: "misoauto-ui"
+        working-directory: ./frontend/dist
+        run: |
+          aws s3 sync . ${S3_BUCKET}/${UI_PATH} --delete
