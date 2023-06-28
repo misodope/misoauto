@@ -30,7 +30,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-duration-seconds: 900 #15m
-          aws-region: us-east-1
+          aws-region: us-east-1 #Test
 
       - name: Upload Build to S3
         env:
