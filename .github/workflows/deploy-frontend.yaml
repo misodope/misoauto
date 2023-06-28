@@ -1,4 +1,4 @@
-name: Deploy API to Lambdas
+name: Deploy UI
 on: [push]
 jobs:
   lambdas:
@@ -10,8 +10,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: "latest"
-          cache: npm
+          node-version: 16
 
       - name: Install Dependencies
         run: |
@@ -21,4 +20,6 @@ jobs:
           pnpm install --no-frozen-lockfile
 
       - name: Build
-        run: pnpm build
+        run: |
+          pnpm build
+          ls dist
