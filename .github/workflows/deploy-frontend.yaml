@@ -16,10 +16,11 @@ jobs:
         run: |
           npm install -g pnpm
           pnpm -v
-          cd frontend
           pnpm install --no-frozen-lockfile
+        working-directory: ./frontend
 
       - name: Build
         run: |
           pnpm build
           ls dist
+        working-directory: ./frontend
