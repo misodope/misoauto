@@ -7,7 +7,7 @@ out_dir="dist/"
 find "$out_dir" -name "*.zip" -exec sh -c '
     zip_file="{}"
     parent_folder=$(dirname "$zip_file")
-    function_name=$(basename "${zip_file%.zip}")_"$parent_folder"
+    function_name="$(basename "$parent_folder")"_"$(basename "${zip_file%.zip}")"
 
     if aws lambda get-function --function-name "$function_name" > /dev/null 2>&1; then
         echo "Updating existing function: $function_name"
