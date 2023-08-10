@@ -23,11 +23,11 @@ jobs:
 
       - name: Bundle and Package lambdas TypeScript
         run: |
-          chomod +x ./scripts/build.sh ./scripts/zip.sh
+          chmod +x ./scripts/build.sh ./scripts/zip.sh
           ./scripts/build.sh
           ./scripts/zip.sh
 
       - name: Deploy lambdas
         run: |
-          chomod +x ./scripts/deploy.sh
+          chmod +x ./scripts/deploy.sh
           ./scripts/deploy.sh
