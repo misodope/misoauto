@@ -1,7 +1,19 @@
 #!/bin/bash
 
+# Exit the script immediately if any command returns a non-zero status
+set -e
+
 # Define the output directory
 out_dir="dist/"
+
+# Function to perform cleanup on script exit
+cleanup() {
+    echo "Script exited, performing cleanup..."
+    # Add cleanup actions here if needed
+}
+
+# Set up trap to call cleanup function on script exit
+trap cleanup EXIT
 
 # Go to the out_dir and deploy each .zip file to AWS Lambda
 find "$out_dir" -name "*.zip" -exec sh -c '
@@ -22,3 +34,7 @@ find "$out_dir" -name "*.zip" -exec sh -c '
         --zip-file "fileb://$zip_file"
     fi
 ' \;
+
+# If any errors occurred above, the script would have already exited due to set -e
+# If we reach this point, the script has executed successfully
+echo "Script executed successfully."
