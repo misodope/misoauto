@@ -14,6 +14,6 @@ find "$out_dir" -name "*.zip" -exec sh -c '
     else
         echo "Creating new function: $function_name"
         # Replace <YOUR_ROLE_ARN> with your actual role ARN
-        aws lambda create-function --function-name "$function_name" --runtime nodejs12.x --role <YOUR_ROLE_ARN> --handler index.handler --zip-file "fileb://$zip_file"
+        aws lambda create-function --function-name "$function_name" --runtime nodejs18.x --role arn:aws:iam::706108767612:role/github-actions --handler index.handler --zip-file "fileb://$zip_file"
     fi
 ' \;
