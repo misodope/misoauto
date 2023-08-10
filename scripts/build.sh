@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# Exit the script immediately if any command returns a non-zero status
+set -e
+
+# Function to perform cleanup on script exit
+cleanup() {
+    echo "Script exited, performing cleanup..."
+    # Add cleanup actions here if needed
+}
+
+# Set up trap to call cleanup function on script exit
+trap cleanup EXIT
+
 # Define the directory where the .ts files are
 src_dir="api"
 # Define the output directory
