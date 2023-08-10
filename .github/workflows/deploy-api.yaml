@@ -12,6 +12,9 @@ jobs:
         with:
           node-version: latest
 
+      - name: Install dependencies
+        run: npm install -g esbuild
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -22,12 +25,14 @@ jobs:
           aws-region: us-east-1 #Test
 
       - name: Bundle and Package lambdas TypeScript
+        shell: bash
         run: |
           chmod +x ./scripts/build.sh ./scripts/zip.sh
           ./scripts/build.sh
           ./scripts/zip.sh
 
       - name: Deploy lambdas
+        shell: bash
         run: |
           chmod +x ./scripts/deploy.sh
           ./scripts/deploy.sh
