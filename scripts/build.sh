@@ -25,5 +25,5 @@ find "$src_dir" -name "*.ts" -exec sh -c '
     dst_dir=$(dirname "$dst")
     echo "file: $file"
     mkdir -p "$dst_dir"
-    esbuild "$file" --bundle --minify --sourcemap --platform=node --target=es2020 --outfile="dist/${file%.ts}.mjs"
+    esbuild "$file" --bundle --minify --platform=node --target=es2020 --outfile="dist/${file%.ts}.mjs" --format=esm
 ' \;

@@ -17,6 +17,7 @@ jobs:
           npm install -g esbuild
           npm install -g pnpm
           pnpm install
+          pnpm prisma-generate
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
