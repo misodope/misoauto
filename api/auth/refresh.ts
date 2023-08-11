@@ -1,16 +1,13 @@
-import { Context, APIGatewayProxyCallback, APIGatewayEvent } from "aws-lambda";
+import { Context, APIGatewayEvent, Handler } from "aws-lambda";
 
-const handler = (
+export const handler: Handler = async (
   event: APIGatewayEvent,
-  context: Context,
-  callback: APIGatewayProxyCallback
+  context: Context
 ) => {
   console.log(`Event: ${JSON.stringify(event, null, 2)}`);
   console.log(`Context: ${JSON.stringify(context, null, 2)}`);
-  callback(null, {
+  return {
     statusCode: 200,
     body: JSON.stringify({ message: "Refresh Endpoint!" }),
-  });
+  };
 };
-
-export default handler;

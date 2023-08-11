@@ -2,6 +2,7 @@
   "name": "misoauto",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "start": "ts-node --esm ./src/index.ts",
     "build": "cd frontend && pnpm build",
