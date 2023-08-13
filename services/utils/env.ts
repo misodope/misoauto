@@ -1,5 +1,3 @@
-import type { VercelRequest } from "@vercel/node";
-
 enum ENV {
   DEVELOPMENT = "development",
   STAGING = "staging",
@@ -23,8 +21,9 @@ const getCurrentEnv = () => {
   }
 };
 
-export const getCurrentRequestEnv = (req: VercelRequest) => {
-  const currentUrl = req.headers.host;
+export const getCurrentRequestEnv = () => {
+  // const currentUrl = req.headers.host;
+  const currentUrl = "";
 
   if (
     currentUrl?.includes("localhost") ||
