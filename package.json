@@ -7,7 +7,7 @@
     "start": "ts-node --esm ./src/index.ts",
     "build": "chmod +x ./scripts/build.sh && ./scripts/build.sh",
     "package": "chmod +x ./scripts/zip.sh && ./scripts/zip.sh",
-    "deploy": "chmod +x ./scripts/deploy.sh && ./scripts/deploy.sh",
+    "deploy-lambdas": "chmod +x ./scripts/deploy.sh && ./scripts/deploy.sh",
     "prisma-generate": "prisma generate --schema=./services/prisma/schema.prisma",
     "prisma-migrate": "prisma migrate dev --schema=./services/prisma/schema.prisma",
     "dev": "cd frontend && pnpm dev --port $PORT"
