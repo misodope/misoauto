@@ -1,4 +1,3 @@
-import { handler } from "./refresh";
 import {
   Context,
   APIGatewayProxyEventV2,
@@ -10,10 +9,13 @@ import { PrismaClient, User } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const handler = async (
+const handler: Handler = async (
   event: APIGatewayProxyEventV2,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
+  console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+  console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+
   const { openId } = event.queryStringParameters as { openId: string };
   if (!openId) {
     return {

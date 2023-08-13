@@ -6,10 +6,13 @@ import {
   APIGatewayProxyResult,
 } from "aws-lambda";
 
-const handler = async (
+const handler: Handler = async (
   event: APIGatewayProxyEventV2WithRequestContext<{ accessToken: string }>,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
+  console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+  console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+
   const tiktokController = new TikTokController();
   const { accessToken } = event.requestContext;
   if (!accessToken) {
