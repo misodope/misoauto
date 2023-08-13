@@ -40,8 +40,8 @@ export const getCurrentRequestEnv = (req: VercelRequest) => {
   }
 };
 
-export const getRedirectUrl = (env: ENV) => {
-  switch (env) {
+export const getRedirectUrl = () => {
+  switch (process.env.NODE_ENV) {
     case ENV.DEVELOPMENT:
       return "http://localhost:3000/api/auth/redirect";
     case ENV.PRODUCTION:

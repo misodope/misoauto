@@ -17,7 +17,6 @@ jobs:
           npm install -g esbuild
           npm install -g pnpm
           pnpm install
-          pnpm prisma-generate
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -28,15 +27,18 @@ jobs:
           role-duration-seconds: 900 #15m
           aws-region: us-east-1 #Test
 
-      - name: Bundle and Package lambdas TypeScript
-        shell: bash
+      - name: Build TypeScript
         run: |
-          chmod +x ./scripts/build.sh ./scripts/zip.sh
-          ./scripts/build.sh
-          ./scripts/zip.sh
+          pnpm build
+
+      - name: Generate Prisma Client
+        run: |
+          pnpm prisma-generate
+
+      - name: Package Lambdas
+        run: |
+          pnpm package
 
       - name: Deploy lambdas
-        shell: bash
         run: |
-          chmod +x ./scripts/deploy.sh
-          ./scripts/deploy.sh
+          pnpm deploy

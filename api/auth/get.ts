@@ -1,24 +1,44 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { handler } from "./refresh";
+import {
+  Context,
+  APIGatewayProxyEventV2,
+  Handler,
+  APIGatewayProxyResult,
+} from "aws-lambda";
 import UserQueries from "../../services/prisma/queries/user";
 import { PrismaClient, User } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const handler = async (req: VercelRequest, res: VercelResponse) => {
-  const { openId } = req.query as { openId: string };
+const handler = async (
+  event: APIGatewayProxyEventV2,
+  context: Context,
+): Promise<APIGatewayProxyResult> => {
+  const { openId } = event.queryStringParameters as { openId: string };
   if (!openId) {
-    return res.status(422).send("No user id provided");
+    return {
+      statusCode: 422,
+      body: JSON.stringify({ message: "No user id provided" }),
+    };
   }
 
   const userQueries = new UserQueries(prisma);
 
   try {
-    const user = await userQueries.getUser(openId);
+    const user: User = await userQueries.getUser(openId);
 
-    return res.status(200).json(user);
+    const handlerResponse: APIGatewayProxyResult = {
+      statusCode: 200,
+      body: JSON.stringify(user),
+    };
+    return handlerResponse;
   } catch {
     // Return error message if user is not found
-    return res.status(404).send("User not found");
+    const handlerErrorResponse: APIGatewayProxyResult = {
+      statusCode: 404,
+      body: JSON.stringify({ message: "User not found" }),
+    };
+    return handlerErrorResponse;
   }
 };
 

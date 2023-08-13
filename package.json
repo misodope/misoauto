@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "ts-node --esm ./src/index.ts",
-    "build": "cd frontend && pnpm build",
+    "build": "chmod +x ./scripts/build.sh && ./scripts/build.sh",
+    "package": "chmod +x ./scripts/zip.sh && ./scripts/zip.sh",
+    "deploy": "chmod +x ./scripts/deploy.sh && ./scripts/deploy.sh",
     "prisma-generate": "prisma generate --schema=./services/prisma/schema.prisma",
     "prisma-migrate": "prisma migrate dev --schema=./services/prisma/schema.prisma",
     "dev": "cd frontend && pnpm dev --port $PORT"
@@ -35,7 +37,9 @@
     "@edge-runtime/cookies": "^3.0.6",
     "@playwright/test": "^1.32.2",
     "@types/aws-lambda": "^8.10.119",
+    "@types/aws-api-gateway-client": "^0.3.0",
     "@types/node": "^18.15.11",
+    "prettier": "3.0.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.2"
   }

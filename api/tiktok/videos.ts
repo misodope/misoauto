@@ -1,20 +1,40 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { TikTokController } from "../../services/api/TikTokController.js";
+import {
+  Context,
+  APIGatewayProxyEventV2WithRequestContext,
+  Handler,
+  APIGatewayProxyResult,
+} from "aws-lambda";
 
-const handler = async (req: VercelRequest, res: VercelResponse) => {
+const handler = async (
+  event: APIGatewayProxyEventV2WithRequestContext<{ accessToken: string }>,
+  context: Context,
+): Promise<APIGatewayProxyResult> => {
   const tiktokController = new TikTokController();
-  const { accessToken } = req.body as { accessToken: string };
+  const { accessToken } = event.requestContext;
   if (!accessToken) {
-    return res.status(422).send("No token provided");
+    return {
+      statusCode: 422,
+      body: JSON.stringify({ message: "No access token provided" }),
+    };
   }
 
   try {
     const videoListResponse = await tiktokController.getVideos(accessToken);
-
-    return res.status(200).json(videoListResponse);
+    const handlerResponse: APIGatewayProxyResult = {
+      statusCode: 200,
+      body: JSON.stringify(videoListResponse),
+    };
+    return handlerResponse;
   } catch (error) {
     console.error(error);
-    return res.status(404).send("Sorry, we're having trouble fetching videos");
+    const handlerErrorResponse: APIGatewayProxyResult = {
+      statusCode: 404,
+      body: JSON.stringify({
+        message: "Sorry, we're having trouble fetching videos",
+      }),
+    };
+    return handlerErrorResponse;
   }
 };
 

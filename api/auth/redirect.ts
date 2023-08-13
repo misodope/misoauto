@@ -2,12 +2,17 @@ import {
   AuthController,
   TikTokSuccessResponse,
 } from "../../services/api/AuthController.js";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import UserQueries from "../../services/prisma/queries/user.js";
 import {
   getCurrentRequestEnv,
   getRedirectUrl,
 } from "../../services/utils/env.js";
+import {
+  Context,
+  APIGatewayProxyEventV2,
+  Handler,
+  APIGatewayProxyResult,
+} from "aws-lambda";
 
 import { PrismaClient } from "@prisma/client";
 import { User } from "@prisma/client";
@@ -44,23 +49,29 @@ prisma.$on("beforeExit", (e: any) => {
   console.log("beforeExit hook", e);
 });
 
-const handler = async (req: VercelRequest, res: VercelResponse) => {
-  const { code, state } = req.query as { code: string; state: string };
-  const { csrfState } = req.cookies;
-  if (state !== csrfState) {
-    res.status(422).send("Invalid state");
-    return;
-  }
+const handler: Handler = async (
+  event: APIGatewayProxyEventV2,
+  context: Context,
+): Promise<APIGatewayProxyResult> => {
+  const { code, state } = event.queryStringParameters as {
+    code: string;
+    state: string;
+  };
+
+  // const { csrfState } = event.cookies;
+  // if (state !== csrfState) {
+  //   res.status(422).send("Invalid state");
+  //   return;
+  // }
 
   try {
     const authController = new AuthController();
     const userQueries = new UserQueries(prisma);
-    const currentEnv = getCurrentRequestEnv(req);
-    const redirectUri = getRedirectUrl(currentEnv);
+    const redirectUri = getRedirectUrl();
 
     const response: TikTokSuccessResponse = await authController.getAccessToken(
       code,
-      redirectUri
+      redirectUri,
     );
 
     let user: User = await userQueries.getUser(response.open_id);
@@ -71,10 +82,26 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
       user = await userQueries.updateUser(response.open_id, response);
     }
 
-    return res.redirect(`/dashboard/?user=${user.openId}`);
+    const handlerResponse: APIGatewayProxyResult = {
+      statusCode: 302,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Credentials": true,
+        Location: `/dashboard/?user=${user.openId}`,
+      },
+      body: JSON.stringify({ message: "Redirecting to dashboard" }),
+    };
+
+    // return res.redirect(`/dashboard/?user=${user.openId}`);
+    return handlerResponse;
   } catch (error) {
     console.error(error);
-    return res.status(500).send("Internal server error");
+    const handlerErrorResponse: APIGatewayProxyResult = {
+      statusCode: 500,
+      body: JSON.stringify({ message: "Internal Server Error" }),
+    };
+    return handlerErrorResponse;
   }
 };
 
