@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuth";
 import { getApiUrl } from "../../../../services/utils/env";
-import Loader from "../../components/Loader";
+import Loader from "../../components/Loader/Loader";
 
 export const Dashboard = () => {
   const [userData, setUserData] = useState<Record<
@@ -27,7 +27,7 @@ export const Dashboard = () => {
 
         if (!response.ok) {
           throw new Error(
-            `Network response was not ok:  ${response?.statusText}`
+            `Network response was not ok:  ${response?.statusText}`,
           );
         }
 

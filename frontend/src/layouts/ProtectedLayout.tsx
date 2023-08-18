@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuth";
-import Loader from "../components/Loader";
+import Loader from "../components/Loader/Loader";
 
 const ProtectedLayout = () => {
   const { isLoggedIn, authLoading, authStarted, authData } = useAuthContext();
