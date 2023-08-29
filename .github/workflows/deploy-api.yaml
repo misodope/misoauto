@@ -36,6 +36,8 @@ jobs:
           pnpm prisma-generate
 
       - name: Deploy Prisma Migrations
+        env:
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
         run: |
           pnpm prisma-migrate-deploy
 

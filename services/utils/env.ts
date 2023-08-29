@@ -40,7 +40,7 @@ export const getCurrentRequestEnv = () => {
 };
 
 export const getRedirectUrl = () => {
-  switch (process.env.NODE_ENV) {
+  switch (getCurrentEnv()) {
     case ENV.DEVELOPMENT:
       return "http://localhost:3000/api/auth/redirect";
     case ENV.PRODUCTION:
