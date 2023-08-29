@@ -4,8 +4,6 @@ enum ENV {
   PRODUCTION = "production",
 }
 
-declare var process: NodeJS.Process;
-
 const getCurrentEnv = () => {
   const currentUrl = window.location.href;
 
