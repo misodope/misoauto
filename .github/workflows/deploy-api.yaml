@@ -35,6 +35,10 @@ jobs:
         run: |
           pnpm prisma-generate
 
+      - name: Deploy Prisma Migrations
+        run: |
+          pnpm prisma-migrate-deploy
+
       - name: Package Lambdas
         run: |
           pnpm package

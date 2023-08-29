@@ -10,6 +10,7 @@
     "deploy-lambdas": "chmod +x ./scripts/deploy.sh && ./scripts/deploy.sh",
     "prisma-generate": "prisma generate --schema=./services/prisma/schema.prisma",
     "prisma-migrate": "prisma migrate dev --schema=./services/prisma/schema.prisma",
+    "prisma-migrate-deploy": "prisma migrate deploy --schema=./services/prisma/schema.prisma",
     "dev": "cd frontend && pnpm dev --port $PORT"
   },
   "dependencies": {
