@@ -3,10 +3,7 @@ import {
   TikTokSuccessResponse,
 } from "../../services/api/AuthController.js";
 import UserQueries from "../../services/prisma/queries/user.js";
-import {
-  getCurrentRequestEnv,
-  getRedirectUrl,
-} from "../../services/utils/env.js";
+import { getRedirectUrl } from "../../services/utils/env.js";
 import {
   Context,
   APIGatewayProxyEventV2,
@@ -39,7 +36,8 @@ export const handler: Handler = async (
   try {
     const authController = new AuthController();
     const userQueries = new UserQueries(prisma);
-    const redirectUri = getRedirectUrl();
+    const redirectUri =
+      "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api/auth/redirect/";
 
     const response: TikTokSuccessResponse = await authController.getAccessToken(
       code,
@@ -60,12 +58,11 @@ export const handler: Handler = async (
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Allow-Credentials": true,
-        Location: `/dashboard/?user=${user.openId}`,
+        Location: `https://dl7rsqqwy6kne.cloudfront.net/dashboard/?user=${user.openId}`,
       },
       body: JSON.stringify({ message: "Redirecting to dashboard" }),
     };
 
-    // return res.redirect(`/dashboard/?user=${user.openId}`);
     return handlerResponse;
   } catch (error) {
     console.error(error);

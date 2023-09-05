@@ -1,4 +1,3 @@
-import { getRedirectUrl } from "../../services/utils/env";
 import { AuthController } from "../../services/api/AuthController";
 import {
   Context,
@@ -15,7 +14,8 @@ export const handler: Handler = async (
   console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
   const authController = new AuthController();
-  const redirectUri = getRedirectUrl();
+  const redirectUri =
+    "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api/auth/redirect/";
   const { url, csrfState } = authController.getAuthorizationUrl(redirectUri);
 
   const daysToLive = 1;

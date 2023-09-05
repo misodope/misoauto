@@ -19,6 +19,8 @@ jobs:
           pnpm install
 
       - name: Generate Prisma Client
+        env:
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
         run: |
           pnpm prisma-generate
 
