@@ -14,28 +14,31 @@ export const handler: Handler = async (
   console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
   const authController = new AuthController();
-  const redirectUri =
-    "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api/auth/redirect/";
-  const { url, csrfState } = authController.getAuthorizationUrl(redirectUri);
+  // const redirectUri =
+  //   "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api/auth/redirect/";
+  // const { url, csrfState } = authController.getAuthorizationUrl(redirectUri);
 
-  const daysToLive = 1;
-  const csrfStateCookie = `csrfState=${csrfState}; Secure; HttpOnly; Max-Age=${
-    daysToLive * 24 * 60 * 60
-  }`;
+  // const daysToLive = 1;
+  // const csrfStateCookie = `csrfState=${csrfState}; Secure; HttpOnly; Max-Age=${
+  //   daysToLive * 24 * 60 * 60
+  // }`;
 
+  // const handlerResponse: APIGatewayProxyResult = {
+  //   statusCode: 302,
+  //   multiValueHeaders: {
+  //     "Set-Cookie": [csrfStateCookie],
+  //   },
+  //   headers: {
+  //     "Access-Control-Allow-Origin": "*",
+  //     "Access-Control-Allow-Headers": "*",
+  //     "Access-Control-Allow-Credentials": true,
+  //     Location: url,
+  //   },
+  //   body: JSON.stringify({ message: "Redirecting to TikTok login" }),
+  // };
   const handlerResponse: APIGatewayProxyResult = {
-    statusCode: 302,
-    multiValueHeaders: {
-      "Set-Cookie": [csrfStateCookie],
-    },
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "*",
-      "Access-Control-Allow-Credentials": true,
-      Location: url,
-    },
-    body: JSON.stringify({ message: "Redirecting to TikTok login" }),
+    statusCode: 200,
+    body: JSON.stringify({ message: "Refresh Endpoint!" }),
   };
-
   return handlerResponse;
 };
