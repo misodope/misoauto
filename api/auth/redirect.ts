@@ -10,7 +10,7 @@ import {
   APIGatewayProxyResult,
 } from "aws-lambda";
 
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client/aws";
 
 const prisma = new PrismaClient();
 
