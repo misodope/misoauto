@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "types": ["node"],
     "strict": false,
+    "sourceMap": true
   },
   "include": ["api", "types", "services"],
   "exclude": ["node_modules", "dist", "frontend", "services/prisma"],
