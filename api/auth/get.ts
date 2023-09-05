@@ -9,7 +9,7 @@ import { PrismaClient, User } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const handler: Handler = async (
+export const handler: Handler = async (
   event: APIGatewayProxyEventV2,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
@@ -43,5 +43,3 @@ const handler: Handler = async (
     return handlerErrorResponse;
   }
 };
-
-export default handler;

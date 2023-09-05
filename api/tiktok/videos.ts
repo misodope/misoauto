@@ -6,7 +6,7 @@ import {
   APIGatewayProxyResult,
 } from "aws-lambda";
 
-const handler: Handler = async (
+export const handler: Handler = async (
   event: APIGatewayProxyEventV2WithRequestContext<{ accessToken: string }>,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
@@ -40,5 +40,3 @@ const handler: Handler = async (
     return handlerErrorResponse;
   }
 };
-
-export default handler;
