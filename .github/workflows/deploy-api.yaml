@@ -18,18 +18,6 @@ jobs:
           npm install -g pnpm
           pnpm install
 
-      - name: Generate Prisma Client
-        env:
-          DATABASE_URL: ${{ vars.DATABASE_URL }}
-        run: |
-          pnpm prisma-generate
-
-      - name: Deploy Prisma Migrations
-        env:
-          DATABASE_URL: ${{ vars.DATABASE_URL }}
-        run: |
-          pnpm prisma-migrate-deploy
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
