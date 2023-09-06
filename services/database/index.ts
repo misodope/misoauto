@@ -31,7 +31,12 @@ export const connectToDb = async (): Promise<Sequelize> => {
       acquire: 3000,
       evict: timeout,
     },
+    dialect: "postgres",
+    protocol: "postgres",
     dialectModule: pg,
+    dialectOptions: {
+      ssl: true,
+    },
   });
   await sequelize.authenticate();
 
