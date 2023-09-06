@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 import path from "path";
+import pg from "pg";
 
 dotenv.config({ path: path.resolve(__dirname, "../../", ".env") });
 console.log(process.env);
@@ -30,6 +31,7 @@ export const connectToDb = async (): Promise<Sequelize> => {
       acquire: 3000,
       evict: timeout,
     },
+    dialectModule: pg,
   });
   await sequelize.authenticate();
 
