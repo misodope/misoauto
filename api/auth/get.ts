@@ -4,10 +4,12 @@ import {
   Handler,
   APIGatewayProxyResult,
 } from "aws-lambda";
-import UserQueries from "../../services/prisma/queries/user";
-import { PrismaClient, User } from "@prisma/client";
+import { Sequelize } from "sequelize";
+import { IUser, getUserModel } from "../../services/database/models/user";
+import { connectToDb } from "../../services/database";
 
-const prisma = new PrismaClient();
+let sequelize: Sequelize | null = null;
+let User: IUser | null = null;
 
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2,
@@ -15,6 +17,11 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log(`Event: ${JSON.stringify(event, null, 2)}`);
   console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+
+  if (!sequelize) {
+    sequelize = await connectToDb();
+    User = await getUserModel(sequelize);
+  }
 
   const { openId } = event.queryStringParameters as { openId: string };
   if (!openId) {
@@ -24,11 +31,9 @@ export const handler: Handler = async (
     };
   }
 
-  const userQueries = new UserQueries(prisma);
-
   try {
-    const user: User = await userQueries.getUser(openId);
-
+    const user = await User.findOne({ where: { openId } });
+    console.log("USER", user);
     const handlerResponse: APIGatewayProxyResult = {
       statusCode: 200,
       body: JSON.stringify(user),

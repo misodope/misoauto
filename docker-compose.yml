@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=misoauto
+      - POSTGRES_PASSWORD=misoauto_password
+      - POSTGRES_DB=misoauto
+    restart: always
+
+# Volumes for persisting data, see https://docs.docker.com/engine/reference/builder/#volume
+volumes:
+  pg_data:

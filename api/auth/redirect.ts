@@ -2,7 +2,6 @@ import {
   AuthController,
   TikTokSuccessResponse,
 } from "../../services/api/AuthController.js";
-import UserQueries from "../../services/prisma/queries/user.js";
 import {
   Context,
   APIGatewayProxyEventV2,
@@ -10,17 +9,13 @@ import {
   APIGatewayProxyResult,
 } from "aws-lambda";
 
-import { PrismaClient, User } from "../../generated/prisma";
-
-const prisma = new PrismaClient();
-
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   console.log(`Event: ${JSON.stringify(event, null, 2)}`);
   console.log(`Context: ${JSON.stringify(context, null, 2)}`);
-  console.log("PRISMA", prisma);
+
   // const { code, state } = event.queryStringParameters as {
   //   code: string;
   //   state: string;
@@ -73,7 +68,7 @@ export const handler: Handler = async (
   // }
   const handlerResponse: APIGatewayProxyResult = {
     statusCode: 200,
-    body: JSON.stringify({ message: "Refresh Endpoint!" }),
+    body: JSON.stringify({ message: "Redirect Endpoint!" }),
   };
 
   return handlerResponse;

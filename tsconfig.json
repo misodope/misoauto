@@ -11,5 +11,5 @@
     "sourceMap": true
   },
   "include": ["api", "types", "services"],
-  "exclude": ["node_modules", "dist", "frontend", "services/prisma"],
+  "exclude": ["node_modules", "dist", "frontend"],
 }
