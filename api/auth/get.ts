@@ -5,8 +5,8 @@ import {
   APIGatewayProxyResult,
 } from "aws-lambda";
 import { Sequelize } from "sequelize";
-import { IUser, getUserModel } from "../../services/database/models/user";
-import { connectToDb } from "../../services/database";
+import { IUser, getUserModel } from "@services/database/models/user";
+import { connectToDb } from "@services/database";
 
 let sequelize: Sequelize | null = null;
 let User: IUser | null = null;
@@ -23,15 +23,15 @@ export const handler: Handler = async (
     User = await getUserModel(sequelize);
   }
 
-  const { openId } = event.queryStringParameters as { openId: string };
-  if (!openId) {
-    return {
-      statusCode: 422,
-      body: JSON.stringify({ message: "No user id provided" }),
-    };
-  }
-
   try {
+    const { openId } = event.queryStringParameters as { openId: string };
+    if (!openId) {
+      return {
+        statusCode: 422,
+        body: JSON.stringify({ message: "No user id provided" }),
+      };
+    }
+
     const user = await User.findOne({ where: { openId } });
     console.log("USER", user);
     const handlerResponse: APIGatewayProxyResult = {

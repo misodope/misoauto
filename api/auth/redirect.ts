@@ -1,7 +1,7 @@
 import {
   AuthController,
   TikTokSuccessResponse,
-} from "../../services/api/AuthController.js";
+} from "@services/api/AuthController.js";
 import {
   Context,
   APIGatewayProxyEventV2,

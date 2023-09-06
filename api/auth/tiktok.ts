@@ -1,4 +1,4 @@
-import { AuthController } from "../../services/api/AuthController";
+import { AuthController } from "@services/api/AuthController";
 import {
   Context,
   APIGatewayProxyEventV2,
