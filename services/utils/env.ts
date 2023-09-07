@@ -62,12 +62,13 @@ export const getAuthUrl = () => {
 };
 
 export const getApiUrl = () => {
-  switch (getCurrentEnv()) {
-    case ENV.DEVELOPMENT:
-      return "http://localhost:3000/api";
-    case ENV.PRODUCTION:
-      return "https://misoauto.vercel.app/api";
-    case ENV.STAGING:
-      return "https://misoauto-misodope-misodope-s-team.vercel.app/api";
-  }
+  // switch (getCurrentEnv()) {
+  //   case ENV.DEVELOPMENT:
+  //     return "http://localhost:3000/api";
+  //   case ENV.PRODUCTION:
+  //     return "https://misoauto.vercel.app/api";
+  //   case ENV.STAGING:
+  //     return "https://misoauto-misodope-misodope-s-team.vercel.app/api";
+  // }
+  return "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api";
 };

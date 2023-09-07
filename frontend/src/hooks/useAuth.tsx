@@ -1,5 +1,4 @@
 import React, { useState, useEffect, createContext } from "react";
-import { getApiUrl } from "../../../services/utils/env";
 
 interface AuthData {
   accessToken: string;
@@ -44,7 +43,7 @@ export const useAuth = (): AuthProps => {
       // Fetch user data
       const fetchUserData = async () => {
         try {
-          const url = `${getApiUrl()}/auth/get?openId=${user}`;
+          const url = `${import.meta.env.VITE_API_URL}/auth/get?openId=${user}`;
           const response = await fetch(url);
           if (!response.ok) {
             throw new Error("Network response was not ok");
@@ -121,7 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Set auth data in cookie for 1 day
         const expires = `; expires=${authData.expiresIn}`;
         document.cookie = `authData=${JSON.stringify(
-          authData
+          authData,
         )}${expires}; path=/`;
       }
     }

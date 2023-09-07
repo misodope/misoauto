@@ -3,6 +3,10 @@ import {
   TikTokSuccessResponse,
 } from "@services/api/AuthController.js";
 import {
+  internalServerError,
+  sendResponseBody,
+} from "@services/utils/response";
+import {
   Context,
   APIGatewayProxyEventV2,
   Handler,
@@ -13,22 +17,41 @@ export const handler: Handler = async (
   event: APIGatewayProxyEventV2,
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
-  console.log(`Event: ${JSON.stringify(event, null, 2)}`);
-  console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+  try {
+    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+    console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-  // const { code, state } = event.queryStringParameters as {
-  //   code: string;
-  //   state: string;
-  // };
+    const { code, state } = event.queryStringParameters as {
+      code: string;
+      state: string;
+    };
+    console.log("CODE", code);
+    console.log("STATE", state);
+    console.log("COOKIES", event.cookies);
 
-  // const { csrfState } = event.cookies;
-  // if (state !== csrfState) {
-  //   res.status(422).send("Invalid state");
-  //   return;
-  // }
+    // const { csrfState } = event.cookies;
+    // if (state !== csrfState) {
+    //   res.status(422).send("Invalid state");
+    //   return;
+    // }
 
+    const authController = new AuthController();
+    const redirectURI = process.env.TIKTOK_REDIRECT_URI || "";
+
+    return sendResponseBody({
+      status: 302,
+      message: "Redirecting to TikTok login",
+      success: {},
+      headers: {
+        // TODO: Update with ?user=${user.openId}
+        Location: `https://dl7rsqqwy6kne.cloudfront.net/dashboard/`,
+      },
+    });
+  } catch (error) {
+    return internalServerError(error);
+  }
   // try {
-  //   const authController = new AuthController();
+  // const authController = new AuthController();
   //   const userQueries = new UserQueries(prisma);
   //   const redirectUri =
   //     "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api/auth/redirect/";

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuth";
-import { getApiUrl } from "../../../../services/utils/env";
 import Loader from "../../components/Loader/Loader";
 
 export const Dashboard = () => {
@@ -14,7 +13,7 @@ export const Dashboard = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const url = `${getApiUrl()}/tiktok/user`;
+        const url = `${import.meta.env.VITE_API_URL}/tiktok/user`;
         const fetchConfig: RequestInit = {
           method: "POST",
           body: JSON.stringify({ accessToken: authData?.accessToken }),

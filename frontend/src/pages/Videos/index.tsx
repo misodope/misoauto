@@ -23,7 +23,7 @@ export const Videos = () => {
   useEffect(() => {
     const fetchVideoList = async () => {
       try {
-        const url = `${getApiUrl()}/tiktok/videos`;
+        const url = `${import.meta.env.VITE_API_URL}/tiktok/videos`;
         const fetchConfig: RequestInit = {
           method: "POST",
           body: JSON.stringify({ accessToken: authData?.accessToken }),

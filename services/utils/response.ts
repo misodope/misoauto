@@ -4,7 +4,7 @@ interface IResponse {
   status: number;
   error?: {} | null;
   message: string;
-  success: {};
+  success: {} | null;
   multiValueHeaders?: {};
   headers?: {};
 }
@@ -13,7 +13,7 @@ export const sendResponseBody = ({
   error = null,
   message,
   status,
-  success,
+  success = null,
   headers,
   multiValueHeaders = {},
 }: IResponse): APIGatewayProxyResult => {
