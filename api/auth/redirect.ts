@@ -37,14 +37,18 @@ export const handler: Handler = async (
 
     const authController = new AuthController();
     const redirectURI = process.env.TIKTOK_REDIRECT_URI || "";
-
+    const response: TikTokSuccessResponse = await authController.getAccessToken(
+      code,
+      redirectURI,
+    );
+    console.log("RESPONSE", response);
     return sendResponseBody({
       status: 302,
       message: "Redirecting to TikTok login",
       success: {},
       headers: {
         // TODO: Update with ?user=${user.openId}
-        Location: `https://dl7rsqqwy6kne.cloudfront.net/dashboard/`,
+        Location: `https://dl7rsqqwy6kne.cloudfront.net/dashboard/?user=${response.open_id}`,
       },
     });
   } catch (error) {
@@ -56,10 +60,10 @@ export const handler: Handler = async (
   //   const redirectUri =
   //     "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api/auth/redirect/";
 
-  //   const response: TikTokSuccessResponse = await authController.getAccessToken(
-  //     code,
-  //     redirectUri,
-  //   );
+  // const response: TikTokSuccessResponse = await authController.getAccessToken(
+  //   code,
+  //   redirectUri,
+  // );
 
   //   let user: User = await userQueries.getUser(response.open_id);
 
