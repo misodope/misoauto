@@ -1,4 +1,5 @@
 import { AuthController } from "@services/api/AuthController";
+import { sendResponseBody } from "@services/utils/response";
 import {
   Context,
   APIGatewayProxyEventV2,
@@ -23,19 +24,15 @@ export const handler: Handler = async (
     daysToLive * 24 * 60 * 60
   }`;
 
-  const handlerResponse: APIGatewayProxyResult = {
-    statusCode: 302,
+  return sendResponseBody({
+    status: 302,
+    message: "Redirecting to TikTok login",
+    success: {},
     multiValueHeaders: {
       "Set-Cookie": [csrfStateCookie],
     },
     headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "*",
-      "Access-Control-Allow-Credentials": true,
       Location: url,
     },
-    body: JSON.stringify({ message: "Redirecting to TikTok login" }),
-  };
-
-  return handlerResponse;
+  });
 };

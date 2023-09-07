@@ -4,7 +4,6 @@ import path from "path";
 import pg from "pg";
 
 dotenv.config({ path: path.resolve(__dirname, "../../", ".env") });
-console.log(process.env);
 
 const timeout = Number(process.env.TIMEOUT) * 1000;
 const URI = process.env.DATABASE_URL;
