@@ -3,6 +3,7 @@ import {
   TikTokSuccessResponse,
 } from "@services/api/AuthController.js";
 import {
+  badRequest,
   internalServerError,
   sendResponseBody,
 } from "@services/utils/response";
@@ -12,12 +13,15 @@ import {
   Handler,
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
-import { Sequelize } from "sequelize";
-import { IUser, getUserModel } from "@services/database/models/user";
-import { connectToDb } from "@services/database";
+// import { Sequelize } from "sequelize";
+// import { IUser, getUserModel } from "@services/database/models/user";
+// import { connectToDb } from "@services/database";
+import { PrismaClient, User } from "@prisma/client";
+import UserQueries from "@services/prisma/queries/user";
 
-let sequelize: Sequelize | null = null;
-let User: IUser | null = null;
+// let sequelize: Sequelize | null = null;
+// let User: IUser | null = null;
+const prisma = new PrismaClient();
 
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2,
@@ -27,10 +31,10 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-    if (!sequelize) {
-      sequelize = await connectToDb();
-      User = await getUserModel(sequelize);
-    }
+    // if (!sequelize) {
+    //   sequelize = await connectToDb();
+    //   User = await getUserModel(sequelize);
+    // }
 
     const code = event.queryStringParameters?.code;
     const state = event.queryStringParameters?.state;
@@ -38,21 +42,28 @@ export const handler: Handler = async (
     console.log("CODE", code);
     console.log("STATE", state);
     console.log("COOKIES", event.cookies);
-    // const { csrfState } = event.cookies;
-    // if (state !== csrfState) {
-    //   res.status(422).send("Invalid state");
-    //   return;
-    // }
-    console.log("PROCESS ENV", process.env);
+
+    const csrfState = getCookie("csrfState", event.cookies);
+    if (state !== csrfState) {
+      return badRequest("Invalid State");
+    }
+    const userQueries = new UserQueries(prisma);
     const authController = new AuthController();
     const redirectURI = process.env.TIKTOK_REDIRECT_URI || "";
     const response: TikTokSuccessResponse = await authController.getAccessToken(
       code,
       redirectURI,
     );
-
     console.log("RESPONSE", response);
-    let user = await User.findOne({ where: { openId: response.open_id } });
+
+    let user: User = await userQueries.getUser(response.open_id);
+    if (!user) {
+      user = await userQueries.createUser(response);
+    } else {
+      user = await userQueries.updateUser(response.open_id, response);
+    }
+    console.log("USER", user);
+    // let user = await User.findOne({ where: { openId: response.open_id } });
     // if (!user) {
     //   user = await User.create({
     //     openId: response.open_id,
@@ -71,7 +82,6 @@ export const handler: Handler = async (
     //     tokenType: response.token_type,
     //   });
     // }
-    console.log("USER", user);
     return sendResponseBody({
       status: 302,
       message: "Redirecting to TikTok login",
@@ -123,4 +133,14 @@ export const handler: Handler = async (
   //   };
   //   return handlerErrorResponse;
   // }
+};
+
+// Cookies example = [ 'csrfState=12345abc' ]
+const getCookie = (name: string, cookies: Array<string>): string | null => {
+  const cookie = cookies.find((cookie) => cookie.includes(name));
+  if (!cookie) {
+    return null;
+  }
+  const cookieParts = cookie.split("=");
+  return cookieParts[1];
 };
