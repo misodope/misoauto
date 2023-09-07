@@ -10,7 +10,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 16
 
       - name: Install Dependencies
         working-directory: ./frontend
@@ -21,6 +21,9 @@ jobs:
 
       - name: Build
         working-directory: ./frontend
+        env:
+          NODE_ENV: production
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: pnpm build
 
       - name: Configure AWS Credentials
