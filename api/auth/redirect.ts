@@ -52,26 +52,26 @@ export const handler: Handler = async (
     );
 
     console.log("RESPONSE", response);
-    let user = await User.findOne({ where: { openId: response.open_id } });
-    if (!user) {
-      user = await User.create({
-        openId: response.open_id,
-        accessToken: response.access_token,
-        refreshToken: response.refresh_token,
-        expiresIn: response.expires_in,
-        scope: response.scope,
-        tokenType: response.token_type,
-      });
-    } else {
-      user = await user.update({
-        accessToken: response.access_token,
-        refreshToken: response.refresh_token,
-        expiresIn: response.expires_in,
-        scope: response.scope,
-        tokenType: response.token_type,
-      });
-    }
-    console.log("USER", user);
+    // let user = await User.findOne({ where: { openId: response.open_id } });
+    // if (!user) {
+    //   user = await User.create({
+    //     openId: response.open_id,
+    //     accessToken: response.access_token,
+    //     refreshToken: response.refresh_token,
+    //     expiresIn: response.expires_in,
+    //     scope: response.scope,
+    //     tokenType: response.token_type,
+    //   });
+    // } else {
+    //   user = await user.update({
+    //     accessToken: response.access_token,
+    //     refreshToken: response.refresh_token,
+    //     expiresIn: response.expires_in,
+    //     scope: response.scope,
+    //     tokenType: response.token_type,
+    //   });
+    // }
+    // console.log("USER", user);
     return sendResponseBody({
       status: 302,
       message: "Redirecting to TikTok login",
