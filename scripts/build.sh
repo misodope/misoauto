@@ -25,5 +25,5 @@ find "$src_dir" -name "*.ts" -exec sh -c '
     dst_dir=$(dirname "$dst")
     echo "file: $file"
     mkdir -p "$dst_dir"
-    esbuild "$file" --bundle --minify --sourcemap --platform=node --target=es2020 --preserve-symlinks --external:@prisma/client --outfile="dist/${file%.ts}.js"
+    esbuild "$file" --bundle --minify --sourcemap --platform=node --target=es2020  --external:@prisma/client --outfile="dist/${file%.ts}.js"
 ' \;
