@@ -52,7 +52,7 @@ export const handler: Handler = async (
     );
 
     console.log("RESPONSE", response);
-    // let user = await User.findOne({ where: { openId: response.open_id } });
+    let user = await User.findOne({ where: { openId: response.open_id } });
     // if (!user) {
     //   user = await User.create({
     //     openId: response.open_id,
@@ -71,7 +71,7 @@ export const handler: Handler = async (
     //     tokenType: response.token_type,
     //   });
     // }
-    // console.log("USER", user);
+    console.log("USER", user);
     return sendResponseBody({
       status: 302,
       message: "Redirecting to TikTok login",
