@@ -1,11 +1,11 @@
-import { APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 
 interface IResponse {
   status: number;
   error?: {} | null;
   message: string;
   success: {} | null;
-  multiValueHeaders?: {};
+  cookies?: Array<string>;
   headers?: {};
 }
 
@@ -15,8 +15,8 @@ export const sendResponseBody = ({
   status,
   success = null,
   headers,
-  multiValueHeaders = {},
-}: IResponse): APIGatewayProxyResult => {
+  cookies = [],
+}: IResponse): APIGatewayProxyStructuredResultV2 => {
   const defaultHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "*",
@@ -26,7 +26,7 @@ export const sendResponseBody = ({
 
   return {
     statusCode: status,
-    multiValueHeaders,
+    cookies: [...cookies],
     headers: defaultHeaders,
     body: JSON.stringify(
       {

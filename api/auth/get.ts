@@ -2,7 +2,7 @@ import {
   Context,
   APIGatewayProxyEventV2,
   Handler,
-  APIGatewayProxyResult,
+  APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
 import { Sequelize } from "sequelize";
 import { IUser, getUserModel } from "@services/database/models/user";
@@ -19,7 +19,7 @@ let User: IUser | null = null;
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2,
   context: Context,
-): Promise<APIGatewayProxyResult> => {
+): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);

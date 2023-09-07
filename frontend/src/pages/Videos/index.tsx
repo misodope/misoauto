@@ -1,4 +1,3 @@
-import { getApiUrl } from "../../../../services/utils/env";
 import Loader from "../../components/Loader/Loader";
 import { useAuthContext } from "../../hooks/useAuth";
 import { useEffect, useState } from "react";
