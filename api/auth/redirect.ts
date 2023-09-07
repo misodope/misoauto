@@ -12,6 +12,12 @@ import {
   Handler,
   APIGatewayProxyResult,
 } from "aws-lambda";
+import { Sequelize } from "sequelize";
+import { IUser, getUserModel } from "@services/database/models/user";
+import { connectToDb } from "@services/database";
+
+let sequelize: Sequelize | null = null;
+let User: IUser | null = null;
 
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2,
@@ -21,13 +27,17 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
+    if (!sequelize) {
+      sequelize = await connectToDb();
+      User = await getUserModel(sequelize);
+    }
+
     const code = event.queryStringParameters?.code;
     const state = event.queryStringParameters?.state;
 
     console.log("CODE", code);
     console.log("STATE", state);
     console.log("COOKIES", event.cookies);
-
     // const { csrfState } = event.cookies;
     // if (state !== csrfState) {
     //   res.status(422).send("Invalid state");
@@ -40,11 +50,32 @@ export const handler: Handler = async (
       code,
       redirectURI,
     );
-    // console.log("RESPONSE", response);
+
+    console.log("RESPONSE", response);
+    let user = await User.findOne({ where: { openId: response.open_id } });
+    if (!user) {
+      user = await User.create({
+        openId: response.open_id,
+        accessToken: response.access_token,
+        refreshToken: response.refresh_token,
+        expiresIn: response.expires_in,
+        scope: response.scope,
+        tokenType: response.token_type,
+      });
+    } else {
+      user = await user.update({
+        accessToken: response.access_token,
+        refreshToken: response.refresh_token,
+        expiresIn: response.expires_in,
+        scope: response.scope,
+        tokenType: response.token_type,
+      });
+    }
+    console.log("USER", user);
     return sendResponseBody({
       status: 302,
       message: "Redirecting to TikTok login",
-      success: {},
+      success: user,
       headers: {
         // TODO: Update with ?user=${user.openId}
         Location: `https://dl7rsqqwy6kne.cloudfront.net/dashboard/?user=${response.open_id}`,
