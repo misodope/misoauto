@@ -33,7 +33,7 @@ export const handler: Handler = async (
     //   res.status(422).send("Invalid state");
     //   return;
     // }
-
+    console.log("PROCESS ENV", process.env);
     const authController = new AuthController();
     const redirectURI = process.env.TIKTOK_REDIRECT_URI || "";
     const response: TikTokSuccessResponse = await authController.getAccessToken(
@@ -57,7 +57,7 @@ export const handler: Handler = async (
   // const authController = new AuthController();
   //   const userQueries = new UserQueries(prisma);
   //   const redirectUri =
-  //     "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api/auth/redirect/";
+  //     "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api/auth/redirect";
 
   // const response: TikTokSuccessResponse = await authController.getAccessToken(
   //   code,
