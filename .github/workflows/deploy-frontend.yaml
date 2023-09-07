@@ -22,10 +22,10 @@ jobs:
       - name: Build
         working-directory: ./frontend
         env:
-          NODE_ENV: production
           VITE_API_URL: ${{ vars.VITE_API_URL }}
-        run: pnpm build
-
+        run: |
+          pnpm build
+          echo $VITE_API_URL
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
