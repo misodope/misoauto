@@ -21,10 +21,9 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-    const { code, state } = event.queryStringParameters as {
-      code: string;
-      state: string;
-    };
+    const code = event.queryStringParameters?.code;
+    const state = event.queryStringParameters?.state;
+
     console.log("CODE", code);
     console.log("STATE", state);
     console.log("COOKIES", event.cookies);
