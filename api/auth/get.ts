@@ -38,7 +38,7 @@ export const handler: Handler = async (
     }
 
     const userQueries = new UserQueries(prisma);
-    const user = await userQueries.getUser(openId);
+    const user: User = await userQueries.getUser(openId);
     // const user = await User.findOne({ where: { openId } });
     console.log("USER", user);
     return sendResponseBody({
