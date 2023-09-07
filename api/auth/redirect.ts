@@ -21,12 +21,12 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-    // const code = event.queryStringParameters?.code;
-    // const state = event.queryStringParameters?.state;
+    const code = event.queryStringParameters?.code;
+    const state = event.queryStringParameters?.state;
 
-    // console.log("CODE", code);
-    // console.log("STATE", state);
-    // console.log("COOKIES", event.cookies);
+    console.log("CODE", code);
+    console.log("STATE", state);
+    console.log("COOKIES", event.cookies);
 
     // const { csrfState } = event.cookies;
     // if (state !== csrfState) {
@@ -34,12 +34,12 @@ export const handler: Handler = async (
     //   return;
     // }
 
-    // const authController = new AuthController();
-    // const redirectURI = process.env.TIKTOK_REDIRECT_URI || "";
-    // const response: TikTokSuccessResponse = await authController.getAccessToken(
-    //   code,
-    //   redirectURI,
-    // );
+    const authController = new AuthController();
+    const redirectURI = process.env.TIKTOK_REDIRECT_URI || "";
+    const response: TikTokSuccessResponse = await authController.getAccessToken(
+      code,
+      redirectURI,
+    );
     // console.log("RESPONSE", response);
     return sendResponseBody({
       status: 302,
@@ -47,7 +47,7 @@ export const handler: Handler = async (
       success: {},
       headers: {
         // TODO: Update with ?user=${user.openId}
-        Location: `https://dl7rsqqwy6kne.cloudfront.net/dashboard/`,
+        Location: `https://dl7rsqqwy6kne.cloudfront.net/dashboard/?user=${response.open_id}`,
       },
     });
   } catch (error) {
