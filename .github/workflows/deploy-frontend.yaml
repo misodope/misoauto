@@ -41,4 +41,4 @@ jobs:
           UI_PATH: "misoauto-ui"
         working-directory: ./frontend/dist
         run: |
-          aws s3 sync . ${S3_BUCKET}/${UI_PATH} --delete
+          aws s3 sync . ${S3_BUCKET}/${UI_PATH} --delete --cache-control max-age=0,no-cache,no-store,must-revalidate
