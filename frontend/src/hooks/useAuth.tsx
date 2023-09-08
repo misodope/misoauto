@@ -5,7 +5,7 @@ interface AuthData {
   access_token: string;
   refresh_token: string;
   createdAt: string;
-  expiresAt: string;
+  expires_at: string;
   open_id: string;
   refresh_expires_at: string;
   scope: string;
@@ -87,21 +87,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const cookie = document.cookie
       .split(";")
       .find((c) => c.trim().startsWith("authData="));
-
+    console.log("Is Logged In?", cookie);
     if (!cookie && !authData) {
       return false;
     }
 
     if (authData && cookie) {
       const cookieAuthData = JSON.parse(cookie.split("=")[1]);
-      const expires = new Date(cookieAuthData.expiresAt);
+      const expires = new Date(cookieAuthData.expires_at);
       const now = new Date();
 
       return expires > now;
     }
 
     if (!cookie && authData) {
-      const expires = new Date(authData.expiresAt);
+      const expires = new Date(authData.expires_at);
       const now = new Date();
 
       return expires > now;

@@ -13,10 +13,10 @@ import {
   Handler,
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
-
 import { Sequelize } from "sequelize";
 import { IUser, getUserModel } from "@services/database/models/user";
 import { connectToDb } from "@services/database";
+import { add } from "date-fns";
 
 let sequelize: Sequelize | null = null;
 let User: IUser | null = null;
@@ -62,6 +62,9 @@ export const handler: Handler = async (
         expires_in: response.expires_in,
         scope: response.scope,
         token_type: response.token_type,
+        refresh_expires_in: response.refresh_expires_in,
+        expires_at: add(new Date(), { seconds: response.expires_in }),
+        refresh_expires_at: add(new Date(), { seconds: response.expires_in }),
       });
     } else {
       user = await user.update({
@@ -70,6 +73,9 @@ export const handler: Handler = async (
         expires_in: response.expires_in,
         scope: response.scope,
         token_type: response.token_type,
+        refresh_expires_in: response.refresh_expires_in,
+        expires_at: add(new Date(), { seconds: response.expires_in }),
+        refresh_expires_at: add(new Date(), { seconds: response.expires_in }),
       });
     }
 

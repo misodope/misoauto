@@ -25,12 +25,24 @@ const schema: ModelAttributes = {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  refresh_expires_in: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   token_type: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   scope: {
     type: DataTypes.STRING,
+    allowNull: false,
+  },
+  expires_at: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  refresh_expires_at: {
+    type: DataTypes.DATE,
     allowNull: false,
   },
 };

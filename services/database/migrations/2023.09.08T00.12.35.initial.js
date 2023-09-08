@@ -26,12 +26,24 @@ exports.up = async params => {
       type: Sequelize.INTEGER,
       allowNull: false,
     },
+    refresh_expires_in: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+    },
     token_type: {
       type: Sequelize.STRING,
       allowNull: false,
     },
     scope: {
       type: Sequelize.STRING,
+      allowNull: false,
+    },
+    expires_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+    },
+    refresh_expires_at: {
+      type: Sequelize.DATE,
       allowNull: false,
     },
     createdAt: {
