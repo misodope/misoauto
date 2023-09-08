@@ -26,9 +26,11 @@ export const Videos = () => {
         const url = `${getApiUrl()}/tiktok/videos`;
         const fetchConfig: RequestInit = {
           method: "POST",
+          mode: "cors",
           body: JSON.stringify({ accessToken: authData?.accessToken }),
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
           },
         };
 

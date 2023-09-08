@@ -18,12 +18,14 @@ export const Dashboard = () => {
 
         const fetchConfig: RequestInit = {
           method: "POST",
+          mode: "cors",
           body: JSON.stringify({ accessToken: authData?.accessToken }),
           headers: {
+            Accept: "application/json",
             "Content-Type": "application/json",
           },
         };
-
+        console.log("FETCH CONFIG", fetchConfig);
         const response = await fetch(url, fetchConfig);
 
         if (!response.ok) {
