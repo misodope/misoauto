@@ -37,6 +37,7 @@ export const connectToDb = async (): Promise<Sequelize> => {
       ssl: true,
     },
   });
+
   await sequelize.authenticate();
 
   return sequelize;

@@ -8,24 +8,24 @@ const schema: ModelAttributes = {
     allowNull: false,
     autoIncrement: true,
   },
-  openId: {
+  open_id: {
     type: DataTypes.STRING,
     allowNull: false,
     primaryKey: true,
   },
-  accessToken: {
+  access_token: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  refreshToken: {
+  refresh_token: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  expiresIn: {
+  expires_in: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  tokenType: {
+  token_type: {
     type: DataTypes.STRING,
     allowNull: false,
   },
@@ -39,7 +39,7 @@ export type IUser = typeof User;
 
 export const getUserModel = async (sequelize?: Sequelize): Promise<IUser> => {
   if (sequelize) {
-    User.init(schema, { sequelize, modelName: "user", timestamps: true });
+    User.init(schema, { sequelize, timestamps: true });
     await User.sync({ force: true });
   }
 
