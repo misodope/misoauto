@@ -1,11 +1,11 @@
-import { getApiUrl } from "../../../../services/utils/env";
-import Loader from "../../components/Loader";
+import Loader from "../../components/Loader/Loader";
 import { useAuthContext } from "../../hooks/useAuth";
 import { useEffect, useState } from "react";
 import {
   TikTokVideo,
   TikTokVideoListResponse,
 } from "../../../../services/api/TikTokController";
+import { getApiUrl } from "../../utils/env";
 
 export const Videos = () => {
   const { authData } = useAuthContext();
@@ -26,9 +26,11 @@ export const Videos = () => {
         const url = `${getApiUrl()}/tiktok/videos`;
         const fetchConfig: RequestInit = {
           method: "POST",
-          body: JSON.stringify({ accessToken: authData?.accessToken }),
+          mode: "cors",
+          body: JSON.stringify({ accessToken: authData?.access_token }),
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
           },
         };
 
@@ -36,13 +38,13 @@ export const Videos = () => {
 
         if (!response.ok) {
           throw new Error(
-            `Network response was not ok:  ${response?.statusText}`
+            `Network response was not ok:  ${response?.statusText}`,
           );
         }
 
         const responseData: TikTokVideoListResponse = await response.json();
 
-        setVideos(responseData.data.videos);
+        setVideos(responseData.response.data.videos);
       } catch (error: unknown) {
         console.error(error);
       }

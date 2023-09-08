@@ -1,37 +1,16 @@
-version: '3'
 services:
-  # backend:
-  #   container_name: graphql-backend
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile.local
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - type: bind
-  #       source: ./backend
-  #       target: /app
-  #     - /app/node_modules
-  # frontend:
-  #   container_name: react-frontend
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile.local
-  #   ports:
-  #     - "5173:5173"
-  #   volumes:
-  #     - type: bind
-  #       source: ./frontend
-  #       target: /app
-  #     - /app/node_modules
-  misoauto:
-    container_name: misoauto-app
-    build:
-      context: ./
-      dockerfile: Dockerfile
-    restart: always
+  db:
+    image: postgres:latest
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
     ports:
-      - 3000:3000
+      - "5436:5432"
     environment:
-      - VERCEL_ACCESS_TOKEN=${VERCEL_ACCESS_TOKEN}
+      - POSTGRES_USER=misoauto
+      - POSTGRES_PASSWORD=misoauto_password
+      - POSTGRES_DB=misoauto
+    restart: always
 
+# Volumes for persisting data, see https://docs.docker.com/engine/reference/builder/#volume
+volumes:
+  pg_data:

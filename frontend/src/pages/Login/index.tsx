@@ -1,4 +1,4 @@
-import { getAuthUrl } from "../../../../services/utils/env";
+import { getApiUrl } from "../../utils/env";
 
 export const Login = () => {
   return (
@@ -6,7 +6,7 @@ export const Login = () => {
       <h1 className="text-3xl font-bold  mb-10">Login</h1>
       <a
         className="cursor-pointer bg-black text-white py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
-        href={getAuthUrl()}
+        href={`${getApiUrl()}/auth/tiktok`}
       >
         Continue with TikTok
       </a>

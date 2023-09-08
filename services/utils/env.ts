@@ -1,5 +1,3 @@
-import type { VercelRequest } from "@vercel/node";
-
 enum ENV {
   DEVELOPMENT = "development",
   STAGING = "staging",
@@ -23,8 +21,9 @@ const getCurrentEnv = () => {
   }
 };
 
-export const getCurrentRequestEnv = (req: VercelRequest) => {
-  const currentUrl = req.headers.host;
+export const getCurrentRequestEnv = () => {
+  // const currentUrl = req.headers.host;
+  const currentUrl = "";
 
   if (
     currentUrl?.includes("localhost") ||
@@ -40,8 +39,8 @@ export const getCurrentRequestEnv = (req: VercelRequest) => {
   }
 };
 
-export const getRedirectUrl = (env: ENV) => {
-  switch (env) {
+export const getRedirectUrl = () => {
+  switch (getCurrentEnv()) {
     case ENV.DEVELOPMENT:
       return "http://localhost:3000/api/auth/redirect";
     case ENV.PRODUCTION:
@@ -63,12 +62,13 @@ export const getAuthUrl = () => {
 };
 
 export const getApiUrl = () => {
-  switch (getCurrentEnv()) {
-    case ENV.DEVELOPMENT:
-      return "http://localhost:3000/api";
-    case ENV.PRODUCTION:
-      return "https://misoauto.vercel.app/api";
-    case ENV.STAGING:
-      return "https://misoauto-misodope-misodope-s-team.vercel.app/api";
-  }
+  // switch (getCurrentEnv()) {
+  //   case ENV.DEVELOPMENT:
+  //     return "http://localhost:3000/api";
+  //   case ENV.PRODUCTION:
+  //     return "https://misoauto.vercel.app/api";
+  //   case ENV.STAGING:
+  //     return "https://misoauto-misodope-misodope-s-team.vercel.app/api";
+  // }
+  return "https://ilywoklih4.execute-api.us-east-1.amazonaws.com/api";
 };

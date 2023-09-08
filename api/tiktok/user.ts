@@ -1,24 +1,39 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import {
+  badRequest,
+  internalServerError,
+  sendResponseBody,
+} from "@services/utils/response.js";
 import { TikTokController } from "../../services/api/TikTokController.js";
+import {
+  Context,
+  APIGatewayProxyEventV2WithRequestContext,
+  Handler,
+  APIGatewayProxyStructuredResultV2,
+} from "aws-lambda";
 
-const handler = async (req: VercelRequest, res: VercelResponse) => {
-  const tiktokController = new TikTokController();
-  const { accessToken } = req.body as { accessToken: string };
-  if (!accessToken) {
-    return res.status(422).send("No token provided");
-  }
-
-  // TODO: Possibly use cookie to get accessToken?
-  const cookie = req.headers.cookie;
-  console.log("This is the cookie", cookie);
-
+export const handler: Handler = async (
+  event: APIGatewayProxyEventV2WithRequestContext<{ accessToken: string }>,
+  context: Context,
+): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
+    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+    console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+
+    const tiktokController = new TikTokController();
+
+    const requestBody = JSON.parse(event.body);
+    const { accessToken } = requestBody;
+    if (!accessToken) {
+      return badRequest("No access token provided");
+    }
+
     const userInfo = await tiktokController.getUserInfo(accessToken);
-    return res.status(200).json(userInfo);
-  } catch {
-    // Return error message if user is not found
-    return res.status(404).send("User not found");
+    return sendResponseBody({
+      status: 200,
+      message: "Successfully fetched user info",
+      success: userInfo,
+    });
+  } catch (error) {
+    return internalServerError(error);
   }
 };
-
-export default handler;

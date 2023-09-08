@@ -12,29 +12,13 @@ Follow these steps to set up the application:
 
 - `npm i -g pnpm`
 
-2. Install `vercel` the PaaS we use to deploy.
-
-- `npm i -g vercel`
-
 2. Install the application dependencies
 
 - `pnpm i`
 
-3. Start the application.
+### Deployments
 
-- `pnpm vdev`
-
-That's it! You can now access the application at http://localhost:3000
-
-### Vercel Deployment
-
-To deploy to dev enviornments run `vercel deploy`
-
-Deploy to prod run `vercel --prod`
-
-Notes:
-
-- Importing code from other files for `Vercel Serverless Functions` you must specify `.js` to resolve correctly.
+Deployments are automated in CI/CD pipeline defined in github workflows.
 
 ### Working with Prisma ORM
 

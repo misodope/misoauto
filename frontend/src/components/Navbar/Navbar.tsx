@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuth";
 import { useState } from "react";
-import { SideNavigation } from "../SideNavigation";
+import { SideNavigation } from "../SideNavigation/SideNavigation";
 
 interface HamburgerProps {
   onClick: () => void;

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuth";
-import { getApiUrl } from "../../../../services/utils/env";
-import Loader from "../../components/Loader";
+import Loader from "../../components/Loader/Loader";
+import { getApiUrl } from "../../utils/env";
 
 export const Dashboard = () => {
   const [userData, setUserData] = useState<Record<
@@ -15,25 +15,28 @@ export const Dashboard = () => {
     const fetchUserData = async () => {
       try {
         const url = `${getApiUrl()}/tiktok/user`;
+        console.log("AUTH DATA", authData);
         const fetchConfig: RequestInit = {
           method: "POST",
-          body: JSON.stringify({ accessToken: authData?.accessToken }),
+          mode: "cors",
+          body: JSON.stringify({ accessToken: authData?.access_token }),
           headers: {
+            Accept: "application/json",
             "Content-Type": "application/json",
           },
         };
-
+        console.log("FETCH CONFIG", fetchConfig);
         const response = await fetch(url, fetchConfig);
 
         if (!response.ok) {
           throw new Error(
-            `Network response was not ok:  ${response?.statusText}`
+            `Network response was not ok:  ${response?.statusText}`,
           );
         }
 
         const data = await response.json();
 
-        setUserData(data);
+        setUserData(data.response);
       } catch (error: unknown) {
         console.error(error);
       }

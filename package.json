@@ -4,38 +4,33 @@
   "version": "0.0.0",
   "scripts": {
     "start": "ts-node --esm ./src/index.ts",
-    "build": "cd frontend && pnpm build",
+    "build": "chmod +x ./scripts/build.sh && ./scripts/build.sh",
+    "package": "chmod +x ./scripts/zip.sh && ./scripts/zip.sh",
+    "deploy-lambdas": "chmod +x ./scripts/deploy.sh && ./scripts/deploy.sh",
+    "migration-up": "node ./services/database/migrate up",
+    "migration-down": "node ./services/database/migrate down",
     "prisma-generate": "prisma generate --schema=./services/prisma/schema.prisma",
     "prisma-migrate": "prisma migrate dev --schema=./services/prisma/schema.prisma",
-    "dev": "cd frontend && pnpm dev --port $PORT",
-    "vdev": "vercel dev --local-config ./vercel.local.json"
+    "prisma-migrate-deploy": "prisma migrate deploy --schema=./services/prisma/schema.prisma",
+    "dev": "cd frontend && pnpm dev --port $PORT"
   },
   "dependencies": {
-    "@apollo/server": "^4.5.0",
-    "@graphql-tools/graphql-file-loader": "^7.5.16",
-    "@graphql-tools/load": "^7.8.13",
-    "@graphql-tools/merge": "^8.4.0",
-    "@graphql-tools/schema": "^9.0.17",
-    "@prisma/client": "^4.15.0",
-    "@types/express": "^4.17.17",
-    "@types/express-session": "^1.17.7",
-    "@vercel/edge": "^0.3.2",
-    "@vercel/node": "^2.10.3",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "date-fns": "^2.30.0",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "graphql": "^16.6.0",
-    "graphql-tag": "^2.12.6",
-    "prisma": "^4.15.0"
+    "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.32.1"
   },
   "devDependencies": {
-    "@edge-runtime/cookies": "^3.0.6",
     "@playwright/test": "^1.32.2",
+    "@types/aws-lambda": "^8.10.119",
     "@types/node": "^18.15.11",
+    "@types/pg": "^8.10.2",
+    "dotenv": "^16.0.3",
+    "prettier": "3.0.1",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.2"
+    "typescript": "^5.0.4",
+    "umzug": "^3.3.1"
   }
 }

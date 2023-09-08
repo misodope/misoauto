@@ -1,14 +1,19 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "outDir": "dist",
     "lib": ["ESnext", "DOM"],
-    "target": "ES2018",
+    "target": "ES2020",
     "module": "CommonJS",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "types": ["node"],
     "strict": false,
+    "sourceMap": true,
+    "paths": {
+      "@services/*": ["services/*"],
+    }
   },
-  "include": ["api", "types", "services"],
-  "exclude": ["node_modules", "dist", "frontend", "services/prisma"],
+  "include": ["api", "types", "services", "services/prisma/schema.prisma"],
+  "exclude": ["node_modules", "dist", "frontend"],
 }

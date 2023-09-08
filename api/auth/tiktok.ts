@@ -1,21 +1,43 @@
-import { getCurrentRequestEnv, getRedirectUrl } from "../../services/utils/env";
-import { AuthController } from "../../services/auth/AuthController";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { AuthController } from "@services/api/AuthController";
+import {
+  internalServerError,
+  sendResponseBody,
+} from "@services/utils/response";
+import {
+  Context,
+  APIGatewayProxyEventV2,
+  Handler,
+  APIGatewayProxyStructuredResultV2,
+} from "aws-lambda";
 
-const handler = (req: VercelRequest, res: VercelResponse) => {
-  const authController = new AuthController();
-  const currentEnv = getCurrentRequestEnv(req);
-  const redirectUri = getRedirectUrl(currentEnv);
-  const { url, csrfState } = authController.getAuthorizationUrl(redirectUri);
+export const handler: Handler = async (
+  event: APIGatewayProxyEventV2,
+  context: Context,
+): Promise<APIGatewayProxyStructuredResultV2> => {
+  try {
+    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+    console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-  const daysToLive = 1;
-  const cookieValue = `csrfState=${csrfState}; Secure; HttpOnly; Max-Age=${
-    daysToLive * 24 * 60 * 60
-  }`;
+    const authController = new AuthController();
+    const redirectUri = process.env.TIKTOK_REDIRECT_URI || "";
 
-  res.setHeader("Set-Cookie", cookieValue);
+    const { url, csrfState } = authController.getAuthorizationUrl(redirectUri);
 
-  return res.redirect(url);
+    const daysToLive = 1;
+    const csrfStateCookie = `csrfState=${csrfState}; Secure; HttpOnly; Max-Age=${
+      daysToLive * 24 * 60 * 60
+    }`;
+
+    return sendResponseBody({
+      status: 302,
+      message: "Redirecting to TikTok login",
+      success: {},
+      cookies: [csrfStateCookie],
+      headers: {
+        Location: url,
+      },
+    });
+  } catch (error) {
+    return internalServerError(error);
+  }
 };
-
-export default handler;
