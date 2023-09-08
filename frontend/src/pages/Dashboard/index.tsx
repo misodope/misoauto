@@ -15,7 +15,7 @@ export const Dashboard = () => {
     const fetchUserData = async () => {
       try {
         const url = `${getApiUrl()}/tiktok/user`;
-
+        console.log("AUTH DATA", authData);
         const fetchConfig: RequestInit = {
           method: "POST",
           mode: "cors",
