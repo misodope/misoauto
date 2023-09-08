@@ -40,18 +40,21 @@ export interface TikTokVideo {
 }
 
 export interface TikTokVideoListResponse {
-  data: {
-    videos: Array<TikTokVideo>;
-    cursor: number;
-    has_more: boolean;
+  message: string;
+  response: {
+    data: {
+      videos: Array<TikTokVideo>;
+      cursor: number;
+      has_more: boolean;
+    };
+    error: TikTokErrorObj;
   };
-  error: TikTokErrorObj;
 }
 
 export class TikTokController {
   // Fetch user info from TikTok API
   async getUserInfo(
-    accessToken: string
+    accessToken: string,
   ): Promise<TikTokUserInfo | TikTokErrorObj> {
     try {
       const url =
@@ -65,7 +68,7 @@ export class TikTokController {
       const response = await fetch(url, fetchConfig);
       if (!response.ok) {
         throw new Error(
-          `Network response was not ok:  ${response?.statusText}`
+          `Network response was not ok:  ${response?.statusText}`,
         );
       }
 
@@ -79,7 +82,7 @@ export class TikTokController {
   async getVideos(
     accessToken: string,
     cursor: number | null = null,
-    maxCount: number = 20
+    maxCount: number = 20,
   ): Promise<TikTokVideoListResponse | TikTokErrorObj> {
     try {
       const url =
@@ -103,7 +106,7 @@ export class TikTokController {
       const response = await fetch(url, fetchConfig);
       if (!response.ok) {
         throw new Error(
-          `Network response was not ok:  ${response?.statusText}`
+          `Network response was not ok:  ${response?.statusText}`,
         );
       }
 

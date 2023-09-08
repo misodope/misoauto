@@ -20,17 +20,12 @@ export const handler: Handler = async (
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
     const tiktokController = new TikTokController();
+
     const requestBody = JSON.parse(event.body);
-    console.log("REQUEST BODY", requestBody);
     const { accessToken } = requestBody;
-    console.log("ACCESS TOKEN", accessToken);
     if (!accessToken) {
       return badRequest("No access token provided");
     }
-
-    // TODO: Possibly use cookie to get accessToken?
-    const cookie = event.cookies;
-    console.log("This is the cookie", cookie);
 
     const userInfo = await tiktokController.getUserInfo(accessToken);
     return sendResponseBody({

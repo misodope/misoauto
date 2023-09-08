@@ -15,16 +15,18 @@ export const handler: Handler = async (
   event: APIGatewayProxyEventV2WithRequestContext<{ accessToken: string }>,
   context: Context,
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  console.log(`Event: ${JSON.stringify(event, null, 2)}`);
-  console.log(`Context: ${JSON.stringify(context, null, 2)}`);
-
-  const tiktokController = new TikTokController();
-  const { accessToken } = event.requestContext;
-  if (!accessToken) {
-    return badRequest("No access token provided");
-  }
-
   try {
+    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+    console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+
+    const tiktokController = new TikTokController();
+
+    const requestBody = JSON.parse(event.body);
+    const { accessToken } = requestBody;
+    if (!accessToken) {
+      return badRequest("No access token provided");
+    }
+
     const videoListResponse = await tiktokController.getVideos(accessToken);
     return sendResponseBody({
       status: 200,
