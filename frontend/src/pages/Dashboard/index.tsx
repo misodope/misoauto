@@ -15,6 +15,7 @@ export const Dashboard = () => {
     const fetchUserData = async () => {
       try {
         const url = `${getApiUrl()}/tiktok/user`;
+
         const fetchConfig: RequestInit = {
           method: "POST",
           body: JSON.stringify({ accessToken: authData?.accessToken }),
