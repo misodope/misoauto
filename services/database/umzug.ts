@@ -13,6 +13,9 @@ const sequelize = new Sequelize(URI, {
   dialect: "postgres",
   protocol: "postgres",
   dialectModule: pg,
+  dialectOptions: {
+    ssl: process.env.NODE_ENV !== "development" ? true : false,
+  },
 });
 
 export const migrator = new Umzug({
