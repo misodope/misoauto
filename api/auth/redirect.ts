@@ -59,7 +59,7 @@ export const handler: Handler = async (
         open_id: response.open_id,
         access_token: response.access_token,
         refresh_token: response.refresh_token,
-        expire_in: response.expires_in,
+        expires_in: response.expires_in,
         scope: response.scope,
         token_type: response.token_type,
       });
@@ -67,7 +67,7 @@ export const handler: Handler = async (
       user = await user.update({
         access_token: response.access_token,
         refresh_token: response.refresh_token,
-        expire_in: response.expires_in,
+        expires_in: response.expires_in,
         scope: response.scope,
         token_type: response.token_type,
       });
