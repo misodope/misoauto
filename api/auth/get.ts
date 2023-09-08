@@ -34,7 +34,7 @@ export const handler: Handler = async (
       return badRequest("No user ID provided.");
     }
 
-    const user = await User.findOne({ where: { openId } });
+    const user = await User.findOne({ where: { open_id: openId } });
     console.log("USER", user);
     return sendResponseBody({
       status: 200,
