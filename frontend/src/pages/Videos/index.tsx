@@ -44,7 +44,7 @@ export const Videos = () => {
 
         const responseData: TikTokVideoListResponse = await response.json();
 
-        setVideos(responseData.data.videos);
+        setVideos(responseData.response.data.videos);
       } catch (error: unknown) {
         console.error(error);
       }
