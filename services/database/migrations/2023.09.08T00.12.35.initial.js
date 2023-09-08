@@ -34,7 +34,17 @@ exports.up = async params => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-  }, { timestamps: true } );
+    createdAt: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.fn('now'),
+    },
+    updatedAt: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.fn('now'),
+    },
+  });
 };
 
 /** @type {import('umzug').MigrationFn<any>} */
