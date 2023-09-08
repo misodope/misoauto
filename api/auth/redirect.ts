@@ -18,8 +18,6 @@ import { Sequelize } from "sequelize";
 import { IUser, getUserModel } from "@services/database/models/user";
 import { connectToDb } from "@services/database";
 
-import UserQueries from "@services/database/queries/user";
-
 let sequelize: Sequelize | null = null;
 let User: IUser | null = null;
 
