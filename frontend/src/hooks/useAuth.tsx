@@ -15,6 +15,11 @@ interface AuthData {
   refreshExpiresIn: number;
 }
 
+interface AuthResponse {
+  message: string;
+  response: AuthData;
+}
+
 interface AuthProps {
   authData: AuthData | null;
   setAuthData: (authData: AuthData | null) => void;
@@ -51,9 +56,9 @@ export const useAuth = (): AuthProps => {
             throw new Error("Network response was not ok");
           }
 
-          const data: AuthData = await response.json();
+          const data: AuthResponse = await response.json();
 
-          setAuthData(data);
+          setAuthData(data.response);
           setLoading(false);
           setFetching(false);
         } catch (error: unknown) {
