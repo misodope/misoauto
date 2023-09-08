@@ -2,17 +2,17 @@ import React, { useState, useEffect, createContext } from "react";
 import { getApiUrl } from "../utils/env";
 
 interface AuthData {
-  accessToken: string;
-  refreshToken: string;
+  access_token: string;
+  refresh_token: string;
   createdAt: string;
   expiresAt: string;
-  openId: string;
-  refreshExpiresAt: string;
+  open_id: string;
+  refresh_expires_at: string;
   scope: string;
   updatedAt: string;
   id: number;
-  expiresIn: number;
-  refreshExpiresIn: number;
+  expires_in: number;
+  refresh_expires_in: number;
 }
 
 interface AuthResponse {
@@ -29,57 +29,6 @@ interface AuthProps {
   setFetching: (fetching: boolean) => void;
   setLoading: (loading: boolean) => void;
 }
-
-export const useAuth = (): AuthProps => {
-  const [authData, setAuthData] = useState<AuthData | null>(null);
-  const [error, setError] = useState<unknown | Error | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [fetching, setFetching] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (fetching) {
-      console.log("Fetching auth user data...");
-      // Check for user param in url
-      const urlParams = new URLSearchParams(window.location.search);
-      const user = urlParams.get("user");
-      if (!user) {
-        return;
-      }
-
-      // Fetch user data
-      const fetchUserData = async () => {
-        try {
-          const url = `${getApiUrl()}/auth/get?openId=${user}`;
-          console.log("Inside FetchUserData", url);
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-
-          const data: AuthResponse = await response.json();
-
-          setAuthData(data.response);
-          setLoading(false);
-          setFetching(false);
-        } catch (error: unknown) {
-          setError(error);
-        }
-      };
-
-      fetchUserData();
-    }
-  }, [fetching]);
-
-  return {
-    authData,
-    error,
-    loading,
-    fetching,
-    setFetching,
-    setLoading,
-    setAuthData,
-  };
-};
 
 interface AuthContextState {
   authData: AuthData | null;
@@ -125,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!cookie) {
         console.log("No auth data in cookie, but in state, setting cookie...");
         // Set auth data in cookie for 1 day
-        const expires = `; expires=${authData.expiresIn}`;
+        const expires = `; expires=${authData.expires_in}`;
         document.cookie = `authData=${JSON.stringify(
           authData,
         )}${expires}; path=/`;
@@ -175,4 +124,55 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 export const useAuthContext = (): AuthContextState => {
   const authData = React.useContext(AuthContext);
   return authData;
+};
+
+export const useAuth = (): AuthProps => {
+  const [authData, setAuthData] = useState<AuthData | null>(null);
+  const [error, setError] = useState<unknown | Error | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [fetching, setFetching] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (fetching) {
+      console.log("Fetching auth user data...");
+      // Check for user param in url
+      const urlParams = new URLSearchParams(window.location.search);
+      const user = urlParams.get("user");
+      if (!user) {
+        return;
+      }
+
+      // Fetch user data
+      const fetchUserData = async () => {
+        try {
+          const url = `${getApiUrl()}/auth/get?openId=${user}`;
+
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          const data: AuthResponse = await response.json();
+
+          setAuthData(data.response);
+          setLoading(false);
+          setFetching(false);
+        } catch (error: unknown) {
+          setError(error);
+        }
+      };
+
+      fetchUserData();
+    }
+  }, [fetching]);
+
+  return {
+    authData,
+    error,
+    loading,
+    fetching,
+    setFetching,
+    setLoading,
+    setAuthData,
+  };
 };

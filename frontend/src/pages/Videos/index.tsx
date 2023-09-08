@@ -27,7 +27,7 @@ export const Videos = () => {
         const fetchConfig: RequestInit = {
           method: "POST",
           mode: "cors",
-          body: JSON.stringify({ accessToken: authData?.accessToken }),
+          body: JSON.stringify({ accessToken: authData?.access_token }),
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",

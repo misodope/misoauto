@@ -35,7 +35,6 @@ export const handler: Handler = async (
     }
 
     const user = await User.findOne({ where: { open_id: openId } });
-    console.log("USER", user);
     if (!user) {
       return badRequest("User not found");
     }
