@@ -1,44 +1,46 @@
+import {
+  badRequest,
+  internalServerError,
+  sendResponseBody,
+} from "@services/utils/response.js";
 import { TikTokController } from "../../services/api/TikTokController.js";
 import {
   Context,
   APIGatewayProxyEventV2WithRequestContext,
   Handler,
-  APIGatewayProxyResult,
+  APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
 
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2WithRequestContext<{ accessToken: string }>,
   context: Context,
-): Promise<APIGatewayProxyResult> => {
-  console.log(`Event: ${JSON.stringify(event, null, 2)}`);
-  console.log(`Context: ${JSON.stringify(context, null, 2)}`);
-
-  const tiktokController = new TikTokController();
-  const { accessToken } = event.requestContext;
-  if (!accessToken) {
-    return {
-      statusCode: 422,
-      body: JSON.stringify({ message: "No access token provided" }),
-    };
-  }
-
-  // TODO: Possibly use cookie to get accessToken?
-  const cookie = event.cookies;
-  console.log("This is the cookie", cookie);
-
+): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
+    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+    console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+
+    const tiktokController = new TikTokController();
+    const { accessToken } = event.requestContext;
+    console.log("ACCESS TOKEN", accessToken);
+    if (!accessToken) {
+      return badRequest("No access token provided");
+    }
+
+    // TODO: Possibly use cookie to get accessToken?
+    const cookie = event.cookies;
+    console.log("This is the cookie", cookie);
+
     const userInfo = await tiktokController.getUserInfo(accessToken);
-    const handlerResponse: APIGatewayProxyResult = {
-      statusCode: 200,
-      body: JSON.stringify(userInfo),
-    };
-    return handlerResponse;
+    return sendResponseBody({
+      status: 200,
+      message: "Successfully fetched user info",
+      success: userInfo,
+    });
   } catch {
     // Return error message if user is not found
-    const handlerErrorResponse: APIGatewayProxyResult = {
-      statusCode: 404,
-      body: JSON.stringify({ message: "User not found" }),
-    };
-    return handlerErrorResponse;
+
+    return internalServerError(
+      "Sorry, we're having trouble fetching user info",
+    );
   }
 };

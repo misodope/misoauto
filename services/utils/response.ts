@@ -4,7 +4,7 @@ interface IResponse {
   status: number;
   error?: {} | null;
   message: string;
-  success: {} | null;
+  success?: {} | null;
   cookies?: Array<string>;
   headers?: {};
 }
