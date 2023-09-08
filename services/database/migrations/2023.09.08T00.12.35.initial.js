@@ -1,40 +1,40 @@
-const { DataTypes } = require( "sequelize");
+const { Sequelize } = require( "sequelize");
 
 /** @type {import('umzug').MigrationFn<any>} */
 exports.up = async params => {
   const { context: sequelize} = params;
   await sequelize.getQueryInterface().createTable('users', {
     id: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: false,
       autoIncrement: true,
     },
     open_id: {
-      type: DataTypes.STRING,
+      type: Sequelize.STRING,
       allowNull: false,
       primaryKey: true,
     },
     access_token: {
-      type: DataTypes.STRING,
+      type: Sequelize.STRING,
       allowNull: false,
     },
     refresh_token: {
-      type: DataTypes.STRING,
+      type: Sequelize.STRING,
       allowNull: false,
     },
     expires_in: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: false,
     },
     token_type: {
-      type: DataTypes.STRING,
+      type: Sequelize.STRING,
       allowNull: false,
     },
     scope: {
-      type: DataTypes.STRING,
+      type: Sequelize.STRING,
       allowNull: false,
     },
-  });
+  }, { timestamps: true } );
 };
 
 /** @type {import('umzug').MigrationFn<any>} */
