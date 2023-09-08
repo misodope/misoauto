@@ -20,7 +20,9 @@ export const handler: Handler = async (
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
     const tiktokController = new TikTokController();
-    const { accessToken } = event.requestContext;
+    const requestBody = JSON.parse(event.body);
+    console.log("REQUEST BODY", requestBody);
+    const { accessToken } = requestBody;
     console.log("ACCESS TOKEN", accessToken);
     if (!accessToken) {
       return badRequest("No access token provided");
@@ -36,11 +38,7 @@ export const handler: Handler = async (
       message: "Successfully fetched user info",
       success: userInfo,
     });
-  } catch {
-    // Return error message if user is not found
-
-    return internalServerError(
-      "Sorry, we're having trouble fetching user info",
-    );
+  } catch (error) {
+    return internalServerError(error);
   }
 };
