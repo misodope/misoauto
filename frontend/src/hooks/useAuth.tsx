@@ -45,6 +45,7 @@ export const useAuth = (): AuthProps => {
       const fetchUserData = async () => {
         try {
           const url = `${getApiUrl()}/auth/get?openId=${user}`;
+          console.log("Inside FetchUserData", url);
           const response = await fetch(url);
           if (!response.ok) {
             throw new Error("Network response was not ok");
