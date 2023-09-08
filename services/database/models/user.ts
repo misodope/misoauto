@@ -40,7 +40,7 @@ export type IUser = typeof User;
 export const getUserModel = async (sequelize?: Sequelize): Promise<IUser> => {
   if (sequelize) {
     User.init(schema, { sequelize, timestamps: true });
-    await User.sync({ force: true });
+    await User.sync({ alter: true });
   }
 
   return User;
