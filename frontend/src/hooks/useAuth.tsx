@@ -1,4 +1,5 @@
 import React, { useState, useEffect, createContext } from "react";
+import { getApiUrl } from "../utils/env";
 
 interface AuthData {
   accessToken: string;
@@ -43,7 +44,7 @@ export const useAuth = (): AuthProps => {
       // Fetch user data
       const fetchUserData = async () => {
         try {
-          const url = `${import.meta.env.VITE_API_URL}/auth/get?openId=${user}`;
+          const url = `${getApiUrl()}/auth/get?openId=${user}`;
           const response = await fetch(url);
           if (!response.ok) {
             throw new Error("Network response was not ok");

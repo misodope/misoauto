@@ -5,6 +5,7 @@ import {
   TikTokVideo,
   TikTokVideoListResponse,
 } from "../../../../services/api/TikTokController";
+import { getApiUrl } from "../../utils/env";
 
 export const Videos = () => {
   const { authData } = useAuthContext();
@@ -22,7 +23,7 @@ export const Videos = () => {
   useEffect(() => {
     const fetchVideoList = async () => {
       try {
-        const url = `${import.meta.env.VITE_API_URL}/tiktok/videos`;
+        const url = `${getApiUrl()}/tiktok/videos`;
         const fetchConfig: RequestInit = {
           method: "POST",
           body: JSON.stringify({ accessToken: authData?.accessToken }),
