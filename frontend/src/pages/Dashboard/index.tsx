@@ -1,51 +1,17 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuthContext } from "../../hooks/useAuth";
 import Loader from "../../components/Loader/Loader";
 import { getApiUrl } from "../../utils/env";
+import { useFetch } from "../../hooks/useFetch";
 
 export const Dashboard = () => {
-  const [userData, setUserData] = useState<Record<
-    string,
-    string | number
-  > | null>(null);
-  const { authData } = useAuthContext();
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const url = `${getApiUrl()}/tiktok/user`;
-        console.log("AUTH DATA", authData);
-        const fetchConfig: RequestInit = {
-          method: "POST",
-          mode: "cors",
-          body: JSON.stringify({ accessToken: authData?.access_token }),
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        };
-        console.log("FETCH CONFIG", fetchConfig);
-        const response = await fetch(url, fetchConfig);
-
-        if (!response.ok) {
-          throw new Error(
-            `Network response was not ok:  ${response?.statusText}`,
-          );
-        }
-
-        const data = await response.json();
-
-        setUserData(data.response);
-      } catch (error: unknown) {
-        console.error(error);
-      }
-    };
-
-    if (authData) {
-      fetchUserData();
-    }
-  }, [authData]);
+  const {
+    data: userData,
+    error,
+    loading,
+  } = useFetch({
+    url: `/tiktok/user`,
+    method: "GET",
+  });
 
   if (!userData) {
     return <Loader />;

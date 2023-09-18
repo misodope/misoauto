@@ -50,17 +50,17 @@ const routes = createRoutesFromElements(
     <Route element={<Layout />}>
       <Route element={<HomeLayout />}>
         {publicRoutes.map((route) => (
-          <Route {...route} />
+          <Route key={route.path} {...route} />
         ))}
       </Route>
 
       <Route element={<ProtectedLayout />}>
         {authedRoutes.map((route) => (
-          <Route {...route} />
+          <Route key={route.path} {...route} />
         ))}
       </Route>
     </Route>
-  </>
+  </>,
 );
 
 export const router = createBrowserRouter(routes);
