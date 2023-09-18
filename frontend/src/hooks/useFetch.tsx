@@ -42,8 +42,14 @@ export const useFetch = (props: FetchProps) => {
           }
 
           const data = await response.json();
-
-          setData(data);
+          /*
+            API Response:       
+            {
+              message,
+              response,
+            },
+          */
+          setData(data.response);
         } catch (error) {
           setError(error);
         } finally {

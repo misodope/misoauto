@@ -25,7 +25,7 @@ export const Videos = () => {
   });
 
   const videos: Array<TikTokVideo> =
-    videoData?.response.data.videos ?? videosJson.videos;
+    videoData?.data.videos ?? videosJson.videos;
   console.log("Videos", videos);
 
   if (!videos.length) {
