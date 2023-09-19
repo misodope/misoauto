@@ -1,28 +1,28 @@
 import { chromium, Page } from "@playwright/test";
+import process from "process";
 
-const scraper = async (url = "https://misodope.com") => {
+const args = process.argv;
+const url = args[2];
+const selector = args[3];
+
+const scraper = async (scrapeUrl = url, scrapeSelector = selector) => {
   const browser = await chromium.launch({
     headless: false,
   });
+
   const page: Page = await browser.newPage();
 
-  await page.goto(url);
+  await page.goto(scrapeUrl);
 
-  // Extract the links from the page using the CSS selector
-  const links = await page.$$eval(
-    "div > .transition-colors.duration-500",
-    (els) =>
-      els.map((el) => {
-        return el.getAttribute("href");
-      })
+  const scraped = await page.locator(scrapeSelector).all();
+  // get all inner text from scraped
+  const scrapedText = await Promise.all(
+    scraped.map(async (el) => await el.getAttribute("href")),
   );
 
-  // Navigate to the last link
-  await page.goto(links[links.length - 1]);
   // Extract the title
   const title = await page.title();
-
-  console.log(`Links`, links);
+  console.log("Scraped", scrapedText);
   console.log(`Title: ${title}`);
 
   await browser.close();

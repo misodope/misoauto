@@ -9,7 +9,7 @@ import { useFetch } from "../../hooks/useFetch";
 import { DataTable } from "../../components/DataTable/DataTable";
 import videosJson from "../../test/data/videos-mock.json";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 export const Videos = () => {
   const { authData } = useAuthContext();
@@ -55,12 +55,12 @@ export const Videos = () => {
               target="_blank"
               className="text-indigo-500 underline hover:text-indigo-900"
             >
-              Go to video
+              Video Link
             </a>
           );
         },
         footer: (info) => info.column.id,
-        header: "Video Link",
+        header: "View Video",
       }),
     ],
     [],
@@ -68,7 +68,7 @@ export const Videos = () => {
   return (
     <div className="container mx-auto flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-10">Videos</h1>
-      <DataTable<TikTokVideo> columns={columns} data={videos} />
+      <DataTable columns={columns} data={videos} />
     </div>
   );
 };

@@ -7,7 +7,7 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 
-// import { useState } from "react";
+import { memo } from "react";
 
 interface DataTableProps<T> {
   data: Array<T>;
@@ -15,7 +15,7 @@ interface DataTableProps<T> {
   pageSize?: number;
 }
 
-export const DataTable = <T extends any>(
+const DataTableComponent = <T extends any>(
   props: DataTableProps<T>,
 ): React.ReactElement<T> => {
   // const [pagination, setPagination] = useState<PaginationState>({
@@ -94,3 +94,5 @@ export const DataTable = <T extends any>(
     </div>
   );
 };
+
+export const DataTable = memo(DataTableComponent) as typeof DataTableComponent;

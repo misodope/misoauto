@@ -43,7 +43,7 @@ export const useFetch = (props: FetchProps) => {
 
           const data = await response.json();
           /*
-            API Response:       
+            Example API Response:       
             {
               message,
               response,

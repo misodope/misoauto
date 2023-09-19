@@ -10,6 +10,13 @@ services:
       - POSTGRES_PASSWORD=misoauto_password
       - POSTGRES_DB=misoauto
     restart: always
+  frontend:
+    build: ./frontend
+    ports: 
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 # Volumes for persisting data, see https://docs.docker.com/engine/reference/builder/#volume
 volumes:
