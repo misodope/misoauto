@@ -1,24 +1,17 @@
 import Loader from "../../components/Loader/Loader";
 import { useAuthContext } from "../../hooks/useAuth";
-import {
-  TikTokVideo,
-  TikTokVideoListResponse,
-} from "../../../../services/api/TikTokController";
+import { TikTokVideo } from "../../../../services/api/TikTokController";
 import { useFetch } from "../../hooks/useFetch";
 
 import { DataTable } from "../../components/DataTable/DataTable";
 import videosJson from "../../test/data/videos-mock.json";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { useCallback, useMemo } from "react";
+import { createColumnHelper } from "@tanstack/react-table";
+import { useMemo } from "react";
 
 export const Videos = () => {
   const { authData } = useAuthContext();
 
-  const {
-    data: videoData,
-    error,
-    loading,
-  } = useFetch({
+  const { data: videoData, loading } = useFetch({
     url: `/tiktok/videos`,
     method: "POST",
     body: JSON.stringify({ accessToken: authData?.access_token }),
@@ -27,10 +20,6 @@ export const Videos = () => {
   const videos: Array<TikTokVideo> =
     videoData?.data.videos ?? videosJson.videos;
   console.log("Videos", videos);
-
-  if (!videos.length) {
-    return <Loader />;
-  }
 
   const columnHelper = createColumnHelper<TikTokVideo>();
   const columns = useMemo(
@@ -42,7 +31,7 @@ export const Videos = () => {
       }),
       columnHelper.accessor("title", {
         cell: (info) => {
-          return <p className="truncate max-w-md">{info.getValue()}</p>;
+          return <p className="truncate max-w-sm">{info.getValue()}</p>;
         },
         footer: (info) => info.column.id,
         header: "Title",
@@ -55,16 +44,21 @@ export const Videos = () => {
               target="_blank"
               className="text-indigo-500 underline hover:text-indigo-900"
             >
-              Video Link
+              View
             </a>
           );
         },
         footer: (info) => info.column.id,
-        header: "View Video",
+        header: "Video",
       }),
     ],
     [],
   );
+
+  if (loading || !videos.length) {
+    return <Loader />;
+  }
+
   return (
     <div className="container mx-auto flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-10">Videos</h1>

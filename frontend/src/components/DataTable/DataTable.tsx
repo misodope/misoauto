@@ -43,8 +43,8 @@ const DataTableComponent = <T extends any>(
   });
 
   return (
-    <div className="p-2">
-      <table className="w-full border border-gray-300">
+    <div className="p-2 overflow-x-auto w-full">
+      <table className="w-full border border-gray-300 to">
         <thead className="bg-gray-100">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>

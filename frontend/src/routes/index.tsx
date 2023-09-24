@@ -34,14 +34,16 @@ export const publicRoutes = [
   },
 ];
 
-const authedRoutes = [
+export const authedRoutes = [
   {
     path: "/dashboard",
     element: <Dashboard />,
+    label: "Dashboard",
   },
   {
     path: "/videos",
     element: <Videos />,
+    label: "Videos",
   },
 ];
 
