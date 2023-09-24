@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Loader from "../../components/Loader/Loader";
 import { useFetch } from "../../hooks/useFetch";
 import { useAuthContext } from "../../hooks/useAuth";
+import { PageTitle } from "../../components/PageTitle/PageTitle";
 
 export const Dashboard = () => {
   const { authData } = useAuthContext();
@@ -23,9 +24,7 @@ export const Dashboard = () => {
   return (
     <div>
       <div className="mt-8 flex items-center flex-col">
-        <h1 className="text-3xl font-bold mb-10 text-center">
-          Hello, {userData.display_name || "Welcome!"}
-        </h1>
+        <PageTitle>Hello, {userData.display_name || "Welcome!"}</PageTitle>
         <img
           className="w-20 h-20 rounded-full mb-4"
           src={(userData.avatar_url as string) || ""}

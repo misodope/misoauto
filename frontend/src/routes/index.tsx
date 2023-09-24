@@ -14,8 +14,15 @@ import { Login } from "../pages/Login";
 import { Privacy } from "../pages/Privacy";
 import { Terms } from "../pages/Terms";
 import { Videos } from "../pages/Videos";
+import { UploadVideos } from "../pages/UploadVideos";
 
-export const publicRoutes = [
+interface RouteProps {
+  path: string;
+  element: React.ReactElement;
+  label?: string;
+}
+
+export const publicRoutes: RouteProps[] = [
   {
     path: "/",
     element: <Landing />,
@@ -34,7 +41,7 @@ export const publicRoutes = [
   },
 ];
 
-export const authedRoutes = [
+export const authedRoutes: RouteProps[] = [
   {
     path: "/dashboard",
     element: <Dashboard />,
@@ -44,6 +51,11 @@ export const authedRoutes = [
     path: "/videos",
     element: <Videos />,
     label: "Videos",
+  },
+  {
+    path: "/videos/upload",
+    element: <UploadVideos />,
+    label: "Upload Videos",
   },
 ];
 
