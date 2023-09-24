@@ -17,6 +17,13 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+  video_upload_lambda:
+    platform: linux/arm64/v8
+    build:
+      context: .
+      dockerfile: ./api/video/Dockerfile.upload
+    ports: 
+      - "9000:8080"
 
 # Volumes for persisting data, see https://docs.docker.com/engine/reference/builder/#volume
 volumes:
