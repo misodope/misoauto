@@ -1,5 +1,10 @@
+import { PageContainer } from "../../components/PageContainer/PageContainer";
 import { PageTitle } from "../../components/PageTitle/PageTitle";
 
 export const UploadVideos = (): React.ReactElement => {
-  return <PageTitle>Upload Videos</PageTitle>;
+  return (
+    <PageContainer>
+      <PageTitle>Upload Videos</PageTitle>
+    </PageContainer>
+  );
 };

@@ -3,6 +3,7 @@ import Loader from "../../components/Loader/Loader";
 import { useFetch } from "../../hooks/useFetch";
 import { useAuthContext } from "../../hooks/useAuth";
 import { PageTitle } from "../../components/PageTitle/PageTitle";
+import { PageContainer } from "../../components/PageContainer/PageContainer";
 
 export const Dashboard = () => {
   const { authData } = useAuthContext();
@@ -22,29 +23,27 @@ export const Dashboard = () => {
   }
 
   return (
-    <div>
-      <div className="mt-8 flex items-center flex-col">
-        <PageTitle>Hello, {userData.display_name || "Welcome!"}</PageTitle>
-        <img
-          className="w-20 h-20 rounded-full mb-4"
-          src={(userData.avatar_url as string) || ""}
-          alt="Profile"
-        />
-        <div className="flex flex-col items-center">
-          <div className="text-sm font-bold text-gray-600 mb-4">
-            {userData.bio_description}
-          </div>
-          <Link
-            to={(userData.profile_deep_link as string) || "https://tiktok.com"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
-          >
-            View profile
-          </Link>
+    <PageContainer>
+      <PageTitle>Hello, {userData.display_name || "Welcome!"}</PageTitle>
+      <img
+        className="w-20 h-20 rounded-full mb-4"
+        src={(userData.avatar_url as string) || ""}
+        alt="Profile"
+      />
+      <div className="flex flex-col items-center">
+        <div className="text-sm font-bold text-gray-600 mb-4">
+          {userData.bio_description}
         </div>
+        <Link
+          to={(userData.profile_deep_link as string) || "https://tiktok.com"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
+        >
+          View profile
+        </Link>
       </div>
-      <div className="grid grid-cols-2 grid-rows-2 gap-4 mt-8">
+      <div className="grid grid-cols-2 grid-rows-2 gap-4 mt-8 w-full">
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="text-2xl font-bold">
             {userData.follower_count || 0}
@@ -74,6 +73,6 @@ export const Dashboard = () => {
           Go to Video Page
         </Link>
       </div>
-    </div>
+    </PageContainer>
   );
 };
