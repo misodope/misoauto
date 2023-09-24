@@ -34,14 +34,16 @@ export const publicRoutes = [
   },
 ];
 
-const authedRoutes = [
+export const authedRoutes = [
   {
     path: "/dashboard",
     element: <Dashboard />,
+    label: "Dashboard",
   },
   {
     path: "/videos",
     element: <Videos />,
+    label: "Videos",
   },
 ];
 
@@ -50,17 +52,17 @@ const routes = createRoutesFromElements(
     <Route element={<Layout />}>
       <Route element={<HomeLayout />}>
         {publicRoutes.map((route) => (
-          <Route {...route} />
+          <Route key={route.path} {...route} />
         ))}
       </Route>
 
       <Route element={<ProtectedLayout />}>
         {authedRoutes.map((route) => (
-          <Route {...route} />
+          <Route key={route.path} {...route} />
         ))}
       </Route>
     </Route>
-  </>
+  </>,
 );
 
 export const router = createBrowserRouter(routes);

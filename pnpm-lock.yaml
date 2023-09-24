@@ -57,6 +57,9 @@ importers:
 
   frontend:
     dependencies:
+      '@tanstack/react-table':
+        specifier: ^8.9.7
+        version: 8.9.7(react-dom@18.2.0)(react@18.2.0)
       dotenv:
         specifier: ^16.0.3
         version: 16.0.3
@@ -631,6 +634,23 @@ packages:
       colors: 1.2.5
       string-argv: 0.3.2
     dev: true
+
+  /@tanstack/react-table@8.9.7(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-UKUekM8JNUyWbjT1q3s1GpH5OtBL9mJ4258Il23fsahvkh3ou9TuFVmqI0/UPiFROgHkRlCBDNPUhcsC9YPFgg==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      react: '>=16'
+      react-dom: '>=16'
+    dependencies:
+      '@tanstack/table-core': 8.9.7
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
+  /@tanstack/table-core@8.9.7:
+    resolution: {integrity: sha512-lkhVcGDxa9GSoDFPkplPDvzsiUACPZrxT3U1edPs0DCMKFhBDgZ7d1DPd7cqHH0JoybfbQ/qiTQYOQBg8sinJg==}
+    engines: {node: '>=12'}
+    dev: false
 
   /@tsconfig/node10@1.0.9:
     resolution: {integrity: sha512-jNsYVVxU8v5g43Erja32laIDHXeoNvFEpX33OK4d6hljo3jDhCBDhx5dhCCTMWUojscpAagGiRkBKxpdl9fxqA==}

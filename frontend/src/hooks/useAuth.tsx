@@ -20,17 +20,8 @@ interface AuthResponse {
   response: AuthData;
 }
 
-interface AuthProps {
-  authData: AuthData | null;
-  setAuthData: (authData: AuthData | null) => void;
-  error: unknown | Error | null;
-  loading: boolean;
-  fetching: boolean;
-  setFetching: (fetching: boolean) => void;
-  setLoading: (loading: boolean) => void;
-}
-
 interface AuthContextState {
+  error: unknown | Error | null;
   authData: AuthData | null;
   authLoading: boolean;
   authStarted: boolean;
@@ -40,6 +31,7 @@ interface AuthContextState {
 
 // Create Context for Auth Data
 export const AuthContext = createContext<AuthContextState>({
+  error: null,
   authData: null,
   authLoading: false,
   authStarted: false,
@@ -49,7 +41,44 @@ export const AuthContext = createContext<AuthContextState>({
 
 // Create Provider for Auth Context
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { authData, loading, setFetching, setLoading, setAuthData } = useAuth();
+  const [authData, setAuthData] = useState<AuthData | null>(null);
+  const [error, setError] = useState<unknown | Error | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [fetching, setFetching] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (fetching) {
+      console.log("Fetching auth user data...");
+      // Check for user param in url
+      const urlParams = new URLSearchParams(window.location.search);
+      const user = urlParams.get("user");
+      if (!user) {
+        return;
+      }
+
+      // Fetch user data
+      const fetchUserData = async () => {
+        try {
+          const url = `${getApiUrl()}/auth/get?openId=${user}`;
+
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          const data: AuthResponse = await response.json();
+
+          setAuthData(data.response);
+          setLoading(false);
+          setFetching(false);
+        } catch (error: unknown) {
+          setError(error);
+        }
+      };
+
+      fetchUserData();
+    }
+  }, [fetching]);
 
   useEffect(() => {
     const cookie = document.cookie
@@ -112,6 +141,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value = {
     authData,
+    error,
     authLoading: loading,
     authStarted: loading && !authData,
     isLoggedIn: isLoggedIn(),
@@ -124,55 +154,4 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 export const useAuthContext = (): AuthContextState => {
   const authData = React.useContext(AuthContext);
   return authData;
-};
-
-export const useAuth = (): AuthProps => {
-  const [authData, setAuthData] = useState<AuthData | null>(null);
-  const [error, setError] = useState<unknown | Error | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [fetching, setFetching] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (fetching) {
-      console.log("Fetching auth user data...");
-      // Check for user param in url
-      const urlParams = new URLSearchParams(window.location.search);
-      const user = urlParams.get("user");
-      if (!user) {
-        return;
-      }
-
-      // Fetch user data
-      const fetchUserData = async () => {
-        try {
-          const url = `${getApiUrl()}/auth/get?openId=${user}`;
-
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-
-          const data: AuthResponse = await response.json();
-
-          setAuthData(data.response);
-          setLoading(false);
-          setFetching(false);
-        } catch (error: unknown) {
-          setError(error);
-        }
-      };
-
-      fetchUserData();
-    }
-  }, [fetching]);
-
-  return {
-    authData,
-    error,
-    loading,
-    fetching,
-    setFetching,
-    setLoading,
-    setAuthData,
-  };
 };

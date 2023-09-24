@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { authedRoutes } from "../../routes";
 
 interface SideNavigationProps {
   open: boolean;
@@ -20,20 +21,16 @@ export const SideNavigation: React.FC<SideNavigationProps> = ({
       <button onClick={onClose} className="p-4 mr-2 self-end text-white">
         x
       </button>
-
       <div className="flex flex-col text-lg">
-        <Link
-          to="/dashboard"
-          className="p-2 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors duration-200"
-        >
-          Dashboard
-        </Link>
-        <Link
-          to="/videos"
-          className="p-2 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors duration-200"
-        >
-          Videos
-        </Link>
+        {authedRoutes.map((route) => (
+          <Link
+            className="p-2 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors duration-200"
+            to={route.path}
+            onClick={onClose}
+          >
+            {route.label}
+          </Link>
+        ))}
         <Link
           to="#"
           className="absolute bottom-0 w-full p-2 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors duration-200"
