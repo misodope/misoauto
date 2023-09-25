@@ -26,7 +26,16 @@ export const UploadVideos = (): React.ReactElement => {
       });
 
       const data = await response.json();
+      const signedUrl = data.response.signedUrl;
 
+      const uploadResponse = await fetch(signedUrl, {
+        method: "PUT",
+        body: uploadFile,
+      });
+
+      const uploadData = await uploadResponse.json();
+
+      console.log("Upload Response", uploadData);
       console.log("Upload Video Response", data);
     } catch (error) {
       console.error("Error Uploading Video", error);
