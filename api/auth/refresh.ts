@@ -13,8 +13,6 @@ export const handler: Handler = async (
   console.log(`Event: ${JSON.stringify(event, null, 2)}`);
   console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-  console.log("BODY", event.body);
-
   return sendResponseBody({
     status: 200,
     message: "Refresh Endpoint!",

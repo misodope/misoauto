@@ -24,7 +24,12 @@ dotenv.config({ path: path.resolve(__dirname, "../../", ".env") });
 const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
 
 export const handler: Handler = async (
-  event: APIGatewayProxyEventV2WithRequestContext<{ file: File }>,
+  event: APIGatewayProxyEventV2WithRequestContext<{
+    file: File;
+    filename: string;
+    filetype: string;
+    filesize: string;
+  }>,
   context: Context,
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   let uploadId: string;
@@ -33,14 +38,15 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-    const body = JSON.parse(event.body);
-    console.log("BODYYY", body);
-    // console.log("File", file);
-    // console.log("Filename", filename);
-    // console.log("Filetype", filetype);
-    // console.log("Filesize", Number(filesize));
+    const requestBody = JSON.parse(event.body);
+    const { file, filename, filetype, filesize } = requestBody;
+    console.log("BODYYY", requestBody);
+    console.log("File", file);
+    console.log("Filename", filename);
+    console.log("Filetype", filetype);
+    console.log("Filesize", Number(filesize));
 
-    if (!body.file) {
+    if (!file) {
       return badRequest("No file provided.");
     }
 
@@ -56,22 +62,22 @@ export const handler: Handler = async (
       },
     });
 
-    // const buffer = Buffer.from(file, "base64");
+    const buffer = Buffer.from(file, "base64");
 
-    // const multipartUpload = await s3Client.send(
-    //   new CreateMultipartUploadCommand({
-    //     Bucket: "misoauto",
-    //     Key: `videos/${filename}`,
-    //   }),
-    // );
+    const multipartUpload = await s3Client.send(
+      new CreateMultipartUploadCommand({
+        Bucket: "misoauto",
+        Key: `videos/${filename}`,
+      }),
+    );
 
-    // uploadId = multipartUpload.UploadId;
-    // console.log("Upload ID", uploadId);
+    uploadId = multipartUpload.UploadId;
+    console.log("Upload ID", uploadId);
 
-    // const uploadPromises = [];
+    const uploadPromises = [];
 
-    // const partSize = Math.ceil(Number(filesize) / CHUNK_SIZE);
-    // console.log("Part Size", partSize);
+    const partSize = Math.ceil(Number(filesize) / CHUNK_SIZE);
+    console.log("Part Size", partSize);
 
     return sendResponseBody({
       status: 200,
