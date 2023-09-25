@@ -1,7 +1,13 @@
 import { useRef, useState } from "react";
 
-export const FileUpload = () => {
-  const [uploadFile, setUploadFile] = useState<null | File>(null);
+interface FileUploadProps {
+  handleFileChange: (f: File) => void;
+  selectedFile: File | null;
+}
+export const FileUpload: React.FC<FileUploadProps> = ({
+  handleFileChange,
+  selectedFile,
+}) => {
   const [dragActive, setDragActive] = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -21,7 +27,7 @@ export const FileUpload = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    e.target?.files && setUploadFile(e.target.files[0]);
+    e.target?.files && handleFileChange(e.target.files[0]);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -30,7 +36,7 @@ export const FileUpload = () => {
 
     setDragActive(false);
 
-    e.dataTransfer.files && setUploadFile(e.dataTransfer.files[0]);
+    e.dataTransfer.files && handleFileChange(e.dataTransfer.files[0]);
   };
 
   const handleUploadClick = () => {
@@ -50,7 +56,7 @@ export const FileUpload = () => {
           dragActive ? `border-violet-200` : "border-violet-500"
         }`}
       >
-        {uploadFile === null ? (
+        {selectedFile === null ? (
           <img
             className="w-8 h-8 animate-bounce"
             src="https://img.icons8.com/ios/100/upload--v1.png"
@@ -71,7 +77,7 @@ export const FileUpload = () => {
           multiple={false}
           onChange={handleChooseFile}
         />
-        {uploadFile === null ? (
+        {selectedFile === null ? (
           <>
             <label htmlFor="input-file-upload">
               <div className="flex flex-col items-center gap-1">
@@ -87,7 +93,7 @@ export const FileUpload = () => {
           </>
         ) : (
           <div className="flex flex-col items-center">
-            <p className="font-bold">{uploadFile.name}</p>
+            <p className="font-bold">{selectedFile.name}</p>
             <button
               className="cursor-pointer underline hover:text-violet-400 text-violet-500"
               onClick={handleUploadClick}
