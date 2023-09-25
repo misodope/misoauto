@@ -3,9 +3,11 @@ import { PageTitle } from "../../components/PageTitle/PageTitle";
 import { FileUpload } from "../../components/FileUpload/FileUpload";
 import { useState } from "react";
 import { getApiUrl } from "../../utils/env";
+import Loader from "../../components/Loader/Loader";
 
 export const UploadVideos = (): React.ReactElement => {
   const [uploadFile, setUploadFile] = useState<null | File>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleFileChange = (file: File) => {
     setUploadFile(file);
@@ -15,6 +17,8 @@ export const UploadVideos = (): React.ReactElement => {
     if (!uploadFile) {
       return;
     }
+
+    setUploading(true);
 
     try {
       const response = await fetch(getApiUrl() + "/video/upload", {
@@ -34,7 +38,10 @@ export const UploadVideos = (): React.ReactElement => {
       });
 
       console.log("Upload Response", uploadResponse);
-      console.log("Upload Video Response", data);
+      if (uploadResponse.ok) {
+        setUploading((prev) => !prev);
+        setUploadFile(null);
+      }
     } catch (error) {
       console.error("Error Uploading Video", error);
     }
@@ -43,16 +50,22 @@ export const UploadVideos = (): React.ReactElement => {
   return (
     <PageContainer>
       <PageTitle>Upload Videos</PageTitle>
-      <FileUpload
-        handleFileChange={handleFileChange}
-        selectedFile={uploadFile}
-      />
-      <button
-        onClick={handleUploadSubmit}
-        className="p-2 bg-indigo-500 text-white rounded my-2"
-      >
-        Submit
-      </button>
+      {uploading ? (
+        <Loader isPageLoader={false} />
+      ) : (
+        <>
+          <FileUpload
+            handleFileChange={handleFileChange}
+            selectedFile={uploadFile}
+          />
+          <button
+            onClick={handleUploadSubmit}
+            className="p-2 bg-indigo-500 text-white rounded my-2"
+          >
+            Submit
+          </button>
+        </>
+      )}
     </PageContainer>
   );
 };

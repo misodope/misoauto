@@ -2,14 +2,13 @@ import {
   badRequest,
   internalServerError,
   sendResponseBody,
-} from "../../services/utils/response";
+} from "@services/utils/response";
 
 import {
   Context,
   APIGatewayProxyEventV2WithRequestContext,
   Handler,
   APIGatewayProxyStructuredResultV2,
-  APIGatewayProxyEvent,
 } from "aws-lambda";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
@@ -34,6 +33,12 @@ export const handler: Handler = async (
 
     const requestBody = JSON.parse(event.body);
     const { filename, filesize, filetype } = requestBody;
+    if (!filename) {
+      badRequest("No file provided");
+    }
+
+    const parts = Math.ceil(Number(filesize) / CHUNK_SIZE);
+    console.log("Part Size", parts);
 
     const REGION = process.env.LAMBDA_AWS_REGION;
     const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
@@ -57,7 +62,6 @@ export const handler: Handler = async (
       expiresIn: 15 * 60, // minutes multiplier * seconds
     });
 
-    console.log("Signed URL", url);
     return sendResponseBody({
       status: 200,
       message: "Successfully Uploaded Video.",
@@ -67,32 +71,3 @@ export const handler: Handler = async (
     return internalServerError(error);
   }
 };
-
-// (async () => {
-//   const REGION = process.env.AWS_REGION;
-//   const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
-//   const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
-
-//   const s3Client = new S3Client({
-//     region: REGION,
-//     credentials: {
-//       accessKeyId: ACCESS_KEY_ID,
-//       secretAccessKey: SECRET_ACCESS_KEY,
-//     },
-//   });
-
-//   const putObjectCommand = new PutObjectCommand({
-//     Bucket: "misoauto",
-//     Key: "videos/test.txt",
-//     Body: JSON.stringify({
-//       ligma: "balls",
-//       sugundese: "nuts",
-//     }),
-//   });
-//   const putResponse = await s3Client.send(putObjectCommand);
-//   console.log("Uploaded File", putResponse);
-
-//   const listCommand = new ListObjectsCommand({ Bucket: "misoauto" });
-//   const listResponse = await s3Client.send(listCommand);
-//   console.log("Objects", listResponse);
-// })();
