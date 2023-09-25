@@ -33,17 +33,18 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-    const { file, filename, filetype, filesize } = JSON.parse(event.body);
-    console.log("File", file);
-    console.log("Filename", filename);
-    console.log("Filetype", filetype);
-    console.log("Filesize", Number(filesize));
+    const body = JSON.parse(event.body);
+    console.log("BODYYY", body);
+    // console.log("File", file);
+    // console.log("Filename", filename);
+    // console.log("Filetype", filetype);
+    // console.log("Filesize", Number(filesize));
 
-    if (!file) {
+    if (!body.file) {
       return badRequest("No file provided.");
     }
 
-    const REGION = process.env.AWS_REGION;
+    const REGION = process.env.LAMBDA_AWS_REGION;
     const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
     const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
 
@@ -55,22 +56,22 @@ export const handler: Handler = async (
       },
     });
 
-    const buffer = Buffer.from(file, "base64");
+    // const buffer = Buffer.from(file, "base64");
 
-    const multipartUpload = await s3Client.send(
-      new CreateMultipartUploadCommand({
-        Bucket: "misoauto",
-        Key: `videos/${filename}`,
-      }),
-    );
+    // const multipartUpload = await s3Client.send(
+    //   new CreateMultipartUploadCommand({
+    //     Bucket: "misoauto",
+    //     Key: `videos/${filename}`,
+    //   }),
+    // );
 
-    uploadId = multipartUpload.UploadId;
-    console.log("Upload ID", uploadId);
+    // uploadId = multipartUpload.UploadId;
+    // console.log("Upload ID", uploadId);
 
-    const uploadPromises = [];
+    // const uploadPromises = [];
 
-    const partSize = Math.ceil(Number(filesize) / CHUNK_SIZE);
-    console.log("Part Size", partSize);
+    // const partSize = Math.ceil(Number(filesize) / CHUNK_SIZE);
+    // console.log("Part Size", partSize);
 
     return sendResponseBody({
       status: 200,
