@@ -33,7 +33,7 @@ export const handler: Handler = async (
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
     const requestBody = JSON.parse(event.body);
-    const { filename, filesize } = requestBody;
+    const { filename, filesize, filetype } = requestBody;
 
     const REGION = process.env.LAMBDA_AWS_REGION;
     const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
@@ -50,18 +50,18 @@ export const handler: Handler = async (
     const putObjectCommand = new PutObjectCommand({
       Bucket: "misoauto",
       Key: `videos/${filename}`,
+      ContentType: filetype,
     });
 
     const url = await getSignedUrl(s3Client, putObjectCommand, {
-      expiresIn: 3600,
+      expiresIn: 15 * 60, // minutes multiplier * seconds
     });
 
+    console.log("Signed URL", url);
     return sendResponseBody({
       status: 200,
       message: "Successfully Uploaded Video.",
-      success: {
-        signedUrl: url,
-      },
+      success: url,
     });
   } catch (error) {
     return internalServerError(error);

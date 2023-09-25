@@ -22,17 +22,16 @@ export const UploadVideos = (): React.ReactElement => {
         body: JSON.stringify({
           filename: uploadFile.name,
           filesize: uploadFile.size,
+          filetype: uploadFile.type,
         }),
       });
-
       const data = await response.json();
-      const signedUrl = data.response.signedUrl;
+      const signedUrl = data.response;
 
       const uploadResponse = await fetch(signedUrl, {
         method: "PUT",
         body: uploadFile,
       });
-
       const uploadData = await uploadResponse.json();
 
       console.log("Upload Response", uploadData);
