@@ -11,15 +11,9 @@ import {
   APIGatewayProxyStructuredResultV2,
   APIGatewayProxyEvent,
 } from "aws-lambda";
-import {
-  S3Client,
-  // ListObjectsCommand,
-  // PutObjectCommand,
-  UploadPartCommand,
-  CreateMultipartUploadCommand,
-} from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-import parser from "lambda-multipart-parser";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import dotenv from "dotenv";
 import path from "path";
@@ -29,61 +23,45 @@ const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
 
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2WithRequestContext<{
-    file: File;
     filename: string;
-    filetype: string;
     filesize: string;
   }>,
   context: Context,
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  let uploadId: string;
-
   try {
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-    const parsedEvent = await parser.parse(
-      event as unknown as APIGatewayProxyEvent,
-    );
+    const requestBody = JSON.parse(event.body);
+    const { filename, filesize } = requestBody;
 
-    console.log("PARSED EVENT", parsedEvent);
+    const REGION = process.env.LAMBDA_AWS_REGION;
+    const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
+    const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
 
-    // if (!file) {
-    //   return badRequest("No file provided.");
-    // }
+    const s3Client = new S3Client({
+      region: REGION,
+      credentials: {
+        accessKeyId: ACCESS_KEY_ID,
+        secretAccessKey: SECRET_ACCESS_KEY,
+      },
+    });
 
-    // const REGION = process.env.LAMBDA_AWS_REGION;
-    // const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
-    // const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
+    const putObjectCommand = new PutObjectCommand({
+      Bucket: "misoauto",
+      Key: `videos/${filename}`,
+    });
 
-    // const s3Client = new S3Client({
-    //   region: REGION,
-    //   credentials: {
-    //     accessKeyId: ACCESS_KEY_ID,
-    //     secretAccessKey: SECRET_ACCESS_KEY,
-    //   },
-    // });
-
-    // const buffer = Buffer.from(file, "base64");
-
-    // const multipartUpload = await s3Client.send(
-    //   new CreateMultipartUploadCommand({
-    //     Bucket: "misoauto",
-    //     Key: `videos/${filename}`,
-    //   }),
-    // );
-
-    // uploadId = multipartUpload.UploadId;
-    // console.log("Upload ID", uploadId);
-
-    // const uploadPromises = [];
-
-    // const partSize = Math.ceil(Number(filesize) / CHUNK_SIZE);
-    // console.log("Part Size", partSize);
+    const url = await getSignedUrl(s3Client, putObjectCommand, {
+      expiresIn: 3600,
+    });
 
     return sendResponseBody({
       status: 200,
       message: "Successfully Uploaded Video.",
+      success: {
+        signedUrl: url,
+      },
     });
   } catch (error) {
     return internalServerError(error);

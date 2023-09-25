@@ -17,15 +17,12 @@ export const UploadVideos = (): React.ReactElement => {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("file", uploadFile);
-      formData.append("filename", uploadFile.name);
-      formData.append("filesize", String(uploadFile.size));
-      formData.append("filetype", uploadFile.type);
-
       const response = await fetch(getApiUrl() + "/video/upload", {
         method: "POST",
-        body: formData,
+        body: JSON.stringify({
+          filename: uploadFile.name,
+          filesize: uploadFile.size,
+        }),
       });
 
       const data = await response.json();
