@@ -32,9 +32,8 @@ export const UploadVideos = (): React.ReactElement => {
         method: "PUT",
         body: uploadFile,
       });
-      const uploadData = await uploadResponse.json();
 
-      console.log("Upload Response", uploadData);
+      console.log("Upload Response", uploadResponse);
       console.log("Upload Video Response", data);
     } catch (error) {
       console.error("Error Uploading Video", error);
