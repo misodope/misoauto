@@ -30,7 +30,7 @@ find "$out_dir" -name "*.zip" -exec sh -c '
         aws lambda create-function --function-name "$function_name" \
         --runtime nodejs18.x \
         --role arn:aws:iam::706108767612:role/github-actions \
-        --handler "$(basename "${zip_file%.zip}")".handler \
+        --handler index.handler \
         --zip-file "fileb://$zip_file"
     fi
 ' \;

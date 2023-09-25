@@ -27,6 +27,7 @@ export const SideNavigation: React.FC<SideNavigationProps> = ({
             className="p-2 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors duration-200"
             to={route.path}
             onClick={onClose}
+            key={route.path}
           >
             {route.label}
           </Link>

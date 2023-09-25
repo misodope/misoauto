@@ -17,12 +17,7 @@ const ProtectedLayout = () => {
     return <Navigate to="/" />;
   }
 
-  return (
-    <div>
-      {/* Outlet is similar to children but works for routes only? */}
-      <Outlet />
-    </div>
-  );
+  return <Outlet />;
 };
 
 export default ProtectedLayout;

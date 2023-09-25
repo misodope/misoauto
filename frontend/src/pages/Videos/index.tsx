@@ -7,6 +7,8 @@ import { DataTable } from "../../components/DataTable/DataTable";
 import videosJson from "../../test/data/videos-mock.json";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { PageTitle } from "../../components/PageTitle/PageTitle";
+import { PageContainer } from "../../components/PageContainer/PageContainer";
 
 export const Videos = () => {
   const { authData } = useAuthContext();
@@ -60,10 +62,10 @@ export const Videos = () => {
   }
 
   return (
-    <div className="container mx-auto flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-10">Videos</h1>
+    <PageContainer>
+      <PageTitle>Videos</PageTitle>
       <DataTable columns={columns} data={videos} />
-    </div>
+    </PageContainer>
   );
 };
 
