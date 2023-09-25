@@ -3,11 +3,13 @@ import {
   internalServerError,
   sendResponseBody,
 } from "../../services/utils/response";
+
 import {
   Context,
   APIGatewayProxyEventV2WithRequestContext,
   Handler,
   APIGatewayProxyStructuredResultV2,
+  APIGatewayProxyEvent,
 } from "aws-lambda";
 import {
   S3Client,
@@ -16,6 +18,8 @@ import {
   UploadPartCommand,
   CreateMultipartUploadCommand,
 } from "@aws-sdk/client-s3";
+
+import parser from "lambda-multipart-parser";
 
 import dotenv from "dotenv";
 import path from "path";
@@ -38,46 +42,44 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
-    const requestBody = JSON.parse(event.body);
-    const { file, filename, filetype, filesize } = requestBody;
-    console.log("BODYYY", requestBody);
-    console.log("File", file);
-    console.log("Filename", filename);
-    console.log("Filetype", filetype);
-    console.log("Filesize", Number(filesize));
-
-    if (!file) {
-      return badRequest("No file provided.");
-    }
-
-    const REGION = process.env.LAMBDA_AWS_REGION;
-    const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
-    const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
-
-    const s3Client = new S3Client({
-      region: REGION,
-      credentials: {
-        accessKeyId: ACCESS_KEY_ID,
-        secretAccessKey: SECRET_ACCESS_KEY,
-      },
-    });
-
-    const buffer = Buffer.from(file, "base64");
-
-    const multipartUpload = await s3Client.send(
-      new CreateMultipartUploadCommand({
-        Bucket: "misoauto",
-        Key: `videos/${filename}`,
-      }),
+    const parsedEvent = await parser.parse(
+      event as unknown as APIGatewayProxyEvent,
     );
 
-    uploadId = multipartUpload.UploadId;
-    console.log("Upload ID", uploadId);
+    console.log("PARSED EVENT", parsedEvent);
 
-    const uploadPromises = [];
+    // if (!file) {
+    //   return badRequest("No file provided.");
+    // }
 
-    const partSize = Math.ceil(Number(filesize) / CHUNK_SIZE);
-    console.log("Part Size", partSize);
+    // const REGION = process.env.LAMBDA_AWS_REGION;
+    // const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
+    // const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
+
+    // const s3Client = new S3Client({
+    //   region: REGION,
+    //   credentials: {
+    //     accessKeyId: ACCESS_KEY_ID,
+    //     secretAccessKey: SECRET_ACCESS_KEY,
+    //   },
+    // });
+
+    // const buffer = Buffer.from(file, "base64");
+
+    // const multipartUpload = await s3Client.send(
+    //   new CreateMultipartUploadCommand({
+    //     Bucket: "misoauto",
+    //     Key: `videos/${filename}`,
+    //   }),
+    // );
+
+    // uploadId = multipartUpload.UploadId;
+    // console.log("Upload ID", uploadId);
+
+    // const uploadPromises = [];
+
+    // const partSize = Math.ceil(Number(filesize) / CHUNK_SIZE);
+    // console.log("Part Size", partSize);
 
     return sendResponseBody({
       status: 200,
