@@ -18,13 +18,13 @@ services:
       - ./frontend:/app
       - /app/node_modules
   # Lambda definitions for local development
-  video_upload_lambda:
-    build:
-      context: .
-      dockerfile: ./api/video/Dockerfile.upload
-    ports: 
-      - "9000:8080"
-    restart: always
+  # video_upload_lambda:
+  #   build:
+  #     context: .
+  #     dockerfile: ./api/video/Dockerfile.upload
+  #   ports: 
+  #     - "9000:8080"
+  #   restart: always
 
 # Volumes for persisting data, see https://docs.docker.com/engine/reference/builder/#volume
 volumes:

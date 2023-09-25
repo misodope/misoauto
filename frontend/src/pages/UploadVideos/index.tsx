@@ -21,29 +21,29 @@ export const UploadVideos = (): React.ReactElement => {
     setUploading(true);
 
     try {
-      const response = await fetch(getApiUrl() + "/video/upload", {
-        method: "POST",
-        body: JSON.stringify({
-          filename: uploadFile.name,
-          filesize: uploadFile.size,
-          filetype: uploadFile.type,
-        }),
-      });
+      const response = await fetch(
+        getApiUrl() + "/video/upload/presigned/get",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            filename: uploadFile.name,
+            filesize: uploadFile.size,
+            filetype: uploadFile.type,
+          }),
+        },
+      );
       const data = await response.json();
       const signedUrl = data.response;
-
-      const uploadResponse = await fetch(signedUrl, {
+      console.log("Signed URL", signedUrl);
+      await fetch(signedUrl, {
         method: "PUT",
         body: uploadFile,
       });
-
-      console.log("Upload Response", uploadResponse);
-      if (uploadResponse.ok) {
-        setUploading((prev) => !prev);
-        setUploadFile(null);
-      }
     } catch (error) {
       console.error("Error Uploading Video", error);
+    } finally {
+      setUploading(false);
+      setUploadFile(null);
     }
   };
 

@@ -16,7 +16,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import dotenv from "dotenv";
 import path from "path";
-dotenv.config({ path: path.resolve(__dirname, "../../", ".env") });
+dotenv.config({ path: path.resolve(__dirname, "../../../", ".env") });
 
 const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
 
