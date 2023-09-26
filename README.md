@@ -24,9 +24,14 @@ Deployments are automated in CI/CD pipeline defined in github workflows.
 
 #### Migrations
 
-After modifying any schemas or models in `prisma` you must run a migration: `pnpm prisa-migrate --name title_of_migration`
+Run migrations with umzug.
 
-When successfully migrated run `pnpm prisma-generate` to re-generate the types for `PrismaClient`
+Documentation https://github.com/sequelize/umzug/tree/main/examples/1.sequelize-typescript
+
+Navigate to the migration service: `services/database/migrate.js`
+Create a migration: `node migrate create --name new-migration.ts` # create a new migration file
+`node migrate up` # apply migrations
+`node migrate down` # revert the last migration
 
 ### Working with Vercel and Vercel Serverless Functions
 
