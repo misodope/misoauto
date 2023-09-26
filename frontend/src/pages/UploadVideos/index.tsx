@@ -58,15 +58,11 @@ export const UploadVideos = (): React.ReactElement => {
       }
 
       const responseParts = await Promise.all(promises);
-      console.log("Response Parts", responseParts);
-      const responseJsonParts = await Promise.all(
-        responseParts.map((response) => response.json()),
-      );
-      console.log("Response JSON Parts", responseJsonParts);
-      const responseDataParts = responseJsonParts.map((part, i) => ({
-        ETag: part.headers.etag,
+      const responseDataParts = responseParts.map((response, i) => ({
+        ETag: response.headers.get("Etag"),
         PartNumber: i + 1,
       }));
+      console.log("Response Data Parts", responseDataParts);
       const completeRequestBody = JSON.stringify({
         fileId,
         fileKey,
