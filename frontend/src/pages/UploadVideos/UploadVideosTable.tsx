@@ -29,7 +29,7 @@ export const UploadVideosTable = () => {
           return <p>{name}</p>;
         },
         footer: (info) => info.column.id,
-        header: "Video ID",
+        header: "Name",
       }),
       columnHelper.accessor("createdAt", {
         cell: (info) => {
@@ -40,30 +40,25 @@ export const UploadVideosTable = () => {
       }),
       columnHelper.accessor("tiktok_video_id", {
         footer: (info) => info.column.id,
-        header: "TikTok Upload Status",
+        header: "TikTok Status",
       }),
       columnHelper.accessor("instagram_video_id", {
         footer: (info) => info.column.id,
-        header: "Instagram Upload Status",
+        header: "Instagram Status",
       }),
       columnHelper.accessor("youtube_video_id", {
         footer: (info) => info.column.id,
-        header: "YouTube Upload Status",
+        header: "YouTube Status",
       }),
     ],
     [],
   );
 
-  if (loading || !videos.length) {
-    return <Loader />;
+  if (loading) {
+    return <Loader isPageLoader={false} />;
   }
 
-  return (
-    <PageContainer>
-      <PageTitle>Videos</PageTitle>
-      <DataTable columns={columns} data={videos} />
-    </PageContainer>
-  );
+  return <DataTable columns={columns} data={videos} />;
 };
 
 export default UploadVideosTable;
