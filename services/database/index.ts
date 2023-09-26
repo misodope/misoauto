@@ -1,9 +1,5 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-
-import { User } from "./models/user";
-import { Video } from "./models/video";
-
 import path from "path";
 import pg from "pg";
 dotenv.config({ path: path.resolve(__dirname, "../../", ".env") });
@@ -49,9 +45,6 @@ export const connectToDb = async (): Promise<Sequelize> => {
   });
 
   await sequelize.authenticate();
-
-  User.hasMany(Video);
-  Video.belongsTo(User);
 
   return sequelize;
 };
