@@ -56,7 +56,7 @@ export const handler: Handler = async (
       },
     });
 
-    const sortedParts = parts.toSorted((a, b) => a.PartNumber - b.PartNumber);
+    const sortedParts = [...parts].sort((a, b) => a.PartNumber - b.PartNumber);
     const completeMultipartParams: CompleteMultipartUploadCommandInput = {
       Bucket: process.env.VIDEO_BUCKET,
       Key: fileKey,
