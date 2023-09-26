@@ -1,11 +1,13 @@
 import { PageContainer } from "../../components/PageContainer/PageContainer";
 import { PageTitle } from "../../components/PageTitle/PageTitle";
 import { FileUpload } from "../../components/FileUpload/FileUpload";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getApiUrl } from "../../utils/env";
 import Loader from "../../components/Loader/Loader";
 import { useAuthContext } from "../../hooks/useAuth";
 import UploadVideosTable from "./UploadVideosTable";
+import { useFetch } from "../../hooks/useFetch";
+
 interface PresignedUrlPart {
   signedUrl: string;
   partNumber: number;
@@ -22,6 +24,16 @@ export const UploadVideos = (): React.ReactElement => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<null | string>(null);
   const { authData } = useAuthContext();
+
+  const [getVideos, { data: videoData, loading: videoDataLoading }] = useFetch({
+    url: `/video/upload/list`,
+    method: "POST",
+    body: JSON.stringify({ user_id: authData?.open_id }),
+  });
+
+  useEffect(() => {
+    getVideos();
+  }, []);
 
   const handleFileChange = (file: File) => {
     setUploadFile(file);
@@ -80,6 +92,8 @@ export const UploadVideos = (): React.ReactElement => {
         method: "POST",
         body: completeRequestBody,
       });
+
+      getVideos();
     } catch (error) {
       console.error("Error Uploading Video", error);
       setUploadError("Sorry, there was an error uploading the video");
@@ -111,7 +125,11 @@ export const UploadVideos = (): React.ReactElement => {
           )}
         </>
       )}
-      <UploadVideosTable />
+      {videoDataLoading ? (
+        <Loader isPageLoader={false} />
+      ) : (
+        <UploadVideosTable data={videoData} />
+      )}
     </PageContainer>
   );
 };

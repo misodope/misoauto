@@ -6,18 +6,22 @@ import { useFetch } from "../../hooks/useFetch";
 import { DataTable } from "../../components/DataTable/DataTable";
 import videosJson from "../../test/data/videos-mock.json";
 import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { PageTitle } from "../../components/PageTitle/PageTitle";
 import { PageContainer } from "../../components/PageContainer/PageContainer";
 
 export const Videos = () => {
   const { authData } = useAuthContext();
 
-  const { data: videoData, loading } = useFetch({
+  const [getVideos, { data: videoData, loading }] = useFetch({
     url: `/tiktok/videos`,
     method: "POST",
     body: JSON.stringify({ accessToken: authData?.access_token }),
   });
+
+  useEffect(() => {
+    getVideos();
+  }, []);
 
   const videos: Array<TikTokVideo> =
     videoData?.data.videos ?? videosJson.videos;

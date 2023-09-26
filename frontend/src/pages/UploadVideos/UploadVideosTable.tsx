@@ -1,25 +1,14 @@
-import Loader from "../../components/Loader/Loader";
-import { useFetch } from "../../hooks/useFetch";
-
 import { DataTable } from "../../components/DataTable/DataTable";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { PageTitle } from "../../components/PageTitle/PageTitle";
-import { PageContainer } from "../../components/PageContainer/PageContainer";
-import { useAuthContext } from "../../hooks/useAuth";
+import format from "date-fns/format";
+interface UploadVideosTableProps {
+  data: Array<Record<string, string>>;
+}
 
-export const UploadVideosTable = () => {
-  const { authData } = useAuthContext();
-
-  const { data: videoData, loading } = useFetch({
-    url: `/video/upload/list`,
-    method: "POST",
-    body: JSON.stringify({ user_id: authData?.open_id }),
-  });
-
-  const videos: Array<{}> = videoData?.data.videos ?? [];
-  console.log("Videos", videos);
-
+export const UploadVideosTable: React.FC<UploadVideosTableProps> = ({
+  data,
+}) => {
   const columnHelper = createColumnHelper<Record<string, string>>();
   const columns = useMemo(
     () => [
@@ -33,32 +22,28 @@ export const UploadVideosTable = () => {
       }),
       columnHelper.accessor("createdAt", {
         cell: (info) => {
-          return <p>{info.getValue()}</p>;
+          return <p>{format(new Date(info.getValue()), "MM/dd/yyyy")}</p>;
         },
         footer: (info) => info.column.id,
         header: "Upload Date",
       }),
       columnHelper.accessor("tiktok_video_id", {
         footer: (info) => info.column.id,
-        header: "TikTok Status",
+        header: "TikTok",
       }),
       columnHelper.accessor("instagram_video_id", {
         footer: (info) => info.column.id,
-        header: "Instagram Status",
+        header: "Instagram",
       }),
       columnHelper.accessor("youtube_video_id", {
         footer: (info) => info.column.id,
-        header: "YouTube Status",
+        header: "YouTube",
       }),
     ],
     [],
   );
 
-  if (loading) {
-    return <Loader isPageLoader={false} />;
-  }
-
-  return <DataTable columns={columns} data={videos} />;
+  return <DataTable columns={columns} data={data ?? []} />;
 };
 
 export default UploadVideosTable;

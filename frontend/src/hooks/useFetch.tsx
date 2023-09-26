@@ -8,16 +8,18 @@ interface FetchProps {
   body?: BodyInit | null | undefined;
 }
 
-export const useFetch = (props: FetchProps) => {
-  console.log("Use Fetch Invoked", props);
+export const useFetch = (
+  props: FetchProps,
+): [() => void, { data: any; error: unknown | null; loading: boolean }] => {
   const { isLoggedIn } = useAuthContext();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown | null>(null);
   const [data, setData] = useState<any>();
+  const [fetchData, setFetchData] = useState(false);
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && fetchData) {
       (async () => {
         setLoading(true);
 
@@ -54,14 +56,15 @@ export const useFetch = (props: FetchProps) => {
           setError(error);
         } finally {
           setLoading(false);
+          setFetchData(false);
         }
       })();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, fetchData]);
 
-  return {
-    data,
-    loading,
-    error,
+  const getData = () => {
+    setFetchData(true);
   };
+
+  return [getData, { data, error, loading }];
 };
