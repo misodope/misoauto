@@ -5,8 +5,12 @@ import dotenv from "dotenv";
 import pg from "pg";
 
 dotenv.config({ path: path.resolve(__dirname, "../../", ".env") });
-
-const URI = process.env.DATABASE_URL;
+const LOCAL_DATABASE_URL =
+  "postgres://misoauto:misoauto_password@localhost:5436/misoauto";
+const URI =
+  process.env.NODE_ENV === "development"
+    ? LOCAL_DATABASE_URL
+    : process.env.DATABASE_URL;
 console.log("URI", URI);
 console.log(__dirname);
 const sequelize = new Sequelize(URI, {

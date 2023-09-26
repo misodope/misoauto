@@ -6,7 +6,12 @@ import pg from "pg";
 dotenv.config({ path: path.resolve(__dirname, "../../", ".env") });
 
 const timeout = Number(process.env.TIMEOUT) * 1000;
-const URI = process.env.DATABASE_URL;
+const LOCAL_DATABASE_URL =
+  "postgres://misoauto:misoauto_password@localhost:5436/misoauto";
+const URI =
+  process.env.NODE_ENV === "development"
+    ? LOCAL_DATABASE_URL
+    : process.env.DATABASE_URL;
 
 let sequelize: Sequelize | null = null;
 

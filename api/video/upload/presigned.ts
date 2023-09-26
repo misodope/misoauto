@@ -10,7 +10,12 @@ import {
   Handler,
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+} from "@aws-sdk/client-s3";
 
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -30,6 +35,9 @@ export const handler: Handler = async (
   try {
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+    if (!event.body) {
+      badRequest("No request body provided");
+    }
 
     const requestBody = JSON.parse(event.body);
     const { filename, filesize, filetype } = requestBody;
@@ -37,12 +45,10 @@ export const handler: Handler = async (
       badRequest("No file provided");
     }
 
-    const parts = Math.ceil(Number(filesize) / CHUNK_SIZE);
-    console.log("Part Size", parts);
-
     const REGION = process.env.LAMBDA_AWS_REGION;
     const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
     const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
+    const BUCKET = "misoauto";
 
     const s3Client = new S3Client({
       region: REGION,
@@ -52,22 +58,67 @@ export const handler: Handler = async (
       },
     });
 
-    const putObjectCommand = new PutObjectCommand({
-      Bucket: "misoauto",
+    const uploadCommand = new CreateMultipartUploadCommand({
+      Bucket: BUCKET,
       Key: `videos/${filename}`,
       ContentType: filetype,
     });
 
-    const url = await getSignedUrl(s3Client, putObjectCommand, {
-      expiresIn: 15 * 60, // minutes multiplier * seconds
-    });
+    const { UploadId, Key } = await s3Client.send(uploadCommand);
+
+    const parts = Math.ceil(Number(filesize) / CHUNK_SIZE);
+    console.log("Part Size", parts);
+
+    const presignedUrls = await makePresignedUrls(
+      s3Client,
+      Key,
+      UploadId,
+      BUCKET,
+      parts,
+    );
 
     return sendResponseBody({
       status: 200,
       message: "Successfully Uploaded Video.",
-      success: url,
+      success: presignedUrls,
     });
   } catch (error) {
     return internalServerError(error);
   }
+};
+
+const makePresignedUrls = async (
+  s3Client: S3Client,
+  fileKey: string,
+  fileId: string,
+  bucket: string,
+  parts: number,
+): Promise<Array<{ signedUrl: string; partNumber: number }>> => {
+  const multipartParams = {
+    Bucket: bucket,
+    Key: fileKey,
+    UploadId: fileId,
+  };
+  const promises = [];
+  for (let i = 0; i < parts; i++) {
+    const uploadPartCommand = new UploadPartCommand({
+      ...multipartParams,
+      PartNumber: i + 1,
+    });
+
+    const presignedUrl = await getSignedUrl(s3Client, uploadPartCommand, {
+      expiresIn: 15 * 60,
+    });
+
+    promises.push(presignedUrl);
+  }
+
+  const signedUrls = await Promise.all(promises);
+
+  return signedUrls.map((signedUrl, index) => {
+    return {
+      signedUrl,
+      partNumber: index + 1,
+    };
+  });
 };
