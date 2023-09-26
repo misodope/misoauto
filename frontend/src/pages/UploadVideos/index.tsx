@@ -4,7 +4,7 @@ import { FileUpload } from "../../components/FileUpload/FileUpload";
 import { useState } from "react";
 import { getApiUrl } from "../../utils/env";
 import Loader from "../../components/Loader/Loader";
-import { useAuthContext, AuthContext } from "../../hooks/useAuth";
+import { useAuthContext } from "../../hooks/useAuth";
 interface PresignedUrlPart {
   signedUrl: string;
   partNumber: number;

@@ -28,6 +28,8 @@ export const connectToDb = async (): Promise<Sequelize> => {
     }
     return sequelize;
   }
+  console.log("DB URI", URI);
+  console.log("Env", process.env);
 
   sequelize = new Sequelize(URI, {
     logging: false,
