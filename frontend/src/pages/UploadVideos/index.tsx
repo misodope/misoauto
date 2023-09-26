@@ -5,6 +5,7 @@ import { useState } from "react";
 import { getApiUrl } from "../../utils/env";
 import Loader from "../../components/Loader/Loader";
 import { useAuthContext } from "../../hooks/useAuth";
+import UploadVideosTable from "./UploadVideosTable";
 interface PresignedUrlPart {
   signedUrl: string;
   partNumber: number;
@@ -110,6 +111,7 @@ export const UploadVideos = (): React.ReactElement => {
           )}
         </>
       )}
+      <UploadVideosTable />
     </PageContainer>
   );
 };

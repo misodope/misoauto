@@ -2,51 +2,53 @@ import Loader from "../../components/Loader/Loader";
 import { useFetch } from "../../hooks/useFetch";
 
 import { DataTable } from "../../components/DataTable/DataTable";
-import videosJson from "../../test/data/videos-mock.json";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { PageTitle } from "../../components/PageTitle/PageTitle";
 import { PageContainer } from "../../components/PageContainer/PageContainer";
+import { useAuthContext } from "../../hooks/useAuth";
 
 export const UploadVideosTable = () => {
+  const { authData } = useAuthContext();
+
   const { data: videoData, loading } = useFetch({
     url: `/video/upload/list`,
     method: "POST",
-    body: JSON.stringify({}),
+    body: JSON.stringify({ user_id: authData?.open_id }),
   });
 
-  const videos: Array<{}> = videoData?.data.videos ?? videosJson.videos;
+  const videos: Array<{}> = videoData?.data.videos ?? [];
   console.log("Videos", videos);
 
   const columnHelper = createColumnHelper<Record<string, string>>();
   const columns = useMemo(
     () => [
-      columnHelper.accessor("name", {
-        cell: (info) => info.getValue(),
+      columnHelper.accessor("key", {
+        cell: (info) => {
+          const name = info.getValue().split("/").pop();
+          return <p>{name}</p>;
+        },
         footer: (info) => info.column.id,
         header: "Video ID",
       }),
-      columnHelper.accessor("title", {
-        cell: (info) => {
-          return <p className="truncate max-w-sm">{info.getValue()}</p>;
-        },
-        footer: (info) => info.column.id,
-        header: "Title",
-      }),
       columnHelper.accessor("createdAt", {
         cell: (info) => {
-          return (
-            <a
-              href={info.getValue()}
-              target="_blank"
-              className="text-indigo-500 underline hover:text-indigo-900"
-            >
-              View
-            </a>
-          );
+          return <p>{info.getValue()}</p>;
         },
         footer: (info) => info.column.id,
-        header: "Video",
+        header: "Upload Date",
+      }),
+      columnHelper.accessor("tiktok_video_id", {
+        footer: (info) => info.column.id,
+        header: "TikTok Upload Status",
+      }),
+      columnHelper.accessor("instagram_video_id", {
+        footer: (info) => info.column.id,
+        header: "Instagram Upload Status",
+      }),
+      columnHelper.accessor("youtube_video_id", {
+        footer: (info) => info.column.id,
+        header: "YouTube Upload Status",
       }),
     ],
     [],
