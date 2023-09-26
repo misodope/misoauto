@@ -12,7 +12,6 @@ import {
 } from "aws-lambda";
 import {
   S3Client,
-  PutObjectCommand,
   CreateMultipartUploadCommand,
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
@@ -28,6 +27,7 @@ const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2WithRequestContext<{
     filename: string;
+    filetype: string;
     filesize: string;
   }>,
   context: Context,
@@ -45,21 +45,16 @@ export const handler: Handler = async (
       badRequest("No file provided");
     }
 
-    const REGION = process.env.LAMBDA_AWS_REGION;
-    const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
-    const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
-    const BUCKET = "misoauto";
-
     const s3Client = new S3Client({
-      region: REGION,
+      region: process.env.LAMBDA_AWS_REGION,
       credentials: {
-        accessKeyId: ACCESS_KEY_ID,
-        secretAccessKey: SECRET_ACCESS_KEY,
+        accessKeyId: process.env.LAMBDA_AWS_ACCESS_KEY,
+        secretAccessKey: process.env.LAMBDA_AWS_SECRET_ACCESS_KEY,
       },
     });
 
     const uploadCommand = new CreateMultipartUploadCommand({
-      Bucket: BUCKET,
+      Bucket: process.env.VIDEO_BUCKET,
       Key: `videos/${filename}`,
       ContentType: filetype,
     });
@@ -73,14 +68,18 @@ export const handler: Handler = async (
       s3Client,
       Key,
       UploadId,
-      BUCKET,
+      process.env.VIDEO_BUCKET,
       parts,
     );
 
     return sendResponseBody({
       status: 200,
-      message: "Successfully Uploaded Video.",
-      success: presignedUrls,
+      message: "Successfully generated upload urls.",
+      success: {
+        fileId: UploadId,
+        fileKey: Key,
+        presignedUrls,
+      },
     });
   } catch (error) {
     return internalServerError(error);

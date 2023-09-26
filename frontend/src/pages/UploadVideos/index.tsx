@@ -5,6 +5,17 @@ import { useState } from "react";
 import { getApiUrl } from "../../utils/env";
 import Loader from "../../components/Loader/Loader";
 
+interface PresignedUrlPart {
+  signedUrl: string;
+  partNumber: number;
+}
+
+interface PresignedUrlResponse {
+  presignedUrls: PresignedUrlPart[];
+  fileId: string;
+  fileKey: string;
+}
+
 export const UploadVideos = (): React.ReactElement => {
   const [uploadFile, setUploadFile] = useState<null | File>(null);
   const [uploading, setUploading] = useState(false);
@@ -17,6 +28,8 @@ export const UploadVideos = (): React.ReactElement => {
     if (!uploadFile) {
       return;
     }
+
+    const blobs = createBlobs(uploadFile);
 
     setUploading(true);
 
@@ -33,11 +46,35 @@ export const UploadVideos = (): React.ReactElement => {
         },
       );
       const data = await response.json();
-      const signedUrl = data.response;
-      console.log("Signed URL", signedUrl);
-      await fetch(signedUrl, {
-        method: "PUT",
-        body: uploadFile,
+      const { presignedUrls, fileId, fileKey }: PresignedUrlResponse =
+        data.response;
+      console.log("Presigned Response", presignedUrls);
+
+      const promises = [];
+      for (const part of presignedUrls) {
+        const { signedUrl, partNumber } = part;
+        const blob = blobs[partNumber - 1];
+        promises.push(fetch(signedUrl, { method: "PUT", body: blob }));
+      }
+
+      const responseParts = await Promise.all(promises);
+      const responseJsonParts = await Promise.all(
+        responseParts.map((response) => response.json()),
+      );
+
+      const responseDataParts = responseJsonParts.map((part, i) => ({
+        ETag: part.headers.etag,
+        PartNumber: i + 1,
+      }));
+      const completeRequestBody = JSON.stringify({
+        fileId,
+        fileKey,
+        parts: responseDataParts,
+      });
+
+      await fetch(getApiUrl() + "/video/upload/complete/post", {
+        method: "POST",
+        body: completeRequestBody,
       });
     } catch (error) {
       console.error("Error Uploading Video", error);
@@ -68,4 +105,22 @@ export const UploadVideos = (): React.ReactElement => {
       )}
     </PageContainer>
   );
+};
+
+const createBlobs = (file: File): Blob[] => {
+  const CHUNK = 5 * 1024 * 1024; // 5MB
+  const parts = Math.ceil(file.size / CHUNK);
+
+  const blobs: Blob[] = [];
+
+  for (let i = 0; i < parts; i++) {
+    const start = i * CHUNK;
+    const end = (i + 1) * CHUNK;
+
+    const blob = i < parts ? file.slice(start, end) : file.slice(start);
+
+    blobs.push(blob);
+  }
+
+  return blobs;
 };
