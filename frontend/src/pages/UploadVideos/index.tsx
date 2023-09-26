@@ -4,6 +4,7 @@ import { FileUpload } from "../../components/FileUpload/FileUpload";
 import { useState } from "react";
 import { getApiUrl } from "../../utils/env";
 import Loader from "../../components/Loader/Loader";
+import { set } from "date-fns";
 
 interface PresignedUrlPart {
   signedUrl: string;
@@ -19,6 +20,7 @@ interface PresignedUrlResponse {
 export const UploadVideos = (): React.ReactElement => {
   const [uploadFile, setUploadFile] = useState<null | File>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<null | string>(null);
 
   const handleFileChange = (file: File) => {
     setUploadFile(file);
@@ -32,6 +34,7 @@ export const UploadVideos = (): React.ReactElement => {
     const blobs = createBlobs(uploadFile);
 
     setUploading(true);
+    setUploadError(null);
 
     try {
       const response = await fetch(
@@ -56,27 +59,20 @@ export const UploadVideos = (): React.ReactElement => {
         const blob = blobs[partNumber - 1];
         promises.push(fetch(signedUrl, { method: "PUT", body: blob }));
       }
-
+      const startTime = window.performance.now();
       const responseParts = await Promise.all(promises);
-      const responseDataParts = responseParts.map((response, i) => {
-        console.log("Response", response);
-        console.log("Response Headers", response.headers);
-        // loop through each header and log it out
-        response.headers.forEach((value, key) => {
-          console.log(key, value);
-        });
-        return {
-          ETag: response.headers.get("Etag"),
-          PartNumber: i + 1,
-        };
-      });
-      console.log("Response Data Parts", responseDataParts);
+      const totalTime = window.performance.now() - startTime;
+      console.log("Upload File Time", (totalTime / 1000).toFixed(2), "seconds");
+
+      const responseDataParts = responseParts.map((response, i) => ({
+        ETag: response.headers.get("Etag"),
+        PartNumber: i + 1,
+      }));
       const completeRequestBody = JSON.stringify({
         fileId,
         fileKey,
         parts: responseDataParts,
       });
-      console.log("Complete Request Body", completeRequestBody);
 
       await fetch(getApiUrl() + "/video/upload/complete/post", {
         method: "POST",
@@ -84,6 +80,7 @@ export const UploadVideos = (): React.ReactElement => {
       });
     } catch (error) {
       console.error("Error Uploading Video", error);
+      setUploadError("Sorry, there was an error uploading the video");
     } finally {
       setUploading(false);
       setUploadFile(null);
@@ -107,6 +104,9 @@ export const UploadVideos = (): React.ReactElement => {
           >
             Submit
           </button>
+          {Boolean(uploadError) && (
+            <p className="text-red-500 text-sm">{uploadError}</p>
+          )}
         </>
       )}
     </PageContainer>

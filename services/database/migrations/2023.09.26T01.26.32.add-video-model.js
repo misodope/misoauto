@@ -9,11 +9,6 @@ exports.up = async (params) => {
       primaryKey: true,
       defaultValue: Sequelize.UUIDV4,
     },
-    name: {
-      type: Sequelize.STRING,
-      allowNull: false,
-      primaryKey: false,
-    },
     bucket: {
       type: Sequelize.STRING,
       allowNull: true,
