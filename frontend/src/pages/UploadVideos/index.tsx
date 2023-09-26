@@ -58,10 +58,11 @@ export const UploadVideos = (): React.ReactElement => {
       }
 
       const responseParts = await Promise.all(promises);
+      console.log("Response Parts", responseParts);
       const responseJsonParts = await Promise.all(
         responseParts.map((response) => response.json()),
       );
-
+      console.log("Response JSON Parts", responseJsonParts);
       const responseDataParts = responseJsonParts.map((part, i) => ({
         ETag: part.headers.etag,
         PartNumber: i + 1,
@@ -71,6 +72,7 @@ export const UploadVideos = (): React.ReactElement => {
         fileKey,
         parts: responseDataParts,
       });
+      console.log("Complete Request Body", completeRequestBody);
 
       await fetch(getApiUrl() + "/video/upload/complete/post", {
         method: "POST",
