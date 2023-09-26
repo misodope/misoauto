@@ -1,22 +1,12 @@
 import { Sequelize, Model, DataTypes, ModelAttributes } from "sequelize";
 
-class Video extends Model {}
+export class Video extends Model {}
 
 const schema: ModelAttributes = {
   id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    primaryKey: true,
-    defaultValue: DataTypes.UUIDV4,
-  },
-  name: {
     type: DataTypes.STRING,
     allowNull: false,
     primaryKey: true,
-  },
-  url: {
-    type: DataTypes.STRING,
-    allowNull: false,
   },
   bucket: {
     type: DataTypes.STRING,
@@ -49,7 +39,7 @@ const schema: ModelAttributes = {
 
 export type IVideo = typeof Video;
 
-export const getUserModel = async (sequelize?: Sequelize): Promise<IVideo> => {
+export const getVideoModel = async (sequelize?: Sequelize): Promise<IVideo> => {
   if (sequelize) {
     Video.init(schema, { sequelize, modelName: "videos", timestamps: true });
     await Video.sync();

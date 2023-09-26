@@ -4,10 +4,9 @@ exports.up = async (params) => {
   const { context: sequelize } = params;
   await sequelize.getQueryInterface().createTable("videos", {
     id: {
-      type: Sequelize.UUID,
+      type: Sequelize.STRING,
       allowNull: false,
       primaryKey: true,
-      defaultValue: Sequelize.UUIDV4,
     },
     bucket: {
       type: Sequelize.STRING,

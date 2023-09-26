@@ -16,6 +16,10 @@ import {
   CompleteMultipartUploadCommandInput,
 } from "@aws-sdk/client-s3";
 
+import { Sequelize } from "sequelize";
+import { connectToDb } from "@services/database";
+import { IVideo, getVideoModel } from "@services/database/models/video";
+
 import dotenv from "dotenv";
 import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../../../", ".env") });
@@ -29,7 +33,11 @@ interface CompleteRequestBody {
   fileId: string;
   fileKey: string;
   parts: Part[];
+  user_id: string;
 }
+
+let sequelize: Sequelize | null = null;
+let Video: IVideo | null = null;
 
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2WithRequestContext<CompleteRequestBody>,
@@ -43,7 +51,8 @@ export const handler: Handler = async (
     }
 
     const requestBody = JSON.parse(event.body);
-    const { fileId, fileKey, parts } = requestBody as CompleteRequestBody;
+    const { fileId, fileKey, parts, user_id } =
+      requestBody as CompleteRequestBody;
     if (!fileId || !fileKey || !parts) {
       badRequest("No file provided");
     }
@@ -71,6 +80,27 @@ export const handler: Handler = async (
     );
 
     await s3Client.send(uploadCommand);
+
+    if (!sequelize) {
+      sequelize = await connectToDb();
+
+      Video = await getVideoModel(sequelize);
+    }
+
+    let video = await Video.findOne({ where: { key: fileKey, user_id } });
+    if (video === null) {
+      video = await Video.create({
+        id: fileId,
+        name: fileKey.split("/")[1],
+        bucket: process.env.VIDEO_BUCKET,
+        key: fileKey,
+        user_id,
+      });
+    } else {
+      video = await video.update({
+        id: fileId,
+      });
+    }
 
     return sendResponseBody({
       status: 200,

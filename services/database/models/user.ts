@@ -1,6 +1,6 @@
 import { Sequelize, Model, DataTypes, ModelAttributes } from "sequelize";
 
-class User extends Model {}
+export class User extends Model {}
 
 const schema: ModelAttributes = {
   id: {

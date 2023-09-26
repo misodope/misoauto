@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState } from "react";
 import { useAuthContext } from "./useAuth";
 import { getApiUrl } from "../utils/env";
 

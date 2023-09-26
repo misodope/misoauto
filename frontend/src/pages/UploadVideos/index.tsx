@@ -4,8 +4,7 @@ import { FileUpload } from "../../components/FileUpload/FileUpload";
 import { useState } from "react";
 import { getApiUrl } from "../../utils/env";
 import Loader from "../../components/Loader/Loader";
-import { set } from "date-fns";
-
+import { useAuthContext, AuthContext } from "../../hooks/useAuth";
 interface PresignedUrlPart {
   signedUrl: string;
   partNumber: number;
@@ -21,6 +20,7 @@ export const UploadVideos = (): React.ReactElement => {
   const [uploadFile, setUploadFile] = useState<null | File>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<null | string>(null);
+  const { authData } = useAuthContext();
 
   const handleFileChange = (file: File) => {
     setUploadFile(file);
@@ -72,6 +72,7 @@ export const UploadVideos = (): React.ReactElement => {
         fileId,
         fileKey,
         parts: responseDataParts,
+        user_id: authData?.open_id,
       });
 
       await fetch(getApiUrl() + "/video/upload/complete/post", {
