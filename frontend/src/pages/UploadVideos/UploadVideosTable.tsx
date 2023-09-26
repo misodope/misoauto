@@ -2,6 +2,7 @@ import { DataTable } from "../../components/DataTable/DataTable";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import format from "date-fns/format";
+import { UploadStatus } from "./UploadStatus";
 interface UploadVideosTableProps {
   data: Array<Record<string, string>>;
 }
@@ -28,14 +29,26 @@ export const UploadVideosTable: React.FC<UploadVideosTableProps> = ({
         header: "Upload Date",
       }),
       columnHelper.accessor("tiktok_video_id", {
+        cell: (info) => {
+          const status = Boolean(info.getValue()) ? "complete" : "pending";
+          return <UploadStatus status={status} />;
+        },
         footer: (info) => info.column.id,
         header: "TikTok",
       }),
       columnHelper.accessor("instagram_video_id", {
+        cell: (info) => {
+          const status = Boolean(info.getValue()) ? "complete" : "pending";
+          return <UploadStatus status={status} />;
+        },
         footer: (info) => info.column.id,
         header: "Instagram",
       }),
       columnHelper.accessor("youtube_video_id", {
+        cell: (info) => {
+          const status = Boolean(info.getValue()) ? "complete" : "pending";
+          return <UploadStatus status={status} />;
+        },
         footer: (info) => info.column.id,
         header: "YouTube",
       }),

@@ -44,8 +44,8 @@ const DataTableComponent = <T extends any>(
 
   return (
     <div className="p-2 overflow-x-auto w-full">
-      <table className="w-full border border-gray-300 to">
-        <thead className="bg-gray-100">
+      <table className="w-full rounded-lg overflow-hidden bg-white shadow-md">
+        <thead className="bg-gray-200">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
@@ -53,7 +53,7 @@ const DataTableComponent = <T extends any>(
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    className="px-4 py-2 text-left"
+                    className="px-4 py-2 text-left font-semibold text-gray-700"
                   >
                     {header.isPlaceholder ? null : (
                       <div>
@@ -72,7 +72,10 @@ const DataTableComponent = <T extends any>(
         <tbody>
           {table.getRowModel().rows.map((row) => {
             return (
-              <tr key={row.id}>
+              <tr
+                key={row.id}
+                className="hover:bg-gray-100 transition-all duration-100"
+              >
                 {row.getVisibleCells().map((cell) => {
                   return (
                     <td
