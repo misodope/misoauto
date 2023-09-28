@@ -12,10 +12,10 @@ import {
 } from "aws-lambda";
 import { S3Client, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 
-import { Sequelize } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import { connectToDb } from "@services/database";
 import { IVideo, getVideoModel } from "@services/database/models/video";
-import { startOfDay } from "date-fns";
+import { startOfDay, endOfDay } from "date-fns";
 
 import dotenv from "dotenv";
 import path from "path";
@@ -52,13 +52,15 @@ export const handler: Handler = async (
     }
 
     const today = startOfDay(new Date());
-    const videos = await sequelize.query(
-      `SELECT * FROM videos WHERE createdAt < ${today}`,
-      {
-        model: Video,
-        mapToModel: true,
+    const endOfToday = endOfDay(today);
+
+    const videos = await Video.findAll({
+      where: {
+        createdAt: {
+          [Op.lt]: endOfToday,
+        },
       },
-    );
+    });
     console.log("VIDEOS", videos);
     if (!videos) {
       return sendResponseBody({
