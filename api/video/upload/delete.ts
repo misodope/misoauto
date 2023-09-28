@@ -53,14 +53,11 @@ export const handler: Handler = async (
 
     const videos = await Video.findAll({
       where: {
-        [Op.and]: [
-          { user_id },
-          {
-            createdAt: {
-              [Op.lt]: endOfDay(new Date()),
-            },
-          },
-        ],
+        user_id,
+        // less than current day.
+        createdAt: {
+          [Op.lt]: endOfDay(sub(new Date(), { days: 1 })),
+        },
       },
     });
     console.log("VIDEOS", videos);
