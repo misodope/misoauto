@@ -15,7 +15,7 @@ import { S3Client, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { Sequelize, Op } from "sequelize";
 import { connectToDb } from "@services/database";
 import { IVideo, getVideoModel } from "@services/database/models/video";
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay } from "date-fns";
 
 import dotenv from "dotenv";
 import path from "path";
@@ -67,6 +67,16 @@ export const handler: Handler = async (
         success: [],
       });
     }
+
+    const deletedVideos = await Video.destroy({
+      where: {
+        user_id,
+        createdAt: {
+          [Op.lt]: today,
+        },
+      },
+    });
+    console.log(`Deleted ${deletedVideos} videos from database`);
 
     const s3Client = new S3Client({
       region: process.env.LAMBDA_AWS_REGION,
