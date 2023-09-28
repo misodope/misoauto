@@ -57,9 +57,7 @@ export const handler: Handler = async (
           { user_id },
           {
             createdAt: {
-              [Op.lt]: sub(endOfDay(new Date()), {
-                days: 1,
-              }),
+              [Op.lt]: endOfDay(new Date()),
             },
           },
         ],
