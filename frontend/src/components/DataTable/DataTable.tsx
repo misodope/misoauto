@@ -43,7 +43,7 @@ const DataTableComponent = <T extends any>(
   });
   console.log("table", table.getRowModel());
   return (
-    <div className="p-2 overflow-x-auto w-full">
+    <div className="overflow-x-auto w-full">
       <table className="w-full rounded-lg overflow-hidden bg-white shadow-md">
         <thead className="bg-gray-200">
           {table.getHeaderGroups().map((headerGroup) => (

@@ -31,6 +31,14 @@ export const UploadVideos = (): React.ReactElement => {
     body: JSON.stringify({ user_id: authData?.open_id }),
   });
 
+  const [deleteVideos, { data: deleteData, loading: deleteLoading }] = useFetch(
+    {
+      url: `/video/upload/delete`,
+      method: "POST",
+      body: JSON.stringify({ user_id: authData?.open_id }),
+    },
+  );
+
   useEffect(() => {
     getVideos();
   }, []);
@@ -103,6 +111,10 @@ export const UploadVideos = (): React.ReactElement => {
     }
   };
 
+  const handleDelete = () => {
+    deleteVideos();
+  };
+
   return (
     <PageContainer>
       <PageTitle>Upload Videos</PageTitle>
@@ -128,7 +140,15 @@ export const UploadVideos = (): React.ReactElement => {
       {videoDataLoading ? (
         <Loader isPageLoader={false} />
       ) : (
-        <UploadVideosTable data={videoData} />
+        <div className="flex flex-col w-full">
+          <UploadVideosTable data={videoData} />
+          <button
+            onClick={handleDelete}
+            className="p-2 bg-red-500 text-white rounded my-2 self-start hover:bg-red-400"
+          >
+            Delete
+          </button>
+        </div>
       )}
     </PageContainer>
   );
