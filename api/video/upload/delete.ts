@@ -60,7 +60,8 @@ export const handler: Handler = async (
         },
       },
     });
-    if (!videos) {
+    console.log("Videos to be deleted: ", videos);
+    if (videos.length === 0) {
       return sendResponseBody({
         status: 200,
         message: "No videos to be deleted",

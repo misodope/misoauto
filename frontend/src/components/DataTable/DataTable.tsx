@@ -41,7 +41,7 @@ const DataTableComponent = <T extends any>(
     getPaginationRowModel: getPaginationRowModel(),
     debugTable: true,
   });
-
+  console.log("table", table.getRowModel());
   return (
     <div className="p-2 overflow-x-auto w-full">
       <table className="w-full rounded-lg overflow-hidden bg-white shadow-md">
@@ -94,6 +94,11 @@ const DataTableComponent = <T extends any>(
           })}
         </tbody>
       </table>
+      {table.getRowModel().rows.length === 0 && (
+        <p className="py-4 text-center w-full font-bold bg-white border-b rounded">
+          No Data Available
+        </p>
+      )}
     </div>
   );
 };
