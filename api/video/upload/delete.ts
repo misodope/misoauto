@@ -77,7 +77,7 @@ export const handler: Handler = async (
     });
 
     const deleteObjectsCommand = new DeleteObjectsCommand({
-      Bucket: process.env.LAMBDA_AWS_BUCKET_NAME,
+      Bucket: process.env.VIDEO_BUCKET,
       Delete: {
         Objects: videos.map((video: any) => ({ Key: video.key })),
       },
