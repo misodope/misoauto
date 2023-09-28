@@ -54,12 +54,12 @@ export const handler: Handler = async (
     const today = startOfDay(new Date());
     const videos = await Video.findAll({
       where: {
+        user_id,
         createdAt: {
           [Op.lt]: today,
         },
       },
     });
-    console.log("VIDEOS", videos);
     if (!videos) {
       return sendResponseBody({
         status: 200,
@@ -68,22 +68,22 @@ export const handler: Handler = async (
       });
     }
 
-    // const s3Client = new S3Client({
-    //   region: process.env.LAMBDA_AWS_REGION,
-    //   credentials: {
-    //     accessKeyId: process.env.LAMBDA_AWS_ACCESS_KEY,
-    //     secretAccessKey: process.env.LAMBDA_AWS_SECRET_ACCESS_KEY,
-    //   },
-    // });
+    const s3Client = new S3Client({
+      region: process.env.LAMBDA_AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.LAMBDA_AWS_ACCESS_KEY,
+        secretAccessKey: process.env.LAMBDA_AWS_SECRET_ACCESS_KEY,
+      },
+    });
 
-    // const deleteObjectsCommand = new DeleteObjectsCommand({
-    //   Bucket: process.env.LAMBDA_AWS_BUCKET_NAME,
-    //   Delete: {
-    //     Objects: videos.map((video: any) => ({ Key: video.key })),
-    //   },
-    // });
+    const deleteObjectsCommand = new DeleteObjectsCommand({
+      Bucket: process.env.LAMBDA_AWS_BUCKET_NAME,
+      Delete: {
+        Objects: videos.map((video: any) => ({ Key: video.key })),
+      },
+    });
 
-    // await s3Client.send(deleteObjectsCommand);
+    await s3Client.send(deleteObjectsCommand);
 
     return sendResponseBody({
       status: 200,
