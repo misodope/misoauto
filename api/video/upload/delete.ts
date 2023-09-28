@@ -52,12 +52,10 @@ export const handler: Handler = async (
     }
 
     const today = startOfDay(new Date());
-    const endOfToday = endOfDay(today);
-
     const videos = await Video.findAll({
       where: {
         createdAt: {
-          [Op.lt]: endOfToday,
+          [Op.lt]: today,
         },
       },
     });
