@@ -6,6 +6,9 @@ console.log(
   }),
 );
 
+// Date right now
+console.log("NOW", new Date());
+
 console.log("START", startOfDay(new Date()));
 
 console.log("END", endOfDay(new Date()));

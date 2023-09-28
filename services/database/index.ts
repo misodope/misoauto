@@ -40,6 +40,7 @@ export const connectToDb = async (): Promise<Sequelize> => {
     dialectOptions: {
       ssl: true,
     },
+    timezone: "+00:00",
   });
 
   await sequelize.authenticate();
