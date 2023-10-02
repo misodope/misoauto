@@ -36,13 +36,13 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
     if (!event.body) {
-      badRequest("No request body provided");
+      return badRequest("No request body provided");
     }
 
     const requestBody = JSON.parse(event.body);
     const { filename, filesize, filetype } = requestBody;
     if (!filename) {
-      badRequest("No file provided");
+      return badRequest("No file provided");
     }
 
     const s3Client = new S3Client({

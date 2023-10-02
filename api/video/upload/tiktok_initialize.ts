@@ -17,9 +17,12 @@ import { IVideo, getVideoModel } from "@services/database/models/video";
 
 import dotenv from "dotenv";
 import path from "path";
+import { TikTokController } from "@services/api/TikTokController";
 dotenv.config({ path: path.resolve(__dirname, "../../../", ".env") });
 
 interface UploadListRequestBody {
+  access_token: string;
+  video_id: string;
   user_id: string;
 }
 
@@ -34,30 +37,39 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
     if (!event.body) {
-      badRequest("No request body provided");
+      return badRequest("No request body provided");
     }
 
     const requestBody = JSON.parse(event.body);
-    const { user_id } = requestBody as UploadListRequestBody;
-    if (!user_id) {
-      badRequest("No User provided");
+    const { access_token, video_id, user_id } =
+      requestBody as UploadListRequestBody;
+    if (!access_token || !video_id || !user_id) {
+      return badRequest("Missing required parameters");
     }
 
     if (!sequelize) {
       sequelize = await connectToDb();
-
       Video = await getVideoModel(sequelize);
     }
 
-    let videos = await Video.findAll({ where: { user_id } });
-    if (!videos) {
-      videos = [];
+    const video = await Video.findOne({ where: { user_id, id: video_id } });
+    if (video === null) {
+      return badRequest("Video not found");
     }
+
+    const tiktokController = new TikTokController();
+
+    // const initUploadResponse = await tiktokController.initUpload(
+    //   access_token,
+    //   1,
+    //   1,
+    //   1,
+    // );
 
     return sendResponseBody({
       status: 200,
       message: "Successfully Requested Videos List",
-      success: videos,
+      success: video,
     });
   } catch (error) {
     return internalServerError(error);

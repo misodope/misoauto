@@ -16,6 +16,14 @@ exports.up = async (params) => {
       type: Sequelize.STRING,
       allowNull: true,
     },
+    file_size: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+    },
+    file_type: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
     tiktok_video_id: {
       type: Sequelize.STRING,
       allowNull: true,

@@ -32,6 +32,8 @@ interface Part {
 interface CompleteRequestBody {
   fileId: string;
   fileKey: string;
+  fileSize: number;
+  fileType: string;
   parts: Part[];
   user_id: string;
 }
@@ -47,14 +49,15 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
     if (!event.body) {
-      badRequest("No request body provided");
+      return badRequest("No request body provided");
     }
 
     const requestBody = JSON.parse(event.body);
-    const { fileId, fileKey, parts, user_id } =
+    const { fileId, fileKey, fileSize, fileType, parts, user_id } =
       requestBody as CompleteRequestBody;
-    if (!fileId || !fileKey || !parts) {
-      badRequest("No file provided");
+
+    if (!fileId || !fileKey || !parts || !fileSize || !fileType) {
+      return badRequest("No file provided");
     }
 
     const s3Client = new S3Client({
@@ -93,6 +96,8 @@ export const handler: Handler = async (
         id: fileId,
         name: fileKey.split("/")[1],
         bucket: process.env.VIDEO_BUCKET,
+        file_size: fileSize,
+        file_type: fileType,
         key: fileKey,
         user_id,
       });

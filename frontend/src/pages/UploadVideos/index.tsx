@@ -92,6 +92,8 @@ export const UploadVideos = (): React.ReactElement => {
       const completeRequestBody = JSON.stringify({
         fileId,
         fileKey,
+        fileSize: uploadFile.size,
+        fileType: uploadFile.type,
         parts: responseDataParts,
         user_id: authData?.open_id,
       });

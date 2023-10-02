@@ -117,4 +117,50 @@ export class TikTokController {
       return error as TikTokErrorObj;
     }
   }
+
+  async initUpload(
+    accessToken: string,
+    fileSize: number,
+    chunkSize: number,
+    totalChunkCount: number,
+  ) {
+    const url = "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/";
+    const body = {
+      source_info: {
+        source: "FILE_UPLOAD",
+        video_size: fileSize,
+        chunk_size: chunkSize,
+        total_chunk_count: totalChunkCount,
+      },
+    };
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json; charset=UTF-8",
+    };
+
+    const fetchConfig: RequestInit = {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    };
+
+    try {
+      const response = await fetch(url, fetchConfig);
+      console.log(response);
+
+      if (!response.ok) {
+        throw new Error(
+          `Network response was not ok:  ${response?.statusText}`,
+        );
+      }
+
+      const responseData = await response.json();
+      console.log("TikTok initUpload response data: ", responseData);
+
+      return responseData;
+    } catch (e) {
+      console.log("TikTok initUpload error: ", e);
+      return e;
+    }
+  }
 }

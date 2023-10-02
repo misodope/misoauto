@@ -34,13 +34,13 @@ export const handler: Handler = async (
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
     if (!event.body) {
-      badRequest("No request body provided");
+      return badRequest("No request body provided");
     }
 
     const requestBody = JSON.parse(event.body);
     const { user_id } = requestBody as UploadListRequestBody;
     if (!user_id) {
-      badRequest("No User provided");
+      return badRequest("No User provided");
     }
 
     if (!sequelize) {
