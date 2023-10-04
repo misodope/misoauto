@@ -61,7 +61,7 @@ export const handler: Handler = async (
 
     const tiktokController = new TikTokController();
 
-    const chunkCount = Math.ceil(Number(video.file_size) / CHUNK_SIZE);
+    const chunkCount = Math.floor(video.file_size / CHUNK_SIZE);
 
     const initUploadResponse = await tiktokController.initUpload(
       access_token,
