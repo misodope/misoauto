@@ -94,11 +94,10 @@ export const handler: Handler = async (
     if (video === null) {
       video = await Video.create({
         id: fileId,
-        name: fileKey.split("/")[1],
         bucket: process.env.VIDEO_BUCKET,
+        key: fileKey,
         file_size: fileSize,
         file_type: fileType,
-        key: fileKey,
         user_id,
       });
     } else {
