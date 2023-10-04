@@ -104,6 +104,9 @@ export const handler: Handler = async (
     } else {
       video = await video.update({
         id: fileId,
+        file_size: fileSize,
+        file_type: fileType,
+        key: fileKey,
       });
     }
 
