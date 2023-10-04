@@ -143,7 +143,7 @@ export class TikTokController {
       headers,
       body: JSON.stringify(body),
     };
-
+    console.log("Fetch Config for TikTok initUpload: ", fetchConfig);
     try {
       const response = await fetch(url, fetchConfig);
       console.log(response);
