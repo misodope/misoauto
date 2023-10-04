@@ -106,7 +106,6 @@ export const handler: Handler = async (
         id: fileId,
         file_size: fileSize,
         file_type: fileType,
-        key: fileKey,
       });
     }
 

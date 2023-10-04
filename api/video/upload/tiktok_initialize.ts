@@ -29,6 +29,8 @@ interface UploadListRequestBody {
 let sequelize: Sequelize | null = null;
 let Video: IVideo | null = null;
 
+const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
+
 export const handler: Handler = async (
   event: APIGatewayProxyEventV2WithRequestContext<UploadListRequestBody>,
   context: Context,
@@ -59,17 +61,21 @@ export const handler: Handler = async (
 
     const tiktokController = new TikTokController();
 
-    // const initUploadResponse = await tiktokController.initUpload(
-    //   access_token,
-    //   1,
-    //   1,
-    //   1,
-    // );
+    const chunkCount = Math.ceil(Number(video.file_size) / CHUNK_SIZE);
+
+    const initUploadResponse = await tiktokController.initUpload(
+      access_token,
+      video.file_size, // file size
+      CHUNK_SIZE, // chunk size
+      chunkCount, // total chunk count
+    );
+
+    console.log("initUploadResponse", initUploadResponse);
 
     return sendResponseBody({
       status: 200,
-      message: "Successfully Requested Videos List",
-      success: video,
+      message: "Successfully initialized upload.",
+      success: initUploadResponse,
     });
   } catch (error) {
     return internalServerError(error);

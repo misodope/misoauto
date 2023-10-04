@@ -2,7 +2,7 @@ FROM public.ecr.aws/lambda/nodejs:18 as builder
 
 WORKDIR /app
 
-COPY ./api/video/upload.ts package.json pnpm-lock.yaml ./
+COPY ./api/video/upload/tiktok_initialize.ts package.json pnpm-lock.yaml ./
 
 RUN npm i -g pnpm esbuild
 
@@ -10,7 +10,7 @@ RUN pnpm i
 
 COPY . .
 
-RUN esbuild upload.ts --bundle --minify --sourcemap --platform=node --target=es2020 --outfile=dist/index.js
+RUN esbuild tiktok_initialize.ts --bundle --minify --sourcemap --platform=node --target=es2020 --outfile=dist/index.js
 
 
 FROM public.ecr.aws/lambda/nodejs:18

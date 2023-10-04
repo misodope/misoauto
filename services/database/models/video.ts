@@ -1,7 +1,27 @@
-import { Sequelize, Model, DataTypes, ModelAttributes } from "sequelize";
+import {
+  Sequelize,
+  Model,
+  DataTypes,
+  ModelAttributes,
+  InferAttributes,
+  InferCreationAttributes,
+} from "sequelize";
 import { getUserModel } from "./user";
 
-class Video extends Model {}
+class Video extends Model<
+  InferAttributes<Video>,
+  InferCreationAttributes<Video>
+> {
+  id: string;
+  bucket: string;
+  key: string;
+  file_size: number;
+  file_type: string;
+  tiktok_video_id: string | null;
+  youtube_video_id: string | null;
+  instagram_video_id: string | null;
+  user_id: string;
+}
 
 const schema: ModelAttributes = {
   id: {
