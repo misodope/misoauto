@@ -21,7 +21,7 @@ export class AuthController {
 
     let url = "https://www.tiktok.com/v2/auth/authorize/";
     url += `?client_key=${process.env.TIKTOK_CLIENT_KEY}`;
-    url += "&scope=user.info.basic,video.list";
+    url += "&scope=user.info.basic,video.list,video.upload,user.info.stats";
     url += "&response_type=code";
     url += `&redirect_uri=${redirectUri}`;
     url += "&state=" + csrfState;
@@ -34,7 +34,7 @@ export class AuthController {
 
   async getAccessToken(
     code: string,
-    redirectUri: string
+    redirectUri: string,
   ): Promise<TikTokSuccessResponse> {
     const url = "https://open.tiktokapis.com/v2/oauth/token/";
     const body = new URLSearchParams({
@@ -62,7 +62,7 @@ export class AuthController {
 
         if (data.error) {
           throw Error(
-            `Error fetching access token! error: ${data.error}, message: ${data.error_description}`
+            `Error fetching access token! error: ${data.error}, message: ${data.error_description}`,
           );
         }
 
