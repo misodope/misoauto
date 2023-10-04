@@ -143,19 +143,17 @@ export class TikTokController {
       headers,
       body: JSON.stringify(body),
     };
+
     console.log("Fetch Config for TikTok initUpload: ", fetchConfig);
     try {
       const response = await fetch(url, fetchConfig);
-      console.log(response);
-
-      if (!response.ok) {
-        throw new Error(
-          `Network response was not ok:  ${response?.statusText}`,
-        );
-      }
 
       const responseData = await response.json();
       console.log("TikTok initUpload response data: ", responseData);
+
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response?.statusText}`);
+      }
 
       return responseData;
     } catch (e) {
