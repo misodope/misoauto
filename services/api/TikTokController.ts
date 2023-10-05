@@ -152,7 +152,7 @@ export class TikTokController {
       console.log("TikTok initUpload response data: ", responseData);
 
       if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response?.statusText}`);
+        throw new Error(responseData.error.message);
       }
 
       return responseData;
