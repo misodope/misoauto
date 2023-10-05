@@ -4,19 +4,20 @@ import { useFetch } from "../../hooks/useFetch";
 import { useAuthContext } from "../../hooks/useAuth";
 import { PageTitle } from "../../components/PageTitle/PageTitle";
 import { PageContainer } from "../../components/PageContainer/PageContainer";
+import { useEffect } from "react";
 
 export const Dashboard = () => {
   const { authData } = useAuthContext();
 
-  const {
-    data: userData,
-    error,
-    loading,
-  } = useFetch({
+  const [getUser, { data: userData, error, loading }] = useFetch({
     url: `/tiktok/user`,
     method: "POST",
     body: JSON.stringify({ accessToken: authData?.access_token }),
   });
+
+  useEffect(() => {
+    getUser();
+  }, []);
 
   if (!userData) {
     return <Loader />;
