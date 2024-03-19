@@ -1,5 +1,5 @@
 .git
 *Dockerfile*
-*docker-compose*
+../../docker-compose.yml
 node_modules
 frontend

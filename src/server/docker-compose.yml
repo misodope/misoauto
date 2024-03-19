@@ -1,0 +1,22 @@
+version: "3"
+services:
+  auth:
+    container_name: auth
+    build:
+      context: .
+      dockerfile: apps/auth/Dockerfile
+      args:
+        - APP=auth
+    restart: always
+    ports:
+      - 3000:3000
+  upload-service:
+    container_name: upload-service
+    build:
+      context: .
+      dockerfile: apps/upload-service/Dockerfile
+      args:
+        - APP=upload-service
+    restart: always
+    ports:
+      - 3001:3000
