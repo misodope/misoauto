@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (fetching) {
-      console.log("Fetching auth user data...");
+      console.log("Fetching server user data...");
       // Check for user param in url
       const urlParams = new URLSearchParams(window.location.search);
       const user = urlParams.get("user");
@@ -86,23 +86,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .find((c) => c.trim().startsWith("authData="));
 
     if (!authData) {
-      console.log("No auth data in state");
+      console.log("No server data in state");
       if (!cookie) {
-        console.log("No auth data in cookie");
+        console.log("No server data in cookie");
         // Set fetching to true to fetch user data
         setFetching(true);
         setLoading(true);
       } else {
-        console.log("Found auth data in cookie");
+        console.log("Found server data in cookie");
         const cookieAuthData = JSON.parse(cookie.split("=")[1]);
         setAuthData(cookieAuthData);
       }
     } else {
-      console.log("Found auth data in state");
-      // Check if auth data is in cookie
+      console.log("Found server data in state");
+      // Check if server data is in cookie
       if (!cookie) {
-        console.log("No auth data in cookie, but in state, setting cookie...");
-        // Set auth data in cookie for 1 day
+        console.log("No server data in cookie, but in state, setting cookie...");
+        // Set server data in cookie for 1 day
         const expires = `; expires=${authData.expires_in}`;
         document.cookie = `authData=${JSON.stringify(
           authData,
