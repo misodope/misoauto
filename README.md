@@ -16,6 +16,11 @@ Follow these steps to set up the application:
 
 - `pnpm i`
 
+3. Start the application in the root folder using `docker`
+```
+docker compose -f docker-compose.yml -f ./src/server/docker-compose.yml up --build
+```
+
 ### Deployments
 
 Deployments are automated in CI/CD pipeline defined in github workflows.

@@ -1,0 +1,10 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: src/frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src/frontend/:/app
+      - /app/node_modules

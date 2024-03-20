@@ -27,6 +27,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/upload-service/tsconfig.app.json"
       }
+    },
+    "tiktok-service": {
+      "type": "application",
+      "root": "apps/tiktok-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/tiktok-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/tiktok-service/tsconfig.app.json"
+      }
     }
   }
 }

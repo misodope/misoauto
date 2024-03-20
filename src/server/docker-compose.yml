@@ -1,22 +1,45 @@
-version: "3"
 services:
+  db:
+    image: postgres:latest
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=misoauto
+      - POSTGRES_PASSWORD=misoauto_password
+      - POSTGRES_DB=misoauto
+    restart: always
   auth:
     container_name: auth
     build:
-      context: .
+      context: ./src/server/
       dockerfile: apps/auth/Dockerfile
       args:
         - APP=auth
     restart: always
     ports:
-      - 3000:3000
+      - "3000:3000"
   upload-service:
     container_name: upload-service
     build:
-      context: .
+      context: ./src/server/
       dockerfile: apps/upload-service/Dockerfile
       args:
         - APP=upload-service
     restart: always
     ports:
-      - 3001:3000
+      - "3001:3000"
+  tiktok-service:
+    container_name: tiktok-service
+    build:
+      context: ./src/server/
+      dockerfile: apps/tiktok-service/Dockerfile
+      args:
+        - APP=tiktok-service
+    restart: always
+    ports:
+      - "3002:3000"
+# Volumes for persisting data, see https://docs.docker.com/engine/reference/builder/#volume
+volumes:
+  pg_data:
