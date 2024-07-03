@@ -18,6 +18,9 @@ services:
       args:
         - APP=auth
     restart: always
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
     ports:
       - "3000:3000"
   upload-service:
