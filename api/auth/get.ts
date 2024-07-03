@@ -12,7 +12,6 @@ import {
   internalServerError,
   sendResponseBody,
 } from "@services/utils/response";
-import { helperFunction } from "api/utils/utils";
 
 let sequelize: Sequelize | null = null;
 let User: IUser | null = null;
