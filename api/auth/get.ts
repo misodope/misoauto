@@ -23,9 +23,6 @@ export const handler: Handler = async (
   context: Context,
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
-    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
-    console.log(`Context: ${JSON.stringify(context, null, 2)}`);
-
     if (!sequelize) {
       sequelize = await connectToDb();
       User = await getUserModel(sequelize);
