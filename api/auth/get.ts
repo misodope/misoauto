@@ -4,6 +4,7 @@ import {
   Handler,
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
+console.log('This should cause a conflict on line 15')
 import { Sequelize } from "sequelize";
 import { IUser, getUserModel } from "@services/database/models/user";
 import { connectToDb } from "@services/database";
