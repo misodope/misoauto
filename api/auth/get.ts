@@ -23,6 +23,7 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
     console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+    console.log('New Log Added')
     console.log(`Context: ${JSON.stringify(context, null, 2)}`);
 
     if (!sequelize) {
