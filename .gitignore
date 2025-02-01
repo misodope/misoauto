@@ -1,0 +1,14 @@
+
+.nx/installation
+.nx/cache
+.nx/workspace-data
+
+# Next.js
+.next
+out
+dist
+node_modules
+
+.env
+.idea
+.DS_Store
