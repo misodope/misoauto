@@ -40,3 +40,9 @@ a {
     color-scheme: dark;
   }
 }
+
+div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
