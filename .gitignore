@@ -1,32 +1,14 @@
-.env
-.env.*
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
+.nx/installation
+.nx/cache
+.nx/workspace-data
+
+# Next.js
+.next
+out
 dist
-dist-ssr
-# *.local
+node_modules
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
+.env
 .idea
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-.pnpm-debug.log
-.pnpm-store
-.vercel
-
-generated

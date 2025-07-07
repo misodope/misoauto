@@ -1,0 +1,17 @@
+{
+  "name": "backend",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register -P backend/tsconfig.json backend/src/main.ts"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nest build --output-path dist/backend"
+      }
+    }
+  }
+}

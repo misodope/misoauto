@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  password       String
+  name           String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  socialAccounts SocialAccount[]
+  videos         Video[]
+}
+
+model Video {
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String?
+  s3Key       String
+  s3Bucket    String
+  duration    Float?
+  fileSize    Int?
+  mimeType    String?
+  status      VideoStatus @default(PROCESSING)
+  userId      Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id])
+  posts       VideoPost[]
+}
+
+model Platform {
+  id          Int             @id @default(autoincrement())
+  name        PlatformType    @unique
+  displayName String
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  accounts    SocialAccount[]
+  posts       VideoPost[]
+}
+
+model SocialAccount {
+  id           Int         @id @default(autoincrement())
+  platformId   Int
+  userId       Int
+  accessToken  String
+  refreshToken String?
+  tokenExpiry  DateTime?
+  accountId    String
+  username     String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  platform     Platform    @relation(fields: [platformId], references: [id])
+  user         User        @relation(fields: [userId], references: [id])
+  posts        VideoPost[]
+
+  @@unique([platformId, accountId])
+}
+
+model VideoPost {
+  id              Int           @id @default(autoincrement())
+  videoId         Int
+  platformId      Int
+  socialAccountId Int
+  platformPostId  String?
+  postUrl         String?
+  status          PostStatus    @default(PENDING)
+  scheduledFor    DateTime?
+  postedAt        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  platform        Platform      @relation(fields: [platformId], references: [id])
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id])
+  video           Video         @relation(fields: [videoId], references: [id])
+}
+
+enum VideoStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum PostStatus {
+  PENDING
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+enum PlatformType {
+  TIKTOK
+  YOUTUBE
+  INSTAGRAM
+  FACEBOOK
+}

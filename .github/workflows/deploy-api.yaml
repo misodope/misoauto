@@ -1,46 +1,46 @@
-name: Deploy API to Lambdas
-on: [push]
-jobs:
-  lambdas:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-
-      - name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: latest
-
-      - name: Install dependencies
-        run: |
-          npm install -g esbuild
-          npm install -g pnpm
-          pnpm install
-
-      - name: Run Database Migrations
-        env:
-          DATABASE_URL: ${{ vars.DATABASE_URL }}
-        run: |
-          pnpm migration-up
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          role-duration-seconds: 900 #15m
-          aws-region: us-east-1 #Test
-
-      - name: Build TypeScript
-        run: |
-          pnpm build
-
-      - name: Package Lambdas
-        run: |
-          pnpm package
-
-      - name: Deploy lambdas
-        run: |
-          pnpm deploy-lambdas
+#name: Deploy API to Lambdas
+#on: [push]
+#jobs:
+#  lambdas:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout Repo
+#        uses: actions/checkout@v3
+#
+#      - name: Setup node
+#        uses: actions/setup-node@v3
+#        with:
+#          node-version: latest
+#
+#      - name: Install dependencies
+#        run: |
+#          npm install -g esbuild
+#          npm install -g pnpm
+#          pnpm install
+#
+#      - name: Run Database Migrations
+#        env:
+#          DATABASE_URL: ${{ vars.DATABASE_URL }}
+#        run: |
+#          pnpm migration-up
+#
+#      - name: Configure AWS Credentials
+#        uses: aws-actions/configure-aws-credentials@v2
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#          role-duration-seconds: 900 #15m
+#          aws-region: us-east-1 #Test
+#
+#      - name: Build TypeScript
+#        run: |
+#          pnpm build
+#
+#      - name: Package Lambdas
+#        run: |
+#          pnpm package
+#
+#      - name: Deploy lambdas
+#        run: |
+#          pnpm deploy-lambdas
