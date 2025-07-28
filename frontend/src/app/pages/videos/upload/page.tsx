@@ -2,6 +2,9 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import {
   Box,
   Flex,
@@ -15,6 +18,7 @@ import {
   Separator
 } from '@radix-ui/themes';
 import { ArrowLeftIcon, UploadIcon } from '@radix-ui/react-icons';
+import ProtectedRoute from '../../../components/ProtectedRoute/ProtectedRoute';
 
 interface PlatformConfig {
   name: string;
@@ -88,11 +92,12 @@ export default function UploadVideo() {
   };
 
   const goBack = () => {
-    router.push('/pages/videos');
+    router.push('/videos');
   };
 
   return (
-    <Box p="6">
+    <ProtectedRoute>
+      <Box p="6">
       <Flex align="center" gap="4" mb="6">
         <Button variant="ghost" size="2" onClick={goBack}>
           <ArrowLeftIcon />
@@ -117,7 +122,7 @@ export default function UploadVideo() {
             }}
           >
             <Flex direction="column" align="center" gap="3">
-              <UploadIcon size={32} />
+              <UploadIcon width="32" height="32" />
               {formData.file ? (
                 <>
                   <Text size="4" weight="medium">{formData.file.name}</Text>
@@ -203,6 +208,7 @@ export default function UploadVideo() {
           Upload Video
         </Button>
       </Flex>
-    </Box>
+      </Box>
+    </ProtectedRoute>
   );
 }

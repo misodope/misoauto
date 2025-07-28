@@ -7,7 +7,7 @@ export default function AuthIndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push('/pages/auth/login');
+    router.push('/auth/login');
   }, [router]);
 
   return null;

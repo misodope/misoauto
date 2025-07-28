@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button, Text, Heading, Flex, Box, TextField } from '@radix-ui/themes';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -12,6 +14,14 @@ export default function Register() {
     confirmPassword: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { isLoggedIn, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && isLoggedIn) {
+      router.push('/home');
+    }
+  }, [isLoggedIn, isLoading, router]);
 
   const handleChange = (name: string, value: string) => {
     setFormData(prev => ({
@@ -53,6 +63,34 @@ export default function Register() {
       console.log('Registration attempt:', { name: formData.name, email: formData.email });
     }
   };
+
+  if (isLoading) {
+    return (
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        minHeight="100vh"
+        p="8"
+      >
+        <Text size="4" color="gray">Loading...</Text>
+      </Flex>
+    );
+  }
+
+  if (isLoggedIn) {
+    return (
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        minHeight="100vh"
+        p="8"
+      >
+        <Text size="4" color="gray">Redirecting...</Text>
+      </Flex>
+    );
+  }
 
   return (
     <Flex 
@@ -131,7 +169,7 @@ export default function Register() {
         <Text size="2">
           Already have an account?{' '}
           <Link 
-            href="/pages/auth/login"
+            href="/auth/login"
             style={{
               color: 'var(--accent-11)',
               textDecoration: 'none',
@@ -140,12 +178,12 @@ export default function Register() {
               padding: '2px 4px'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--accent-12)';
-              e.currentTarget.style.backgroundColor = 'var(--accent-3)';
+              (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent-12)';
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'var(--accent-3)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--accent-11)';
-              e.currentTarget.style.backgroundColor = 'transparent';
+              (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent-11)';
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'transparent';
             }}
           >
             Login here

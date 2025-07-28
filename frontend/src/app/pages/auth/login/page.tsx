@@ -1,18 +1,56 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import * as Form from '@radix-ui/react-form';
 import { Button, Text, Heading, Flex, Box, TextField } from '@radix-ui/themes';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { isLoggedIn, isLoading, impersonateLogin } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && isLoggedIn) {
+      router.push('/home');
+    }
+  }, [isLoggedIn, isLoading, router]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log('Login attempt:', { email });
   };
+
+  if (isLoading) {
+    return (
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        minHeight="100vh"
+        p="8"
+      >
+        <Text size="4" color="gray">Loading...</Text>
+      </Flex>
+    );
+  }
+
+  if (isLoggedIn) {
+    return (
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        minHeight="100vh"
+        p="8"
+      >
+        <Text size="4" color="gray">Redirecting...</Text>
+      </Flex>
+    );
+  }
 
   return (
     <Flex 
@@ -63,7 +101,7 @@ export default function Login() {
           <Text size="2">
             Don't have an account?{' '}
             <Link 
-              href="/pages/auth/register"
+              href="/auth/register"
               style={{
                 color: 'var(--accent-11)',
                 textDecoration: 'none',
@@ -72,12 +110,12 @@ export default function Login() {
                 padding: '2px 4px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--accent-12)';
-                e.currentTarget.style.backgroundColor = 'var(--accent-3)';
+                (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent-12)';
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'var(--accent-3)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--accent-11)';
-                e.currentTarget.style.backgroundColor = 'transparent';
+                (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent-11)';
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'transparent';
               }}
             >
               Register here

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navigation from './components/Navigation/Navigation';
+import DevAuthHelper from './components/DevAuthHelper/DevAuthHelper';
+import { AuthProvider } from './contexts/AuthContext';
 import './globals.css';
 import './layout.scss';
 
@@ -22,17 +24,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Theme 
-          appearance="dark" 
-          accentColor="yellow" 
-          grayColor="slate"
-          radius="medium"
-        >
-          <Navigation />
-          <main className="main-content">
-            {children}
-          </main>
-        </Theme>
+        <AuthProvider>
+          <Theme 
+            appearance="dark" 
+            accentColor="yellow" 
+            grayColor="slate"
+            radius="medium"
+          >
+            <Navigation />
+            <main className="main-content">
+              {children}
+            </main>
+            <DevAuthHelper />
+          </Theme>
+        </AuthProvider>
       </body>
     </html>
   );
