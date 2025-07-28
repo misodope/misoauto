@@ -22,7 +22,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   private store: Map<string, CacheItem<any>>;
   private defaultTTL: number;
   private maxSize: number;
-  private cleanupInterval: NodeJS.Timeout;
+  private cleanupInterval?: NodeJS.Timeout;
 
   constructor() {
     this.store = new Map();
