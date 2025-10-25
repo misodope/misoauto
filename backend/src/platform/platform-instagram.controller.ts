@@ -1,15 +1,14 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Query, 
-  Body, 
-  Param, 
-  Logger 
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Body,
+  Param,
+  Logger,
 } from '@nestjs/common';
 import { PlatformConnectInstagramService } from './platform-connect-instagram.service';
 
-// DTOs for Instagram requests
 export interface AuthUrlRequest {
   state?: string;
 }
@@ -47,9 +46,14 @@ export class InstagramController {
   @Post('exchange-token')
   async exchangeToken(@Body() body: TokenExchangeRequest) {
     this.logger.log('Exchanging Instagram authorization code for tokens');
-    const shortLivedToken = await this.instagramService.exchangeCodeForToken(body.code);
-    const longLivedToken = await this.instagramService.exchangeForLongLivedToken(shortLivedToken.access_token);
-    
+    const shortLivedToken = await this.instagramService.exchangeCodeForToken(
+      body.code,
+    );
+    const longLivedToken =
+      await this.instagramService.exchangeForLongLivedToken(
+        shortLivedToken.access_token,
+      );
+
     return {
       shortLivedToken,
       longLivedToken,
@@ -60,8 +64,10 @@ export class InstagramController {
   @Post('refresh-token')
   async refreshToken(@Body() body: TokenRequest) {
     this.logger.log('Refreshing Instagram long-lived token');
-    const refreshedToken = await this.instagramService.refreshLongLivedToken(body.accessToken);
-    
+    const refreshedToken = await this.instagramService.refreshLongLivedToken(
+      body.accessToken,
+    );
+
     return {
       ...refreshedToken,
       platform: 'instagram',
@@ -72,7 +78,7 @@ export class InstagramController {
   async getUserInfo(@Body() body: TokenRequest) {
     this.logger.log('Fetching Instagram user information');
     const userInfo = await this.instagramService.getUserInfo(body.accessToken);
-    
+
     return {
       user: userInfo,
       platform: 'instagram',
@@ -82,8 +88,11 @@ export class InstagramController {
   @Post('user-media')
   async getUserMedia(@Body() body: UserMediaRequest) {
     this.logger.log('Fetching Instagram user media');
-    const media = await this.instagramService.getUserMedia(body.accessToken, body.limit);
-    
+    const media = await this.instagramService.getUserMedia(
+      body.accessToken,
+      body.limit,
+    );
+
     return {
       media,
       platform: 'instagram',
@@ -92,10 +101,16 @@ export class InstagramController {
   }
 
   @Post('media/:mediaId')
-  async getMediaById(@Param('mediaId') mediaId: string, @Body() body: TokenRequest) {
+  async getMediaById(
+    @Param('mediaId') mediaId: string,
+    @Body() body: TokenRequest,
+  ) {
     this.logger.log(`Fetching Instagram media by ID: ${mediaId}`);
-    const media = await this.instagramService.getMediaById(mediaId, body.accessToken);
-    
+    const media = await this.instagramService.getMediaById(
+      mediaId,
+      body.accessToken,
+    );
+
     return {
       media,
       platform: 'instagram',
@@ -106,7 +121,7 @@ export class InstagramController {
   async validateToken(@Body() body: TokenRequest) {
     this.logger.log('Validating Instagram access token');
     const isValid = await this.instagramService.validateToken(body.accessToken);
-    
+
     return {
       valid: isValid,
       platform: 'instagram',
@@ -117,7 +132,7 @@ export class InstagramController {
   getConfigStatus() {
     this.logger.log('Checking Instagram service configuration');
     const configStatus = this.instagramService.getConfigStatus();
-    
+
     return {
       ...configStatus,
       platform: 'instagram',

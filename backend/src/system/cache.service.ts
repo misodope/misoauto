@@ -26,7 +26,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
 
   constructor() {
     this.store = new Map();
-    this.defaultTTL = 3600000; // 1 hour default
+    this.defaultTTL = 3600000;
     this.maxSize = 1000;
   }
 
@@ -34,7 +34,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     this.logger.log('Cache service initialized');
     this.cleanupInterval = setInterval(() => {
       this.cleanupExpired();
-    }, 60000); // Cleanup every minute
+    }, 60000);
   }
 
   async onModuleDestroy() {

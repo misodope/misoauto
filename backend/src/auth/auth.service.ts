@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import { AuthRepository } from './auth.repository';
+import { AuthReader } from './repository/authReader';
+import { AuthWriter } from './repository/authWriter';
 import * as bcrypt from 'bcrypt';
+import { RegisterDto } from '@backend/auth/dto/auth-register.dto';
 
 @Injectable()
 export class AuthService {
@@ -10,27 +12,30 @@ export class AuthService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly authRepository: AuthRepository,
+    private readonly authReader: AuthReader,
+    private readonly authWriter: AuthWriter,
   ) {}
 
-  async register(email: string, password: string): Promise<User> {
+  async register(data: RegisterDto): Promise<User> {
+    const { email, password, name } = data;
     const hashedPassword = await bcrypt.hash(password, this.saltRounds);
 
-    return this.authRepository.createUser({
-      email,
+    return this.authWriter.createUser({
+      email: email.toLowerCase(),
       password: hashedPassword,
+      name,
     });
   }
   async getUserByEmail(email: string): Promise<User | null> {
-    return this.authRepository.findUserByEmail(email);
+    return this.authReader.findUserByEmail(email);
   }
 
   async getUserById(id: number): Promise<User | null> {
-    return this.authRepository.findUserById(id);
+    return this.authReader.findUserById(id);
   }
 
   async getAllUsers(): Promise<User[]> {
-    return this.authRepository.findAllUsers();
+    return this.authReader.findAllUsers();
   }
 
   async updateUser(
@@ -41,7 +46,7 @@ export class AuthService {
     const user = await this.getUserById(id);
     if (user) {
       const hashedPassword = await bcrypt.hash(password, this.saltRounds);
-      return this.authRepository.updateUser({
+      return this.authWriter.updateUser({
         where: { id },
         data: { email, password: hashedPassword },
       });
@@ -50,7 +55,7 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.authRepository.findUserByEmail(email);
+    const user = await this.authReader.findUserByEmail(email);
     if (user && (await bcrypt.compare(password, user.password))) {
       return user;
     }
@@ -59,8 +64,11 @@ export class AuthService {
 
   async login(user: User) {
     const payload = { email: user.email, sub: user.id };
+
+    const signedToken = this.jwtService.sign(payload);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: signedToken,
     };
   }
 }

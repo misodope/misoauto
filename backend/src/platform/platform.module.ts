@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PlatformRepository } from './platform.repository';
+import { PlatformReader } from './repository/platformReader';
+import { PlatformWriter } from './repository/platformWriter';
 import { PlatformConnectTikTokService } from './platform-connect-tiktok.service';
 import { PlatformConnectInstagramService } from './platform-connect-instagram.service';
 import { PlatformConnectYouTubeService } from './platform-connect-youtube.service';
@@ -10,19 +11,17 @@ import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  controllers: [
-    InstagramController,
-    TikTokController,
-    YouTubeController,
-  ],
+  controllers: [InstagramController, TikTokController, YouTubeController],
   providers: [
-    PlatformRepository,
+    PlatformReader,
+    PlatformWriter,
     PlatformConnectTikTokService,
     PlatformConnectInstagramService,
     PlatformConnectYouTubeService,
   ],
   exports: [
-    PlatformRepository,
+    PlatformReader,
+    PlatformWriter,
     PlatformConnectTikTokService,
     PlatformConnectInstagramService,
     PlatformConnectYouTubeService,

@@ -87,7 +87,8 @@ export class PlatformConnectYouTubeService {
       clientId: process.env.YOUTUBE_CLIENT_ID || '',
       clientSecret: process.env.YOUTUBE_CLIENT_SECRET || '',
       redirectUri: process.env.YOUTUBE_REDIRECT_URI || '',
-      scope: 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.upload',
+      scope:
+        'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.upload',
     };
 
     this.httpClient = axios.create({
@@ -97,7 +98,6 @@ export class PlatformConnectYouTubeService {
       },
     });
 
-    // Request interceptor for logging
     this.httpClient.interceptors.request.use(
       (config) => {
         this.logger.debug(`Making request to: ${config.url}`);
@@ -109,7 +109,6 @@ export class PlatformConnectYouTubeService {
       },
     );
 
-    // Response interceptor for error handling
     this.httpClient.interceptors.response.use(
       (response) => response,
       (error) => {
@@ -123,9 +122,6 @@ export class PlatformConnectYouTubeService {
     );
   }
 
-  /**
-   * Generate OAuth authorization URL for YouTube
-   */
   generateAuthUrl(state?: string): string {
     const params = {
       client_id: this.config.clientId,
@@ -139,13 +135,10 @@ export class PlatformConnectYouTubeService {
 
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${stringify(params)}`;
     this.logger.log(`Generated YouTube auth URL: ${authUrl}`);
-    
+
     return authUrl;
   }
 
-  /**
-   * Exchange authorization code for access token
-   */
   async exchangeCodeForToken(code: string): Promise<YouTubeTokenResponse> {
     try {
       this.logger.log('Exchanging authorization code for access token');
@@ -164,7 +157,9 @@ export class PlatformConnectYouTubeService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`YouTube OAuth error: ${response.data.error_description}`);
+        throw new BadRequestException(
+          `YouTube OAuth error: ${response.data.error_description}`,
+        );
       }
 
       this.logger.log('Successfully exchanged code for token');
@@ -175,10 +170,9 @@ export class PlatformConnectYouTubeService {
     }
   }
 
-  /**
-   * Refresh access token using refresh token
-   */
-  async refreshAccessToken(refreshToken: string): Promise<YouTubeTokenResponse> {
+  async refreshAccessToken(
+    refreshToken: string,
+  ): Promise<YouTubeTokenResponse> {
     try {
       this.logger.log('Refreshing YouTube access token');
 
@@ -195,7 +189,9 @@ export class PlatformConnectYouTubeService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`YouTube token refresh error: ${response.data.error_description}`);
+        throw new BadRequestException(
+          `YouTube token refresh error: ${response.data.error_description}`,
+        );
       }
 
       this.logger.log('Successfully refreshed access token');
@@ -206,9 +202,6 @@ export class PlatformConnectYouTubeService {
     }
   }
 
-  /**
-   * Get user's channel information
-   */
   async getChannelInfo(accessToken: string): Promise<YouTubeChannelInfo> {
     try {
       this.logger.log('Fetching YouTube channel information');
@@ -228,33 +221,38 @@ export class PlatformConnectYouTubeService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`YouTube API error: ${response.data.error.message}`);
+        throw new BadRequestException(
+          `YouTube API error: ${response.data.error.message}`,
+        );
       }
 
       if (!response.data.items || response.data.items.length === 0) {
-        throw new BadRequestException('No YouTube channel found for this account');
+        throw new BadRequestException(
+          'No YouTube channel found for this account',
+        );
       }
 
       this.logger.log('Successfully fetched channel information');
       return response.data.items[0];
     } catch (error) {
       this.logger.error('Failed to fetch channel information:', error);
-      throw new BadRequestException('Failed to fetch YouTube channel information');
+      throw new BadRequestException(
+        'Failed to fetch YouTube channel information',
+      );
     }
   }
 
-  /**
-   * Get channel's uploaded videos
-   */
-  async getChannelVideos(accessToken: string, maxResults: number = 25): Promise<YouTubeVideo[]> {
+  async getChannelVideos(
+    accessToken: string,
+    maxResults: number = 25,
+  ): Promise<YouTubeVideo[]> {
     try {
       this.logger.log('Fetching YouTube channel videos');
 
-      // First, get the channel's uploads playlist ID
       const channelInfo = await this.getChannelInfo(accessToken);
-      const uploadsPlaylistId = channelInfo.contentDetails.relatedPlaylists.uploads;
+      const uploadsPlaylistId =
+        channelInfo.contentDetails.relatedPlaylists.uploads;
 
-      // Get playlist items (videos)
       const playlistParams = {
         part: 'snippet',
         playlistId: uploadsPlaylistId,
@@ -271,12 +269,15 @@ export class PlatformConnectYouTubeService {
       );
 
       if (playlistResponse.data.error) {
-        throw new BadRequestException(`YouTube API error: ${playlistResponse.data.error.message}`);
+        throw new BadRequestException(
+          `YouTube API error: ${playlistResponse.data.error.message}`,
+        );
       }
 
-      // Get detailed video information
-      const videoIds = playlistResponse.data.items.map((item: any) => item.snippet.resourceId.videoId);
-      
+      const videoIds = playlistResponse.data.items.map(
+        (item: any) => item.snippet.resourceId.videoId,
+      );
+
       if (videoIds.length === 0) {
         return [];
       }
@@ -296,7 +297,9 @@ export class PlatformConnectYouTubeService {
       );
 
       if (videosResponse.data.error) {
-        throw new BadRequestException(`YouTube API error: ${videosResponse.data.error.message}`);
+        throw new BadRequestException(
+          `YouTube API error: ${videosResponse.data.error.message}`,
+        );
       }
 
       this.logger.log('Successfully fetched channel videos');
@@ -307,10 +310,10 @@ export class PlatformConnectYouTubeService {
     }
   }
 
-  /**
-   * Get video details by ID
-   */
-  async getVideoById(videoId: string, accessToken: string): Promise<YouTubeVideo> {
+  async getVideoById(
+    videoId: string,
+    accessToken: string,
+  ): Promise<YouTubeVideo> {
     try {
       this.logger.log(`Fetching YouTube video details for ID: ${videoId}`);
 
@@ -329,7 +332,9 @@ export class PlatformConnectYouTubeService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`YouTube API error: ${response.data.error.message}`);
+        throw new BadRequestException(
+          `YouTube API error: ${response.data.error.message}`,
+        );
       }
 
       if (!response.data.items || response.data.items.length === 0) {
@@ -344,9 +349,6 @@ export class PlatformConnectYouTubeService {
     }
   }
 
-  /**
-   * Revoke access token
-   */
   async revokeToken(accessToken: string): Promise<void> {
     try {
       this.logger.log('Revoking YouTube access token');
@@ -362,22 +364,19 @@ export class PlatformConnectYouTubeService {
     }
   }
 
-  /**
-   * Validate access token
-   */
   async validateToken(accessToken: string): Promise<boolean> {
     try {
       await this.getChannelInfo(accessToken);
       return true;
     } catch (error) {
-      this.logger.warn('YouTube token validation failed:', (error as Error).message);
+      this.logger.warn(
+        'YouTube token validation failed:',
+        (error as Error).message,
+      );
       return false;
     }
   }
 
-  /**
-   * Validate if the service is properly configured
-   */
   isConfigured(): boolean {
     return !!(
       this.config.clientId &&
@@ -386,9 +385,6 @@ export class PlatformConnectYouTubeService {
     );
   }
 
-  /**
-   * Get service configuration status
-   */
   getConfigStatus(): { configured: boolean; missingFields: string[] } {
     const missingFields: string[] = [];
 

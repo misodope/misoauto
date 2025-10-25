@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { Button, Box, Flex, Text } from '@radix-ui/themes';
+import DevAuthHelper from '../DevAuthHelper/DevAuthHelper';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface NavItem {
@@ -24,12 +25,12 @@ export default function Navigation() {
   ];
 
   return (
-    <Box 
+    <Box
       position="fixed"
       top="0"
       left="0"
       right="0"
-      style={{ 
+      style={{
         zIndex: 1000,
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid var(--gray-6)'
@@ -42,28 +43,28 @@ export default function Navigation() {
             MisoAuto
           </Link>
         </Text>
-        
-        {/* Only show navigation links when user is logged in */}
+
+        {}
         {isLoggedIn && (
           <NavigationMenu.Root>
             <NavigationMenu.List style={{ display: 'flex', gap: '0.5rem', listStyle: 'none', margin: 0, padding: 0, alignItems: 'center' }}>
               {navItems.map((item) => (
                 <NavigationMenu.Item key={item.path}>
                   <NavigationMenu.Link asChild>
-                    <Button 
-                      asChild 
+                    <Button
+                      asChild
                       variant={pathname === item.path ? 'solid' : 'ghost'}
                       size="2"
-                      style={{ 
+                      style={{
                         minHeight: '36px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}
                     >
-                      <Link href={item.path} style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                      <Link href={item.path} style={{
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: '0.5rem',
                         textDecoration: 'none',
                         padding: '0 12px'
@@ -78,23 +79,28 @@ export default function Navigation() {
             </NavigationMenu.List>
           </NavigationMenu.Root>
         )}
-        
-        {isLoading ? (
-          <Text size="2" color="gray">Loading...</Text>
-        ) : !isLoggedIn ? (
-          <Flex gap="2">
-            <Button asChild variant="ghost" size="2">
-              <Link href="/auth/login">Login</Link>
+
+        <Flex align="center" gap="3">
+          {}
+          <DevAuthHelper />
+
+          {isLoading ? (
+            <Text size="2" color="gray">Loading...</Text>
+          ) : !isLoggedIn ? (
+            <Flex gap="2">
+              <Button asChild variant="ghost" size="2">
+                <Link href="/auth/login">Login</Link>
+              </Button>
+              <Button asChild variant="soft" size="2">
+                <Link href="/auth/register">Sign Up</Link>
+              </Button>
+            </Flex>
+          ) : (
+            <Button onClick={logout} variant="soft" size="2" color="red">
+              Logout
             </Button>
-            <Button asChild variant="soft" size="2">
-              <Link href="/auth/register">Sign Up</Link>
-            </Button>
-          </Flex>
-        ) : (
-          <Button onClick={logout} variant="soft" size="2" color="red">
-            Logout
-          </Button>
-        )}
+          )}
+        </Flex>
       </Flex>
     </Box>
   );

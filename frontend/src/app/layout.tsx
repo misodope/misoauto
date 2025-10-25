@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navigation from './components/Navigation/Navigation';
-import DevAuthHelper from './components/DevAuthHelper/DevAuthHelper';
 import { AuthProvider } from './contexts/AuthContext';
+import { Theme } from '@radix-ui/themes';
+import { QueryProvider } from "@frontend/app/lib/api/Provider";
+
 import './globals.css';
 import './layout.scss';
-
-import { Theme } from '@radix-ui/themes';
 import '@radix-ui/themes/styles.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -24,20 +24,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          <Theme 
-            appearance="dark" 
-            accentColor="yellow" 
-            grayColor="slate"
-            radius="medium"
-          >
-            <Navigation />
-            <main className="main-content">
-              {children}
-            </main>
-            <DevAuthHelper />
-          </Theme>
-        </AuthProvider>
+      <QueryProvider>
+          <AuthProvider>
+            <Theme
+              appearance="dark"
+              accentColor="yellow"
+              grayColor="slate"
+              radius="medium"
+            >
+              <Navigation />
+              <main className="main-content">
+                {children}
+              </main>
+            </Theme>
+          </AuthProvider>
+      </QueryProvider>
       </body>
     </html>
   );

@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { VideoRepository } from './video.repository';
+import { VideoReader } from './repository/videoReader';
+import { VideoWriter } from './repository/videoWriter';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  providers: [VideoRepository],
-  exports: [VideoRepository],
+  providers: [VideoReader, VideoWriter],
+  exports: [VideoReader, VideoWriter],
 })
 export class VideoModule {}

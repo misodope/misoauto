@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { SocialAccountRepository } from './social-account.repository';
+import { SocialAccountReader } from './repository/socialAccountReader';
+import { SocialAccountWriter } from './repository/socialAccountWriter';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  providers: [SocialAccountRepository],
-  exports: [SocialAccountRepository],
+  providers: [SocialAccountReader, SocialAccountWriter],
+  exports: [SocialAccountReader, SocialAccountWriter],
 })
 export class SocialAccountModule {}

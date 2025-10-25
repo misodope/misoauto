@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UserRepository } from './user.repository';
+import { UserReader } from './repository/userReader';
+import { UserWriter } from './repository/userWriter';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  providers: [UserRepository],
-  exports: [UserRepository],
+  providers: [UserReader, UserWriter],
+  exports: [UserReader, UserWriter],
 })
 export class UserModule {}

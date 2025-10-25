@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic';
 import {
   Box,

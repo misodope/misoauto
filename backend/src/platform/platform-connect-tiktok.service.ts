@@ -56,7 +56,6 @@ export class PlatformConnectTikTokService {
       },
     });
 
-    // Request interceptor for logging
     this.httpClient.interceptors.request.use(
       (config) => {
         this.logger.debug(`Making request to: ${config.url}`);
@@ -68,7 +67,6 @@ export class PlatformConnectTikTokService {
       },
     );
 
-    // Response interceptor for error handling
     this.httpClient.interceptors.response.use(
       (response) => response,
       (error) => {
@@ -82,9 +80,6 @@ export class PlatformConnectTikTokService {
     );
   }
 
-  /**
-   * Generate OAuth authorization URL for TikTok
-   */
   generateAuthUrl(state?: string): string {
     const params = {
       client_key: this.config.clientId,
@@ -96,13 +91,10 @@ export class PlatformConnectTikTokService {
 
     const authUrl = `https://www.tiktok.com/v2/auth/authorize/?${stringify(params)}`;
     this.logger.log(`Generated TikTok auth URL: ${authUrl}`);
-    
+
     return authUrl;
   }
 
-  /**
-   * Exchange authorization code for access token
-   */
   async exchangeCodeForToken(code: string): Promise<TikTokTokenResponse> {
     try {
       this.logger.log('Exchanging authorization code for access token');
@@ -121,7 +113,9 @@ export class PlatformConnectTikTokService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`TikTok OAuth error: ${response.data.error_description}`);
+        throw new BadRequestException(
+          `TikTok OAuth error: ${response.data.error_description}`,
+        );
       }
 
       this.logger.log('Successfully exchanged code for token');
@@ -132,9 +126,6 @@ export class PlatformConnectTikTokService {
     }
   }
 
-  /**
-   * Refresh access token using refresh token
-   */
   async refreshAccessToken(refreshToken: string): Promise<TikTokTokenResponse> {
     try {
       this.logger.log('Refreshing TikTok access token');
@@ -152,7 +143,9 @@ export class PlatformConnectTikTokService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`TikTok token refresh error: ${response.data.error_description}`);
+        throw new BadRequestException(
+          `TikTok token refresh error: ${response.data.error_description}`,
+        );
       }
 
       this.logger.log('Successfully refreshed access token');
@@ -163,9 +156,6 @@ export class PlatformConnectTikTokService {
     }
   }
 
-  /**
-   * Get user profile information
-   */
   async getUserInfo(accessToken: string): Promise<TikTokUserInfo> {
     try {
       this.logger.log('Fetching TikTok user information');
@@ -173,7 +163,8 @@ export class PlatformConnectTikTokService {
       const response = await this.httpClient.post(
         'https://open.tiktokapis.com/v2/user/info/',
         stringify({
-          fields: 'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count,video_count',
+          fields:
+            'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count,video_count',
         }),
         {
           headers: {
@@ -183,7 +174,9 @@ export class PlatformConnectTikTokService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`TikTok API error: ${response.data.error.message}`);
+        throw new BadRequestException(
+          `TikTok API error: ${response.data.error.message}`,
+        );
       }
 
       this.logger.log('Successfully fetched user information');
@@ -194,9 +187,6 @@ export class PlatformConnectTikTokService {
     }
   }
 
-  /**
-   * Revoke access token
-   */
   async revokeToken(accessToken: string): Promise<void> {
     try {
       this.logger.log('Revoking TikTok access token');
@@ -220,9 +210,6 @@ export class PlatformConnectTikTokService {
     }
   }
 
-  /**
-   * Validate if the service is properly configured
-   */
   isConfigured(): boolean {
     return !!(
       this.config.clientId &&
@@ -231,9 +218,6 @@ export class PlatformConnectTikTokService {
     );
   }
 
-  /**
-   * Get service configuration status
-   */
   getConfigStatus(): { configured: boolean; missingFields: string[] } {
     const missingFields: string[] = [];
 

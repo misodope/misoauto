@@ -35,7 +35,7 @@ export default function Integrations() {
             <Card key={integration.platform} size="3" style={{ padding: '24px' }}>
               <Flex direction="column" gap="4">
                 <Heading size="5">{integration.platform}</Heading>
-                <Badge 
+                <Badge
                   color={integration.connected ? 'green' : 'red'}
                   size="2"
                   style={{ alignSelf: 'flex-start' }}

@@ -49,12 +49,12 @@ export default function Videos() {
           {videos.map((video) => (
             <Card key={video.id} size="2">
               <Box position="relative" mb="3">
-                <img 
-                  src={video.thumbnail} 
+                <img
+                  src={video.thumbnail}
                   alt={video.title}
                   style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px' }}
                 />
-                <Badge 
+                <Badge
                   color={video.status === 'ready' ? 'green' : video.status === 'processing' ? 'yellow' : 'red'}
                   style={{ position: 'absolute', top: '8px', right: '8px' }}
                 >

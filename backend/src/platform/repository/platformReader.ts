@@ -1,20 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Platform, Prisma, PlatformType } from '@prisma/client';
 
 @Injectable()
-export class PlatformRepository {
+export class PlatformReader {
   constructor(private prisma: PrismaService) {}
-
-  async create(data: Prisma.PlatformCreateInput): Promise<Platform> {
-    return this.prisma.platform.create({
-      data,
-      include: {
-        accounts: true,
-        posts: true,
-      },
-    });
-  }
 
   async findAll(params?: {
     skip?: number;
@@ -67,38 +57,6 @@ export class PlatformRepository {
         posts: true,
       },
       orderBy: { displayName: 'asc' },
-    });
-  }
-
-  async update(params: {
-    where: Prisma.PlatformWhereUniqueInput;
-    data: Prisma.PlatformUpdateInput;
-  }): Promise<Platform> {
-    const { where, data } = params;
-    return this.prisma.platform.update({
-      data,
-      where,
-      include: {
-        accounts: true,
-        posts: true,
-      },
-    });
-  }
-
-  async updateStatus(id: number, isActive: boolean): Promise<Platform> {
-    return this.prisma.platform.update({
-      where: { id },
-      data: { isActive },
-      include: {
-        accounts: true,
-        posts: true,
-      },
-    });
-  }
-
-  async delete(where: Prisma.PlatformWhereUniqueInput): Promise<Platform> {
-    return this.prisma.platform.delete({
-      where,
     });
   }
 

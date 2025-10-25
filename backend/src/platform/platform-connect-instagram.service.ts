@@ -59,7 +59,6 @@ export class PlatformConnectInstagramService {
       },
     });
 
-    // Request interceptor for logging
     this.httpClient.interceptors.request.use(
       (config) => {
         this.logger.debug(`Making request to: ${config.url}`);
@@ -71,7 +70,6 @@ export class PlatformConnectInstagramService {
       },
     );
 
-    // Response interceptor for error handling
     this.httpClient.interceptors.response.use(
       (response) => response,
       (error) => {
@@ -85,9 +83,6 @@ export class PlatformConnectInstagramService {
     );
   }
 
-  /**
-   * Generate OAuth authorization URL for Instagram
-   */
   generateAuthUrl(state?: string): string {
     const params = {
       client_id: this.config.clientId,
@@ -99,13 +94,10 @@ export class PlatformConnectInstagramService {
 
     const authUrl = `https://api.instagram.com/oauth/authorize?${stringify(params)}`;
     this.logger.log(`Generated Instagram auth URL: ${authUrl}`);
-    
+
     return authUrl;
   }
 
-  /**
-   * Exchange authorization code for short-lived access token
-   */
   async exchangeCodeForToken(code: string): Promise<InstagramTokenResponse> {
     try {
       this.logger.log('Exchanging authorization code for access token');
@@ -124,7 +116,9 @@ export class PlatformConnectInstagramService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`Instagram OAuth error: ${response.data.error_description}`);
+        throw new BadRequestException(
+          `Instagram OAuth error: ${response.data.error_description}`,
+        );
       }
 
       this.logger.log('Successfully exchanged code for short-lived token');
@@ -135,10 +129,9 @@ export class PlatformConnectInstagramService {
     }
   }
 
-  /**
-   * Exchange short-lived token for long-lived token (60 days)
-   */
-  async exchangeForLongLivedToken(shortLivedToken: string): Promise<InstagramLongLivedTokenResponse> {
+  async exchangeForLongLivedToken(
+    shortLivedToken: string,
+  ): Promise<InstagramLongLivedTokenResponse> {
     try {
       this.logger.log('Exchanging short-lived token for long-lived token');
 
@@ -153,7 +146,9 @@ export class PlatformConnectInstagramService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`Instagram token exchange error: ${response.data.error.message}`);
+        throw new BadRequestException(
+          `Instagram token exchange error: ${response.data.error.message}`,
+        );
       }
 
       this.logger.log('Successfully exchanged for long-lived token');
@@ -164,10 +159,9 @@ export class PlatformConnectInstagramService {
     }
   }
 
-  /**
-   * Refresh long-lived access token
-   */
-  async refreshLongLivedToken(accessToken: string): Promise<InstagramLongLivedTokenResponse> {
+  async refreshLongLivedToken(
+    accessToken: string,
+  ): Promise<InstagramLongLivedTokenResponse> {
     try {
       this.logger.log('Refreshing Instagram long-lived token');
 
@@ -181,7 +175,9 @@ export class PlatformConnectInstagramService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`Instagram token refresh error: ${response.data.error.message}`);
+        throw new BadRequestException(
+          `Instagram token refresh error: ${response.data.error.message}`,
+        );
       }
 
       this.logger.log('Successfully refreshed long-lived token');
@@ -192,9 +188,6 @@ export class PlatformConnectInstagramService {
     }
   }
 
-  /**
-   * Get user profile information
-   */
   async getUserInfo(accessToken: string): Promise<InstagramUserInfo> {
     try {
       this.logger.log('Fetching Instagram user information');
@@ -209,26 +202,31 @@ export class PlatformConnectInstagramService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`Instagram API error: ${response.data.error.message}`);
+        throw new BadRequestException(
+          `Instagram API error: ${response.data.error.message}`,
+        );
       }
 
       this.logger.log('Successfully fetched user information');
       return response.data;
     } catch (error) {
       this.logger.error('Failed to fetch user information:', error);
-      throw new BadRequestException('Failed to fetch Instagram user information');
+      throw new BadRequestException(
+        'Failed to fetch Instagram user information',
+      );
     }
   }
 
-  /**
-   * Get user's media
-   */
-  async getUserMedia(accessToken: string, limit: number = 25): Promise<InstagramMedia[]> {
+  async getUserMedia(
+    accessToken: string,
+    limit: number = 25,
+  ): Promise<InstagramMedia[]> {
     try {
       this.logger.log('Fetching Instagram user media');
 
       const params = {
-        fields: 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username',
+        fields:
+          'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username',
         limit: limit.toString(),
         access_token: accessToken,
       };
@@ -238,7 +236,9 @@ export class PlatformConnectInstagramService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`Instagram API error: ${response.data.error.message}`);
+        throw new BadRequestException(
+          `Instagram API error: ${response.data.error.message}`,
+        );
       }
 
       this.logger.log('Successfully fetched user media');
@@ -249,15 +249,16 @@ export class PlatformConnectInstagramService {
     }
   }
 
-  /**
-   * Get media details by ID
-   */
-  async getMediaById(mediaId: string, accessToken: string): Promise<InstagramMedia> {
+  async getMediaById(
+    mediaId: string,
+    accessToken: string,
+  ): Promise<InstagramMedia> {
     try {
       this.logger.log(`Fetching Instagram media details for ID: ${mediaId}`);
 
       const params = {
-        fields: 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username',
+        fields:
+          'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username',
         access_token: accessToken,
       };
 
@@ -266,7 +267,9 @@ export class PlatformConnectInstagramService {
       );
 
       if (response.data.error) {
-        throw new BadRequestException(`Instagram API error: ${response.data.error.message}`);
+        throw new BadRequestException(
+          `Instagram API error: ${response.data.error.message}`,
+        );
       }
 
       this.logger.log('Successfully fetched media details');
@@ -277,22 +280,19 @@ export class PlatformConnectInstagramService {
     }
   }
 
-  /**
-   * Validate access token
-   */
   async validateToken(accessToken: string): Promise<boolean> {
     try {
       await this.getUserInfo(accessToken);
       return true;
     } catch (error) {
-      this.logger.warn('Instagram token validation failed:', (error as Error).message);
+      this.logger.warn(
+        'Instagram token validation failed:',
+        (error as Error).message,
+      );
       return false;
     }
   }
 
-  /**
-   * Validate if the service is properly configured
-   */
   isConfigured(): boolean {
     return !!(
       this.config.clientId &&
@@ -301,14 +301,12 @@ export class PlatformConnectInstagramService {
     );
   }
 
-  /**
-   * Get service configuration status
-   */
   getConfigStatus(): { configured: boolean; missingFields: string[] } {
     const missingFields: string[] = [];
 
     if (!this.config.clientId) missingFields.push('INSTAGRAM_CLIENT_ID');
-    if (!this.config.clientSecret) missingFields.push('INSTAGRAM_CLIENT_SECRET');
+    if (!this.config.clientSecret)
+      missingFields.push('INSTAGRAM_CLIENT_SECRET');
     if (!this.config.redirectUri) missingFields.push('INSTAGRAM_REDIRECT_URI');
 
     return {

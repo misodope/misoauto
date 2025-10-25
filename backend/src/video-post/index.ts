@@ -1,2 +1,3 @@
-export * from './video-post.repository';
+export * from './repository/videoPostReader';
+export * from './repository/videoPostWriter';
 export * from './video-post.module';

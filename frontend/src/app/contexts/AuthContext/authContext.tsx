@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for JWT token on client side
+
     const jwt = Cookies.get('jwt-token');
     setIsLoggedIn(!!jwt);
     setIsLoading(false);
@@ -27,14 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = () => {
     setIsLoggedIn(true);
   };
-  
+
   const logout = () => {
     Cookies.remove('jwt-token');
     setIsLoggedIn(false);
   };
 
   const impersonateLogin = () => {
-    // Set a mock JWT token for development
+
     Cookies.set('jwt-token', 'dev-mock-token', { expires: 1 });
     setIsLoggedIn(true);
   };

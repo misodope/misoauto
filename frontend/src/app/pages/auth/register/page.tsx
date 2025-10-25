@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Text, Heading, Flex, Box, TextField } from '@radix-ui/themes';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useLogin, useRegister } from "@frontend/app/hooks";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,11 @@ export default function Register() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
+  const {
+    mutate: register,
+    isPending: isRegistering,
+    error: registerError,
+  } = useRegister();
 
   useEffect(() => {
     if (!isLoading && isLoggedIn) {
@@ -28,31 +34,40 @@ export default function Register() {
       ...prev,
       [name]: value
     }));
+
+    if (errors[name] || errors.submit) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        delete newErrors.submit;
+        return newErrors;
+      });
+    }
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -61,6 +76,35 @@ export default function Register() {
     e.preventDefault();
     if (validateForm()) {
       console.log('Registration attempt:', { name: formData.name, email: formData.email });
+
+      register(
+        {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+        },
+        {
+          onSuccess: (data) => {
+            console.log('Registration successful:', data.message);
+
+            setFormData({
+              name: '',
+              email: '',
+              password: '',
+              confirmPassword: ''
+            });
+            setErrors({});
+
+            router.push('/auth/login?message=Registration successful! Please login.');
+          },
+          onError: (error) => {
+            console.error('Registration failed:', JSON.stringify(error));
+
+            const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+            setErrors({ submit: errorMessage });
+          },
+        }
+      );
     }
   };
 
@@ -93,10 +137,10 @@ export default function Register() {
   }
 
   return (
-    <Flex 
-      direction="column" 
-      align="center" 
-      justify="center" 
+    <Flex
+      direction="column"
+      align="center"
+      justify="center"
       minHeight="100vh"
       p="6"
       maxWidth="400px"
@@ -118,7 +162,7 @@ export default function Register() {
               />
               {errors.name && <Text size="1" color="red">{errors.name}</Text>}
             </Box>
-            
+
             <Box>
               <Text as="label" size="2" weight="medium" mb="1">Email</Text>
               <TextField.Root
@@ -131,7 +175,7 @@ export default function Register() {
               />
               {errors.email && <Text size="1" color="red">{errors.email}</Text>}
             </Box>
-            
+
             <Box>
               <Text as="label" size="2" weight="medium" mb="1">Password</Text>
               <TextField.Root
@@ -144,7 +188,7 @@ export default function Register() {
               />
               {errors.password && <Text size="1" color="red">{errors.password}</Text>}
             </Box>
-            
+
             <Box>
               <Text as="label" size="2" weight="medium" mb="1">Confirm Password</Text>
               <TextField.Root
@@ -157,18 +201,34 @@ export default function Register() {
               />
               {errors.confirmPassword && <Text size="1" color="red">{errors.confirmPassword}</Text>}
             </Box>
-            
-            <Button type="submit" size="3" variant="solid" mt="2" style={{ width: '100%' }}>
-              Register
+
+            {}
+            {errors.submit && (
+              <Box>
+                <Text size="2" color="red" align="center">
+                  {errors.submit}
+                </Text>
+              </Box>
+            )}
+
+            <Button
+              type="submit"
+              size="3"
+              variant="solid"
+              mt="2"
+              style={{ width: '100%' }}
+              disabled={isRegistering}
+            >
+              {isRegistering ? 'Creating Account...' : 'Register'}
             </Button>
           </Flex>
         </form>
       </Box>
-        
+
       <Flex justify="center" mt="4">
         <Text size="2">
           Already have an account?{' '}
-          <Link 
+          <Link
             href="/auth/login"
             style={{
               color: 'var(--accent-11)',

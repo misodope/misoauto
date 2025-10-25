@@ -1,15 +1,14 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Query, 
-  Body, 
-  Param, 
-  Logger 
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Body,
+  Param,
+  Logger,
 } from '@nestjs/common';
 import { PlatformConnectYouTubeService } from './platform-connect-youtube.service';
 
-// DTOs for YouTube requests
 export interface AuthUrlRequest {
   state?: string;
 }
@@ -35,9 +34,7 @@ export interface ChannelVideosRequest {
 export class YouTubeController {
   private readonly logger = new Logger(YouTubeController.name);
 
-  constructor(
-    private readonly youtubeService: PlatformConnectYouTubeService,
-  ) {}
+  constructor(private readonly youtubeService: PlatformConnectYouTubeService) {}
 
   @Get('auth-url')
   generateAuthUrl(@Query() query: AuthUrlRequest) {
@@ -51,8 +48,10 @@ export class YouTubeController {
   @Post('exchange-token')
   async exchangeToken(@Body() body: TokenExchangeRequest) {
     this.logger.log('Exchanging YouTube authorization code for token');
-    const tokenResponse = await this.youtubeService.exchangeCodeForToken(body.code);
-    
+    const tokenResponse = await this.youtubeService.exchangeCodeForToken(
+      body.code,
+    );
+
     return {
       ...tokenResponse,
       platform: 'youtube',
@@ -62,8 +61,10 @@ export class YouTubeController {
   @Post('refresh-token')
   async refreshToken(@Body() body: RefreshTokenRequest) {
     this.logger.log('Refreshing YouTube access token');
-    const refreshedToken = await this.youtubeService.refreshAccessToken(body.refreshToken);
-    
+    const refreshedToken = await this.youtubeService.refreshAccessToken(
+      body.refreshToken,
+    );
+
     return {
       ...refreshedToken,
       platform: 'youtube',
@@ -73,8 +74,10 @@ export class YouTubeController {
   @Post('channel-info')
   async getChannelInfo(@Body() body: TokenRequest) {
     this.logger.log('Fetching YouTube channel information');
-    const channelInfo = await this.youtubeService.getChannelInfo(body.accessToken);
-    
+    const channelInfo = await this.youtubeService.getChannelInfo(
+      body.accessToken,
+    );
+
     return {
       channel: channelInfo,
       platform: 'youtube',
@@ -84,8 +87,11 @@ export class YouTubeController {
   @Post('channel-videos')
   async getChannelVideos(@Body() body: ChannelVideosRequest) {
     this.logger.log('Fetching YouTube channel videos');
-    const videos = await this.youtubeService.getChannelVideos(body.accessToken, body.maxResults);
-    
+    const videos = await this.youtubeService.getChannelVideos(
+      body.accessToken,
+      body.maxResults,
+    );
+
     return {
       videos,
       platform: 'youtube',
@@ -94,10 +100,16 @@ export class YouTubeController {
   }
 
   @Post('video/:videoId')
-  async getVideoById(@Param('videoId') videoId: string, @Body() body: TokenRequest) {
+  async getVideoById(
+    @Param('videoId') videoId: string,
+    @Body() body: TokenRequest,
+  ) {
     this.logger.log(`Fetching YouTube video by ID: ${videoId}`);
-    const video = await this.youtubeService.getVideoById(videoId, body.accessToken);
-    
+    const video = await this.youtubeService.getVideoById(
+      videoId,
+      body.accessToken,
+    );
+
     return {
       video,
       platform: 'youtube',
@@ -108,7 +120,7 @@ export class YouTubeController {
   async validateToken(@Body() body: TokenRequest) {
     this.logger.log('Validating YouTube access token');
     const isValid = await this.youtubeService.validateToken(body.accessToken);
-    
+
     return {
       valid: isValid,
       platform: 'youtube',
@@ -119,7 +131,7 @@ export class YouTubeController {
   async revokeToken(@Body() body: TokenRequest) {
     this.logger.log('Revoking YouTube access token');
     await this.youtubeService.revokeToken(body.accessToken);
-    
+
     return {
       success: true,
       platform: 'youtube',
@@ -131,7 +143,7 @@ export class YouTubeController {
   getConfigStatus() {
     this.logger.log('Checking YouTube service configuration');
     const configStatus = this.youtubeService.getConfigStatus();
-    
+
     return {
       ...configStatus,
       platform: 'youtube',
