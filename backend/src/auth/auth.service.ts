@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import { AuthReader } from './repository/authReader';
-import { AuthWriter } from './repository/authWriter';
+import { AuthReader } from './repository/auth-reader';
+import { AuthWriter } from './repository/auth-writer';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from '@backend/auth/dto/auth-register.dto';
 
@@ -21,11 +21,12 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, this.saltRounds);
 
     return this.authWriter.createUser({
-      email: email.toLowerCase(),
+      email: email.trim().toLowerCase(),
       password: hashedPassword,
       name,
     });
   }
+        
   async getUserByEmail(email: string): Promise<User | null> {
     return this.authReader.findUserByEmail(email);
   }
@@ -68,7 +69,7 @@ export class AuthService {
     const signedToken = this.jwtService.sign(payload);
 
     return {
-      access_token: signedToken,
+      accessToken: signedToken,
     };
   }
 }

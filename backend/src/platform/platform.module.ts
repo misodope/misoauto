@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PlatformReader } from './repository/platformReader';
-import { PlatformWriter } from './repository/platformWriter';
+import { PlatformReader } from './repository/platform-reader';
+import { PlatformWriter } from './repository/platform-writer';
 import { PlatformConnectTikTokService } from './platform-connect-tiktok.service';
 import { PlatformConnectInstagramService } from './platform-connect-instagram.service';
 import { PlatformConnectYouTubeService } from './platform-connect-youtube.service';

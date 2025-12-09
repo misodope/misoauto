@@ -32,10 +32,10 @@ export class AuthController {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { access_token } = await this.authService.login(user);
+    const { accessToken } = await this.authService.login(user);
 
-    response.cookie('access_token', access_token);
+    response.cookie('access_token', accessToken);
 
-    return { access_token };
+    return { accessToken };
   }
 }

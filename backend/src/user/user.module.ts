@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { UserReader } from './repository/userReader';
-import { UserWriter } from './repository/userWriter';
+import { UserReader } from './repository/user-reader';
+import { UserWriter } from './repository/user-writer';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({

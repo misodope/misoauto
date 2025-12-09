@@ -8,6 +8,7 @@ import { PlatformModule } from './platform/platform.module';
 import { SocialAccountModule } from './social-account/social-account.module';
 import { VideoPostModule } from './video-post/video-post.module';
 import { AuthModule } from '@backend/auth/auth.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthModule } from '@backend/auth/auth.module';
     SocialAccountModule,
     VideoPostModule,
     AuthModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { SocialAccountReader } from './repository/socialAccountReader';
-import { SocialAccountWriter } from './repository/socialAccountWriter';
+import { SocialAccountReader } from './repository/social-account-reader';
+import { SocialAccountWriter } from './repository/social-account-writer';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({

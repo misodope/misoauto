@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { VideoReader } from './repository/videoReader';
-import { VideoWriter } from './repository/videoWriter';
+import { VideoReader } from './repository/video-reader';
+import { VideoWriter } from './repository/video-writer';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({

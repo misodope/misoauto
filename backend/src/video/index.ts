@@ -1,3 +1,3 @@
-export * from './repository/videoReader';
-export * from './repository/videoWriter';
+export * from './repository/video-reader';
+export * from './repository/video-writer';
 export * from './video.module';
