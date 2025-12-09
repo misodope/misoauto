@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthWriter } from '../../src/auth/repository/authWriter';
+import { AuthWriter } from '../../src/auth/repository/auth-writer';
 import { PrismaService } from '../../src/prisma/prisma.service';
 
 describe('AuthWriter', () => {

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthReader } from '../../src/auth/repository/authReader';
+import { AuthReader } from '../../src/auth/repository/auth-reader';
 import { PrismaService } from '../../src/prisma/prisma.service';
 
 describe('AuthReader', () => {
