@@ -6,12 +6,14 @@ import { ScheduledPostsCron } from './crons/scheduled-posts.cron';
 import { FailedPostsCleanupCron } from './crons/failed-posts-cleanup.cron';
 import { SocialAccountModule } from '@backend/social-account/social-account.module';
 import { VideoPostModule } from '@backend/video-post/video-post.module';
+import { PlatformModule } from '@backend/platform/platform.module';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     SocialAccountModule,
     VideoPostModule,
+    PlatformModule,
   ],
   providers: [
     SchedulerService,

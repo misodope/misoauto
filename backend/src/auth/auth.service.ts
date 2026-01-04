@@ -26,7 +26,7 @@ export class AuthService {
       name,
     });
   }
-        
+
   async getUserByEmail(email: string): Promise<User | null> {
     return this.authReader.findUserByEmail(email);
   }

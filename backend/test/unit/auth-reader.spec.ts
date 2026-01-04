@@ -135,7 +135,9 @@ describe('AuthReader', () => {
 
       const result = await reader.countUsers();
 
-      expect(prismaService.user.count).toHaveBeenCalledWith({ where: undefined });
+      expect(prismaService.user.count).toHaveBeenCalledWith({
+        where: undefined,
+      });
       expect(result).toBe(10);
     });
   });

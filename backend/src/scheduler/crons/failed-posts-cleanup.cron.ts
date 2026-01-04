@@ -23,11 +23,11 @@ export class FailedPostsCleanupCron {
   })
   async handleFailedPostsCleanup() {
     this.logger.log('Running failed posts cleanup');
-    
+
     try {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+
       const failedPosts = await this.videoPostReader.findAll({
         where: {
           status: PostStatus.FAILED,
@@ -36,7 +36,7 @@ export class FailedPostsCleanupCron {
           },
         },
       });
-      
+
       this.logger.log(`Found ${failedPosts.length} old failed posts to delete`);
 
       // Delete each failed post
@@ -51,7 +51,9 @@ export class FailedPostsCleanupCron {
         }
       }
 
-      this.logger.log(`Successfully deleted ${deletedCount} out of ${failedPosts.length} failed posts`);
+      this.logger.log(
+        `Successfully deleted ${deletedCount} out of ${failedPosts.length} failed posts`,
+      );
     } catch (error) {
       this.logger.error('Failed to cleanup old posts', error);
     }

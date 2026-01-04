@@ -3,7 +3,7 @@ import { Interval, Timeout } from '@nestjs/schedule';
 
 /**
  * SchedulerService - Container for example scheduled tasks
- * 
+ *
  * Production cron jobs are in /crons directory:
  * - token-refresh.cron.ts
  * - scheduled-posts.cron.ts

@@ -1,6 +1,10 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { stringify } from 'query-string';
+import { SocialAccountWriter } from '../social-account/repository/social-account-writer';
+import { SocialAccountReader } from '../social-account/repository/social-account-reader';
+import { PlatformReader } from './repository/platform-reader';
+import { PlatformType } from '@prisma/client';
 
 export interface InstagramOAuthConfig {
   clientId: string;
@@ -44,7 +48,11 @@ export class PlatformConnectInstagramService {
   private readonly httpClient: AxiosInstance;
   private readonly config: InstagramOAuthConfig;
 
-  constructor() {
+  constructor(
+    private readonly socialAccountWriter: SocialAccountWriter,
+    private readonly socialAccountReader: SocialAccountReader,
+    private readonly platformReader: PlatformReader,
+  ) {
     this.config = {
       clientId: process.env.INSTAGRAM_CLIENT_ID || '',
       clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '',
@@ -185,6 +193,80 @@ export class PlatformConnectInstagramService {
     } catch (error) {
       this.logger.error('Failed to refresh long-lived token:', error);
       throw new BadRequestException('Failed to refresh Instagram token');
+    }
+  }
+
+  async saveOAuthAccount(params: {
+    userId: number;
+    shortLivedToken: string;
+    instagramUserId: string;
+  }) {
+    try {
+      this.logger.log('Saving Instagram OAuth account');
+
+      // Exchange short-lived token for long-lived token
+      const longLivedTokenResponse = await this.exchangeForLongLivedToken(
+        params.shortLivedToken,
+      );
+
+      // Get Instagram platform
+      const platform = await this.platformReader.findByName(
+        PlatformType.INSTAGRAM,
+      );
+      if (!platform) {
+        throw new BadRequestException(
+          'Instagram platform not found in database',
+        );
+      }
+
+      // Calculate token expiry
+      const tokenExpiry = new Date(
+        Date.now() + longLivedTokenResponse.expires_in * 1000,
+      );
+
+      // Fetch user info to get username
+      const userInfo = await this.getUserInfo(
+        longLivedTokenResponse.access_token,
+      );
+
+      // Check if account already exists
+      const existingAccount =
+        await this.socialAccountReader.findByPlatformAndAccountId(
+          platform.id,
+          params.instagramUserId,
+        );
+
+      let savedAccount;
+      if (existingAccount) {
+        // Update existing account with new tokens
+        this.logger.log(
+          `Updating existing Instagram account ${existingAccount.id}`,
+        );
+        savedAccount = await this.socialAccountWriter.updateTokens({
+          id: existingAccount.id,
+          accessToken: longLivedTokenResponse.access_token,
+          refreshToken: existingAccount.refreshToken || undefined,
+          tokenExpiry,
+        });
+      } else {
+        // Create new account
+        this.logger.log('Creating new Instagram account');
+        savedAccount = await this.socialAccountWriter.create({
+          user: { connect: { id: params.userId } },
+          platform: { connect: { id: platform.id } },
+          accessToken: longLivedTokenResponse.access_token,
+          refreshToken: undefined,
+          tokenExpiry,
+          accountId: params.instagramUserId,
+          username: userInfo.username,
+        });
+      }
+
+      this.logger.log('Successfully saved Instagram account');
+      return savedAccount;
+    } catch (error) {
+      this.logger.error('Failed to save Instagram account:', error);
+      throw error;
     }
   }
 

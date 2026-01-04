@@ -70,12 +70,15 @@ describe('InstagramController', () => {
 
   describe('generateAuthUrl', () => {
     it('should generate auth URL successfully', async () => {
-      const authUrl = 'https://api.instagram.com/oauth/authorize?client_id=123&redirect_uri=test';
+      const authUrl =
+        'https://api.instagram.com/oauth/authorize?client_id=123&redirect_uri=test';
       instagramService.generateAuthUrl.mockReturnValue(authUrl);
 
       const result = await controller.generateAuthUrl({ state: 'test-state' });
 
-      expect(instagramService.generateAuthUrl).toHaveBeenCalledWith('test-state');
+      expect(instagramService.generateAuthUrl).toHaveBeenCalledWith(
+        'test-state',
+      );
       expect(result).toEqual({
         authUrl,
         platform: 'instagram',
@@ -83,7 +86,8 @@ describe('InstagramController', () => {
     });
 
     it('should generate auth URL without state', async () => {
-      const authUrl = 'https://api.instagram.com/oauth/authorize?client_id=123&redirect_uri=test';
+      const authUrl =
+        'https://api.instagram.com/oauth/authorize?client_id=123&redirect_uri=test';
       instagramService.generateAuthUrl.mockReturnValue(authUrl);
 
       const result = await controller.generateAuthUrl({});
@@ -98,13 +102,21 @@ describe('InstagramController', () => {
 
   describe('exchangeToken', () => {
     it('should exchange token successfully', async () => {
-      instagramService.exchangeCodeForToken.mockResolvedValue(mockTokenResponse);
-      instagramService.exchangeForLongLivedToken.mockResolvedValue(mockLongLivedToken);
+      instagramService.exchangeCodeForToken.mockResolvedValue(
+        mockTokenResponse,
+      );
+      instagramService.exchangeForLongLivedToken.mockResolvedValue(
+        mockLongLivedToken,
+      );
 
       const result = await controller.exchangeToken({ code: 'auth-code' });
 
-      expect(instagramService.exchangeCodeForToken).toHaveBeenCalledWith('auth-code');
-      expect(instagramService.exchangeForLongLivedToken).toHaveBeenCalledWith(mockTokenResponse.access_token);
+      expect(instagramService.exchangeCodeForToken).toHaveBeenCalledWith(
+        'auth-code',
+      );
+      expect(instagramService.exchangeForLongLivedToken).toHaveBeenCalledWith(
+        mockTokenResponse.access_token,
+      );
       expect(result).toEqual({
         shortLivedToken: mockTokenResponse,
         longLivedToken: mockLongLivedToken,
@@ -113,19 +125,29 @@ describe('InstagramController', () => {
     });
 
     it('should handle token exchange error', async () => {
-      instagramService.exchangeCodeForToken.mockRejectedValue(new Error('Invalid code'));
+      instagramService.exchangeCodeForToken.mockRejectedValue(
+        new Error('Invalid code'),
+      );
 
-      await expect(controller.exchangeToken({ code: 'invalid-code' })).rejects.toThrow('Invalid code');
+      await expect(
+        controller.exchangeToken({ code: 'invalid-code' }),
+      ).rejects.toThrow('Invalid code');
     });
   });
 
   describe('refreshToken', () => {
     it('should refresh token successfully', async () => {
-      instagramService.refreshLongLivedToken.mockResolvedValue(mockLongLivedToken);
+      instagramService.refreshLongLivedToken.mockResolvedValue(
+        mockLongLivedToken,
+      );
 
-      const result = await controller.refreshToken({ accessToken: 'old-token' });
+      const result = await controller.refreshToken({
+        accessToken: 'old-token',
+      });
 
-      expect(instagramService.refreshLongLivedToken).toHaveBeenCalledWith('old-token');
+      expect(instagramService.refreshLongLivedToken).toHaveBeenCalledWith(
+        'old-token',
+      );
       expect(result).toEqual({
         ...mockLongLivedToken,
         platform: 'instagram',
@@ -133,9 +155,13 @@ describe('InstagramController', () => {
     });
 
     it('should handle refresh token error', async () => {
-      instagramService.refreshLongLivedToken.mockRejectedValue(new Error('Token expired'));
+      instagramService.refreshLongLivedToken.mockRejectedValue(
+        new Error('Token expired'),
+      );
 
-      await expect(controller.refreshToken({ accessToken: 'expired-token' })).rejects.toThrow('Token expired');
+      await expect(
+        controller.refreshToken({ accessToken: 'expired-token' }),
+      ).rejects.toThrow('Token expired');
     });
   });
 
@@ -143,7 +169,9 @@ describe('InstagramController', () => {
     it('should get user info successfully', async () => {
       instagramService.getUserInfo.mockResolvedValue(mockUserInfo);
 
-      const result = await controller.getUserInfo({ accessToken: 'valid-token' });
+      const result = await controller.getUserInfo({
+        accessToken: 'valid-token',
+      });
 
       expect(instagramService.getUserInfo).toHaveBeenCalledWith('valid-token');
       expect(result).toEqual({
@@ -153,9 +181,13 @@ describe('InstagramController', () => {
     });
 
     it('should handle get user info error', async () => {
-      instagramService.getUserInfo.mockRejectedValue(new Error('Invalid token'));
+      instagramService.getUserInfo.mockRejectedValue(
+        new Error('Invalid token'),
+      );
 
-      await expect(controller.getUserInfo({ accessToken: 'invalid-token' })).rejects.toThrow('Invalid token');
+      await expect(
+        controller.getUserInfo({ accessToken: 'invalid-token' }),
+      ).rejects.toThrow('Invalid token');
     });
   });
 
@@ -163,9 +195,15 @@ describe('InstagramController', () => {
     it('should get user media successfully', async () => {
       instagramService.getUserMedia.mockResolvedValue(mockMedia);
 
-      const result = await controller.getUserMedia({ accessToken: 'valid-token', limit: 10 });
+      const result = await controller.getUserMedia({
+        accessToken: 'valid-token',
+        limit: 10,
+      });
 
-      expect(instagramService.getUserMedia).toHaveBeenCalledWith('valid-token', 10);
+      expect(instagramService.getUserMedia).toHaveBeenCalledWith(
+        'valid-token',
+        10,
+      );
       expect(result).toEqual({
         media: mockMedia,
         platform: 'instagram',
@@ -176,9 +214,14 @@ describe('InstagramController', () => {
     it('should get user media with default limit', async () => {
       instagramService.getUserMedia.mockResolvedValue(mockMedia);
 
-      const result = await controller.getUserMedia({ accessToken: 'valid-token' });
+      const result = await controller.getUserMedia({
+        accessToken: 'valid-token',
+      });
 
-      expect(instagramService.getUserMedia).toHaveBeenCalledWith('valid-token', undefined);
+      expect(instagramService.getUserMedia).toHaveBeenCalledWith(
+        'valid-token',
+        undefined,
+      );
       expect(result).toEqual({
         media: mockMedia,
         platform: 'instagram',
@@ -192,9 +235,14 @@ describe('InstagramController', () => {
       const singleMedia = mockMedia[0];
       instagramService.getMediaById.mockResolvedValue(singleMedia);
 
-      const result = await controller.getMediaById('media1', { accessToken: 'valid-token' });
+      const result = await controller.getMediaById('media1', {
+        accessToken: 'valid-token',
+      });
 
-      expect(instagramService.getMediaById).toHaveBeenCalledWith('media1', 'valid-token');
+      expect(instagramService.getMediaById).toHaveBeenCalledWith(
+        'media1',
+        'valid-token',
+      );
       expect(result).toEqual({
         media: singleMedia,
         platform: 'instagram',
@@ -202,10 +250,15 @@ describe('InstagramController', () => {
     });
 
     it('should handle get media by ID error', async () => {
-      instagramService.getMediaById.mockRejectedValue(new Error('Media not found'));
+      instagramService.getMediaById.mockRejectedValue(
+        new Error('Media not found'),
+      );
 
-      await expect(controller.getMediaById('invalid-media-id', { accessToken: 'valid-token' }))
-        .rejects.toThrow('Media not found');
+      await expect(
+        controller.getMediaById('invalid-media-id', {
+          accessToken: 'valid-token',
+        }),
+      ).rejects.toThrow('Media not found');
     });
   });
 
@@ -213,9 +266,13 @@ describe('InstagramController', () => {
     it('should validate token successfully', async () => {
       instagramService.validateToken.mockResolvedValue(true);
 
-      const result = await controller.validateToken({ accessToken: 'valid-token' });
+      const result = await controller.validateToken({
+        accessToken: 'valid-token',
+      });
 
-      expect(instagramService.validateToken).toHaveBeenCalledWith('valid-token');
+      expect(instagramService.validateToken).toHaveBeenCalledWith(
+        'valid-token',
+      );
       expect(result).toEqual({
         valid: true,
         platform: 'instagram',
@@ -225,7 +282,9 @@ describe('InstagramController', () => {
     it('should return false for invalid token', async () => {
       instagramService.validateToken.mockResolvedValue(false);
 
-      const result = await controller.validateToken({ accessToken: 'invalid-token' });
+      const result = await controller.validateToken({
+        accessToken: 'invalid-token',
+      });
 
       expect(result).toEqual({
         valid: false,
