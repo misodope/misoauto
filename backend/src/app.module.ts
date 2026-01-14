@@ -19,7 +19,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     SocialAccountModule,
     VideoPostModule,
     AuthModule,
-    SchedulerModule,
+    SchedulerModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -4,10 +4,10 @@ import { Interval, Timeout } from '@nestjs/schedule';
 /**
  * SchedulerService - Container for example scheduled tasks
  * 
- * Production cron jobs are in /crons directory:
- * - token-refresh.cron.ts
- * - scheduled-posts.cron.ts
- * - failed-posts-cleanup.cron.ts
+ * Production cron jobs are organized by domain in their respective modules:
+ * - social-account/crons/token-refresh.cron.ts
+ * - video-post/crons/scheduled-posts.cron.ts
+ * - video-post/crons/failed-posts-cleanup.cron.ts
  */
 @Injectable()
 export class SchedulerService {

@@ -91,4 +91,9 @@ export class VideoPostWriter {
       where,
     });
   }
+
+  async deleteMany(where: Prisma.VideoPostWhereInput): Promise<number> {
+    const result = await this.prisma.videoPost.deleteMany({ where });
+    return result.count;
+  }
 }
