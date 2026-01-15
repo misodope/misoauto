@@ -3,6 +3,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SchedulerService } from './scheduler.service';
 import { SocialAccountModule } from '@backend/social-account/social-account.module';
 import { VideoPostModule } from '@backend/video-post/video-post.module';
+import { PlatformModule } from '@backend/platform/platform.module';
 import { readdirSync, existsSync, statSync } from 'fs';
 import { join } from 'path';
 
@@ -39,6 +40,7 @@ export class SchedulerModule {
         ScheduleModule.forRoot(),
         SocialAccountModule,
         VideoPostModule,
+        PlatformModule,
       ],
       providers: [SchedulerService, ...cronProviders],
       exports: [SchedulerService],

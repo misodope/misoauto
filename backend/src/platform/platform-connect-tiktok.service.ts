@@ -53,7 +53,9 @@ export class PlatformConnectTikTokService {
     this.config = {
       clientId: process.env.TIKTOK_CLIENT_ID || '',
       clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
-      redirectUri: process.env.TIKTOK_REDIRECT_URI || '',
+      redirectUri:
+        process.env.TIKTOK_REDIRECT_URI ||
+        'https://darrel-unexcruciating-trent.ngrok-free.dev/api/v1/platform/tiktok/redirect',
       scope: 'user.info.basic,video.list,video.upload',
     };
 
@@ -168,12 +170,11 @@ export class PlatformConnectTikTokService {
     try {
       this.logger.log('Fetching TikTok user information');
 
-      const response = await this.httpClient.post(
-        'https://open.tiktokapis.com/v2/user/info/',
-        stringify({
-          fields:
-            'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count,video_count',
-        }),
+      const fields =
+        'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count,video_count';
+
+      const response = await this.httpClient.get(
+        `https://open.tiktokapis.com/v2/user/info/?fields=${fields}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -181,7 +182,7 @@ export class PlatformConnectTikTokService {
         },
       );
 
-      if (response.data.error) {
+      if (response.data.error && response.data.error.code !== 'ok') {
         throw new BadRequestException(
           `TikTok API error: ${response.data.error.message}`,
         );
@@ -199,14 +200,18 @@ export class PlatformConnectTikTokService {
     try {
       this.logger.log('Revoking TikTok access token');
 
+      const tokenData = {
+        client_key: this.config.clientId,
+        client_secret: this.config.clientSecret,
+        token: accessToken,
+      };
+
       await this.httpClient.post(
         'https://open.tiktokapis.com/v2/oauth/revoke/',
-        stringify({
-          token: accessToken,
-        }),
+        stringify(tokenData),
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
         },
       );
@@ -216,27 +221,6 @@ export class PlatformConnectTikTokService {
       this.logger.error('Failed to revoke access token:', error);
       throw new BadRequestException('Failed to revoke TikTok token');
     }
-  }
-
-  isConfigured(): boolean {
-    return !!(
-      this.config.clientId &&
-      this.config.clientSecret &&
-      this.config.redirectUri
-    );
-  }
-
-  getConfigStatus(): { configured: boolean; missingFields: string[] } {
-    const missingFields: string[] = [];
-
-    if (!this.config.clientId) missingFields.push('TIKTOK_CLIENT_ID');
-    if (!this.config.clientSecret) missingFields.push('TIKTOK_CLIENT_SECRET');
-    if (!this.config.redirectUri) missingFields.push('TIKTOK_REDIRECT_URI');
-
-    return {
-      configured: missingFields.length === 0,
-      missingFields,
-    };
   }
 
   async saveOAuthAccount(params: {
