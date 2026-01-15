@@ -1,6 +1,10 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { stringify } from 'query-string';
+import { SocialAccountWriter } from '@backend/social-account/repository/social-account-writer';
+import { SocialAccountReader } from '@backend/social-account/repository/social-account-reader';
+import { PlatformReader } from './repository/platform-reader';
+import { PlatformType } from '@prisma/client';
 
 export interface TikTokOAuthConfig {
   clientId: string;
@@ -41,7 +45,11 @@ export class PlatformConnectTikTokService {
   private readonly httpClient: AxiosInstance;
   private readonly config: TikTokOAuthConfig;
 
-  constructor() {
+  constructor(
+    private readonly socialAccountWriter: SocialAccountWriter,
+    private readonly socialAccountReader: SocialAccountReader,
+    private readonly platformReader: PlatformReader,
+  ) {
     this.config = {
       clientId: process.env.TIKTOK_CLIENT_ID || '',
       clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
@@ -229,5 +237,70 @@ export class PlatformConnectTikTokService {
       configured: missingFields.length === 0,
       missingFields,
     };
+  }
+
+  async saveOAuthAccount(params: {
+    userId: number;
+    tokenResponse: TikTokTokenResponse;
+  }) {
+    try {
+      this.logger.log('Saving TikTok OAuth account to database');
+
+      // Get TikTok platform
+      const platform = await this.platformReader.findByName(
+        PlatformType.TIKTOK,
+      );
+      if (!platform) {
+        throw new BadRequestException('TikTok platform not found in database');
+      }
+
+      // Calculate token expiry
+      const tokenExpiry = new Date(
+        Date.now() + params.tokenResponse.expires_in * 1000,
+      );
+
+      // Fetch user info to get username
+      const userInfo = await this.getUserInfo(
+        params.tokenResponse.access_token,
+      );
+
+      // Check if account already exists
+      const existingAccount =
+        await this.socialAccountReader.findByPlatformAndAccountId(
+          platform.id,
+          params.tokenResponse.open_id,
+        );
+
+      let savedAccount;
+      if (existingAccount) {
+        // Update existing account with new tokens
+        this.logger.log(
+          `Updating existing TikTok account ${existingAccount.id}`,
+        );
+        savedAccount = await this.socialAccountWriter.updateTokens({
+          id: existingAccount.id,
+          accessToken: params.tokenResponse.access_token,
+          refreshToken: params.tokenResponse.refresh_token,
+          tokenExpiry,
+        });
+      } else {
+        // Create new account
+        this.logger.log('Creating new TikTok account');
+        savedAccount = await this.socialAccountWriter.create({
+          user: { connect: { id: params.userId } },
+          platform: { connect: { id: platform.id } },
+          accessToken: params.tokenResponse.access_token,
+          refreshToken: params.tokenResponse.refresh_token,
+          tokenExpiry,
+          accountId: params.tokenResponse.open_id,
+          username: userInfo.display_name,
+        });
+      }
+
+      return savedAccount;
+    } catch (error) {
+      this.logger.error('Failed to save TikTok account:', error);
+      throw new BadRequestException('Failed to save TikTok account');
+    }
   }
 }

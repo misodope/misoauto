@@ -71,7 +71,9 @@ describe('AuthController', () => {
 
       authService.register.mockRejectedValue(new Error('Registration failed'));
 
-      await expect(controller.register(registerDto)).rejects.toThrow('Registration failed');
+      await expect(controller.register(registerDto)).rejects.toThrow(
+        'Registration failed',
+      );
     });
   });
 
@@ -119,7 +121,9 @@ describe('AuthController', () => {
 
       authService.validateUser.mockRejectedValue(new Error('Database error'));
 
-      await expect(controller.login(loginDto)).rejects.toThrow('Database error');
+      await expect(controller.login(loginDto)).rejects.toThrow(
+        'Database error',
+      );
     });
   });
 });

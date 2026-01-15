@@ -9,12 +9,12 @@ import { PrismaService } from '../prisma/prisma.service';
 @Module({
   imports: [
     JwtModule.register({
-      secret: 'your-secret-key',
+      secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '60m' },
     }),
   ],
   providers: [AuthService, AuthReader, AuthWriter, PrismaService],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

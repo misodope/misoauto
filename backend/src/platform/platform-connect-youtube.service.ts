@@ -1,6 +1,10 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { stringify } from 'query-string';
+import { SocialAccountWriter } from '../social-account/repository/social-account-writer';
+import { SocialAccountReader } from '../social-account/repository/social-account-reader';
+import { PlatformReader } from './repository/platform-reader';
+import { PlatformType } from '@prisma/client';
 
 export interface YouTubeOAuthConfig {
   clientId: string;
@@ -82,7 +86,11 @@ export class PlatformConnectYouTubeService {
   private readonly httpClient: AxiosInstance;
   private readonly config: YouTubeOAuthConfig;
 
-  constructor() {
+  constructor(
+    private readonly socialAccountWriter: SocialAccountWriter,
+    private readonly socialAccountReader: SocialAccountReader,
+    private readonly platformReader: PlatformReader,
+  ) {
     this.config = {
       clientId: process.env.YOUTUBE_CLIENT_ID || '',
       clientSecret: process.env.YOUTUBE_CLIENT_SECRET || '',
@@ -199,6 +207,79 @@ export class PlatformConnectYouTubeService {
     } catch (error) {
       this.logger.error('Failed to refresh access token:', error);
       throw new BadRequestException('Failed to refresh YouTube token');
+    }
+  }
+
+  async saveOAuthAccount(params: {
+    userId: number;
+    tokenResponse: YouTubeTokenResponse;
+  }) {
+    try {
+      this.logger.log('Saving YouTube OAuth account');
+
+      // Get YouTube platform
+      const platform = await this.platformReader.findByName(
+        PlatformType.YOUTUBE,
+      );
+      if (!platform) {
+        throw new BadRequestException('YouTube platform not found in database');
+      }
+
+      // Calculate token expiry
+      const tokenExpiry = new Date(
+        Date.now() + params.tokenResponse.expires_in * 1000,
+      );
+
+      // Fetch channel info to get channel ID and username
+      const channelInfo = await this.getChannelInfo(
+        params.tokenResponse.access_token,
+      );
+
+      // Check if account already exists
+      const existingAccount =
+        await this.socialAccountReader.findByPlatformAndAccountId(
+          platform.id,
+          channelInfo.id,
+        );
+
+      let savedAccount;
+      if (existingAccount) {
+        // Update existing account with new tokens
+        this.logger.log(
+          `Updating existing YouTube account ${existingAccount.id}`,
+        );
+
+        // YouTube may return a new refresh token, use it if provided
+        const newRefreshToken =
+          params.tokenResponse.refresh_token ||
+          existingAccount.refreshToken ||
+          undefined;
+
+        savedAccount = await this.socialAccountWriter.updateTokens({
+          id: existingAccount.id,
+          accessToken: params.tokenResponse.access_token,
+          refreshToken: newRefreshToken,
+          tokenExpiry,
+        });
+      } else {
+        // Create new account
+        this.logger.log('Creating new YouTube account');
+        savedAccount = await this.socialAccountWriter.create({
+          user: { connect: { id: params.userId } },
+          platform: { connect: { id: platform.id } },
+          accessToken: params.tokenResponse.access_token,
+          refreshToken: params.tokenResponse.refresh_token || undefined,
+          tokenExpiry,
+          accountId: channelInfo.id,
+          username: channelInfo.snippet.title,
+        });
+      }
+
+      this.logger.log('Successfully saved YouTube account');
+      return savedAccount;
+    } catch (error) {
+      this.logger.error('Failed to save YouTube account:', error);
+      throw error;
     }
   }
 

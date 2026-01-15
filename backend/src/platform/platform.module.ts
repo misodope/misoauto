@@ -8,9 +8,11 @@ import { InstagramController } from './platform-instagram.controller';
 import { TikTokController } from './platform-tiktok.controller';
 import { YouTubeController } from './platform-youtube.controller';
 import { PrismaModule } from '../prisma/prisma.module';
+import { SocialAccountModule } from '../social-account/social-account.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, SocialAccountModule, AuthModule],
   controllers: [InstagramController, TikTokController, YouTubeController],
   providers: [
     PlatformReader,

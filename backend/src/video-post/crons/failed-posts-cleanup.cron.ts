@@ -15,7 +15,7 @@ export class FailedPostsCleanupCron {
    * Automatically removes failed posts that haven't been updated in 30+ days
    * to prevent database bloat from accumulating permanent failures.
    *
-   * Schedule: Daily at midnight (0 0 * * *)
+   * Schedule: Daily at midnight
    */
   @Cron('0 0 * * *', {
     name: 'cleanup-failed-posts',

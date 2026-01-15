@@ -106,7 +106,7 @@ describe('CacheService', () => {
 
     it('should return false for expired key', () => {
       jest.useFakeTimers();
-      
+
       const key = 'test-key';
       const value = 'test-value';
       const shortTtl = 1000; // 1 second
@@ -164,7 +164,7 @@ describe('CacheService', () => {
 
       // Fast forward time beyond short TTL
       jest.advanceTimersByTime(1001);
-      
+
       // Should exclude expired item
       expect(service.size()).toBe(1);
 
@@ -196,7 +196,7 @@ describe('CacheService', () => {
 
       // Fast forward time beyond short TTL
       jest.advanceTimersByTime(1001);
-      
+
       const keys = service.keys();
       expect(keys).toHaveLength(1);
       expect(keys).toContain('key2');
@@ -274,7 +274,7 @@ describe('CacheService', () => {
 
       // Fast forward time beyond TTL
       jest.advanceTimersByTime(1001);
-      
+
       expect(service.get(key)).toBeNull();
 
       jest.useRealTimers();
