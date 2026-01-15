@@ -2,9 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SocialAccount, Prisma } from '@prisma/client';
 
+type SocialAccountWithAllRelations = Prisma.SocialAccountGetPayload<{ include: { platform: true; user: true; posts: true; } }>;
+
 @Injectable()
 export class SocialAccountReader {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(params?: {
     skip?: number;
@@ -12,7 +14,7 @@ export class SocialAccountReader {
     cursor?: Prisma.SocialAccountWhereUniqueInput;
     where?: Prisma.SocialAccountWhereInput;
     orderBy?: Prisma.SocialAccountOrderByWithRelationInput;
-  }): Promise<SocialAccount[]> {
+  }): Promise<SocialAccountWithAllRelations[]> {
     const { skip, take, cursor, where, orderBy } = params || {};
     return this.prisma.socialAccount.findMany({
       skip,
