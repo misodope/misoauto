@@ -7,9 +7,7 @@ import { PostStatus } from '@prisma/client';
 export class FailedPostsCleanupCron {
   private readonly logger = new Logger(FailedPostsCleanupCron.name);
 
-  constructor(
-    private readonly videoPostWriter: VideoPostWriter,
-  ) {}
+  constructor(private readonly videoPostWriter: VideoPostWriter) {}
 
   /**
    * Automatically removes failed posts that haven't been updated in 30+ days

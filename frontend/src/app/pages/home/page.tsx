@@ -1,12 +1,19 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
-import { Flex, Heading, Text, Button, Box, Card, Badge } from '@radix-ui/themes';
+import {
+  Flex,
+  Heading,
+  Text,
+  Button,
+  Box,
+  Card,
+  Badge,
+} from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function Home() {
-  const { isLoggedIn, isLoading } = useAuth();
+  const { user, isLoggedIn, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -18,7 +25,9 @@ export default function Home() {
         p="8"
         style={{ textAlign: 'center' }}
       >
-        <Text size="4" color="gray">Loading...</Text>
+        <Text size="4" color="gray">
+          Loading...
+        </Text>
       </Flex>
     );
   }
@@ -32,25 +41,29 @@ export default function Home() {
       p="8"
       style={{ textAlign: 'center' }}
     >
-      <Heading size="8" mb="4">Welcome to MisoAuto</Heading>
+      <Heading size="8" mb="4">
+        Welcome to MisoAuto
+      </Heading>
       <Text size="5" color="gray" mb="8">
         Your social media automation platform
       </Text>
 
       {isLoggedIn ? (
-
         <Card size="3" style={{ maxWidth: '500px', width: '100%' }}>
           <Flex direction="column" align="center" gap="4">
             <Flex align="center" gap="2">
-              <Badge color="green" size="2">✓ Logged in</Badge>
+              <Badge color="green" size="2">
+                ✓ Logged in
+              </Badge>
             </Flex>
 
             <Text size="4" weight="medium">
-              Welcome back!
+              Welcome back{user?.name ? `, ${user.name}` : ''}!
             </Text>
 
             <Text size="3" color="gray" style={{ textAlign: 'center' }}>
-              You're all set to manage your social media content and automations.
+              You&apos;re all set to manage your social media content and
+              automations.
             </Text>
 
             <Flex gap="3" mt="4">
@@ -64,7 +77,6 @@ export default function Home() {
           </Flex>
         </Card>
       ) : (
-
         <Box>
           <Text size="4" color="gray" mb="6" style={{ display: 'block' }}>
             Get started by creating an account or logging in

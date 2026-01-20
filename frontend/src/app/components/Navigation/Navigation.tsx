@@ -32,13 +32,16 @@ export default function Navigation() {
       style={{
         zIndex: 1000,
         backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid var(--gray-6)'
+        borderBottom: '1px solid var(--gray-6)',
       }}
       p="4"
     >
       <Flex justify="between" align="center">
         <Text size="6" weight="bold">
-          <Link href="/home" style={{ textDecoration: 'none', color: 'var(--accent-12)' }}>
+          <Link
+            href="/home"
+            style={{ textDecoration: 'none', color: 'var(--accent-12)' }}
+          >
             MisoAuto
           </Link>
         </Text>
@@ -46,7 +49,16 @@ export default function Navigation() {
         {}
         {isLoggedIn && (
           <NavigationMenu.Root>
-            <NavigationMenu.List style={{ display: 'flex', gap: '0.5rem', listStyle: 'none', margin: 0, padding: 0, alignItems: 'center' }}>
+            <NavigationMenu.List
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                listStyle: 'none',
+                margin: 0,
+                padding: 0,
+                alignItems: 'center',
+              }}
+            >
               {navItems.map((item) => (
                 <NavigationMenu.Item key={item.path}>
                   <NavigationMenu.Link asChild>
@@ -58,16 +70,19 @@ export default function Navigation() {
                         minHeight: '36px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
                       }}
                     >
-                      <Link href={item.path} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        textDecoration: 'none',
-                        padding: '0 12px'
-                      }}>
+                      <Link
+                        href={item.path}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          textDecoration: 'none',
+                          padding: '0 12px',
+                        }}
+                      >
                         <span>{item.icon}</span>
                         <span>{item.label}</span>
                       </Link>
@@ -81,7 +96,9 @@ export default function Navigation() {
 
         <Flex align="center" gap="3">
           {isLoading ? (
-            <Text size="2" color="gray">Loading...</Text>
+            <Text size="2" color="gray">
+              Loading...
+            </Text>
           ) : !isLoggedIn ? (
             <Flex gap="2">
               <Button asChild variant="ghost" size="2">

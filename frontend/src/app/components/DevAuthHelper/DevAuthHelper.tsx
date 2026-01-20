@@ -22,7 +22,7 @@ export default function DevAuthHelper() {
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
         marginRight: '8px',
         height: '36px',
-        minWidth: 'auto'
+        minWidth: 'auto',
       }}
     >
       <Text size="1" weight="bold" color="orange">

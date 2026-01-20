@@ -1,33 +1,71 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api, { setAccessToken, getAccessToken, clearAccessToken } from '../../lib/axios';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
+import api, {
+  setAccessToken,
+  getAccessToken,
+  clearAccessToken,
+} from '../../lib/axios';
+
+export interface SocialAccount {
+  id: number;
+  platform: {
+    id: number;
+    name: string;
+    displayName: string;
+  };
+  username: string;
+  accountId: string;
+}
+
+export interface User {
+  id: number;
+  email: string;
+  name: string | null;
+  socialAccounts?: SocialAccount[];
+}
 
 type AuthContextType = {
+  user: User | null;
   isLoggedIn: boolean;
   isLoading: boolean;
-  login: (accessToken: string) => void;
+  login: (user: User) => void;
   logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Try to restore session on mount by attempting a token refresh
+  const isLoggedIn = user !== null;
+
+  // Rehydrate session on mount
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Try to refresh tokens - if successful, user has valid session
-        const response = await api.post<{ accessToken: string }>('/auth/refresh');
-        setAccessToken(response.data.accessToken);
-        setIsLoggedIn(true);
+        // Try to refresh tokens first
+        const refreshResponse = await api.post<{ accessToken: string }>(
+          '/auth/refresh',
+        );
+        setAccessToken(refreshResponse.data.accessToken);
+
+        // Fetch user profile with the new token
+        const profileResponse = await api.get<User>('/auth/me');
+        setUser(profileResponse.data);
       } catch {
-        // No valid refresh token, user needs to login
+        // No valid session, user needs to login
         clearAccessToken();
-        setIsLoggedIn(false);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -36,9 +74,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const login = useCallback((accessToken: string) => {
-    setAccessToken(accessToken);
-    setIsLoggedIn(true);
+  const login = useCallback(async (_userData: User) => {
+    const profileResponse = await api.get<User>('/auth/me');
+    setUser(profileResponse.data);
   }, []);
 
   const logout = useCallback(async () => {
@@ -48,12 +86,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Continue with local logout even if server call fails
     } finally {
       clearAccessToken();
-      setIsLoggedIn(false);
+      setUser(null);
     }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, isLoggedIn, isLoading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

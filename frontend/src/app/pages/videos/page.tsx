@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Flex, Heading, Button, Card, Text, Badge, Grid } from '@radix-ui/themes';
+import {
+  Box,
+  Flex,
+  Heading,
+  Button,
+  Card,
+  Text,
+  Badge,
+  Grid,
+} from '@radix-ui/themes';
 import ProtectedRoute from '../../components/ProtectedRoute/ProtectedRoute';
 
 interface Video {
@@ -52,18 +61,33 @@ export default function Videos() {
                 <img
                   src={video.thumbnail}
                   alt={video.title}
-                  style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '8px' }}
+                  style={{
+                    width: '100%',
+                    height: '180px',
+                    objectFit: 'cover',
+                    borderRadius: '8px',
+                  }}
                 />
                 <Badge
-                  color={video.status === 'ready' ? 'green' : video.status === 'processing' ? 'yellow' : 'red'}
+                  color={
+                    video.status === 'ready'
+                      ? 'green'
+                      : video.status === 'processing'
+                        ? 'yellow'
+                        : 'red'
+                  }
                   style={{ position: 'absolute', top: '8px', right: '8px' }}
                 >
                   {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
                 </Badge>
               </Box>
               <Box>
-                <Heading size="4" mb="2">{video.title}</Heading>
-                <Text size="2" color="gray" mb="2">Uploaded on {video.uploadDate}</Text>
+                <Heading size="4" mb="2">
+                  {video.title}
+                </Heading>
+                <Text size="2" color="gray" mb="2">
+                  Uploaded on {video.uploadDate}
+                </Text>
                 <Flex gap="1" wrap="wrap">
                   {video.platforms.map((platform) => (
                     <Badge key={platform} variant="soft">

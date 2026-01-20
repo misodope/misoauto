@@ -12,11 +12,12 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { PlatformConnectInstagramService } from '../services/platform-connect-instagram.service';
-import { JwtAuthGuard } from '@backend/common/guards/jwt-auth.guard';
 import {
+  JwtAuthGuard,
   CurrentUser,
   JwtPayload,
-} from '@backend/common/decorators/current-user.decorator';
+  getOAuthCookieOptions,
+} from '@backend/common';
 
 export interface TokenExchangeRequest {
   code: string;
@@ -51,13 +52,11 @@ export class InstagramController {
 
     // Store CSRF state and userId in cookies for redirect validation
     res.cookie('csrfState', csrfState, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      ...getOAuthCookieOptions(),
       maxAge: 5 * 60 * 1000, // 5 minutes
     });
     res.cookie('oauthUserId', user.sub.toString(), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      ...getOAuthCookieOptions(),
       maxAge: 5 * 60 * 1000, // 5 minutes
     });
 

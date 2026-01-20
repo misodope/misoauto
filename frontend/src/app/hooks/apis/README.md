@@ -5,6 +5,7 @@ This directory contains React hooks for authentication using React Query (TanSta
 ## Available Hooks
 
 ### `useRegister`
+
 Hook for user registration.
 
 ```tsx
@@ -13,7 +14,11 @@ import { useRegister } from '@/app/hooks';
 const RegisterComponent = () => {
   const { mutate: register, isPending, error } = useRegister();
 
-  const handleRegister = (formData: { email: string; password: string; name: string }) => {
+  const handleRegister = (formData: {
+    email: string;
+    password: string;
+    name: string;
+  }) => {
     register(formData, {
       onSuccess: (data) => {
         console.log('Registration successful:', data.message);
@@ -27,15 +32,17 @@ const RegisterComponent = () => {
   };
 
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target as HTMLFormElement);
-      handleRegister({
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-        name: formData.get('name') as string,
-      });
-    }}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target as HTMLFormElement);
+        handleRegister({
+          email: formData.get('email') as string,
+          password: formData.get('password') as string,
+          name: formData.get('name') as string,
+        });
+      }}
+    >
       <input name="name" type="text" placeholder="Name" required />
       <input name="email" type="email" placeholder="Email" required />
       <input name="password" type="password" placeholder="Password" required />
@@ -53,6 +60,7 @@ const RegisterComponent = () => {
 ```
 
 ### `useLogin`
+
 Hook for user authentication.
 
 ```tsx
@@ -78,14 +86,16 @@ const LoginComponent = () => {
   };
 
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target as HTMLFormElement);
-      handleLogin({
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-      });
-    }}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target as HTMLFormElement);
+        handleLogin({
+          email: formData.get('email') as string,
+          password: formData.get('password') as string,
+        });
+      }}
+    >
       <input name="email" type="email" placeholder="Email" required />
       <input name="password" type="password" placeholder="Password" required />
       <button type="submit" disabled={isPending}>
@@ -102,6 +112,7 @@ const LoginComponent = () => {
 ```
 
 ### `useLogout`
+
 Hook for user logout.
 
 ```tsx
@@ -117,15 +128,12 @@ const LogoutButton = () => {
     router.push('/login'); // Redirect to login page
   };
 
-  return (
-    <button onClick={handleLogout}>
-      Logout
-    </button>
-  );
+  return <button onClick={handleLogout}>Logout</button>;
 };
 ```
 
 ### `useAuthStatus`
+
 Hook for checking authentication status.
 
 ```tsx
@@ -169,14 +177,22 @@ import { useRouter } from 'next/navigation';
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const router = useRouter();
-  
-  const { mutate: login, isPending: isLoggingIn, error: loginError } = useLogin();
-  const { mutate: register, isPending: isRegistering, error: registerError } = useRegister();
+
+  const {
+    mutate: login,
+    isPending: isLoggingIn,
+    error: loginError,
+  } = useLogin();
+  const {
+    mutate: register,
+    isPending: isRegistering,
+    error: registerError,
+  } = useRegister();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     const authData = {
       email: formData.get('email') as string,
       password: formData.get('password') as string,
@@ -193,11 +209,14 @@ const AuthForm = () => {
       register(authData, {
         onSuccess: () => {
           // Auto-login after successful registration
-          login({ email: authData.email, password: authData.password }, {
-            onSuccess: () => {
-              router.push('/dashboard');
+          login(
+            { email: authData.email, password: authData.password },
+            {
+              onSuccess: () => {
+                router.push('/dashboard');
+              },
             },
-          });
+          );
         },
       });
     }
@@ -209,7 +228,7 @@ const AuthForm = () => {
   return (
     <div className="auth-form">
       <h1>{isLogin ? 'Login' : 'Register'}</h1>
-      
+
       <form onSubmit={handleSubmit}>
         {!isLogin && (
           <input
@@ -219,26 +238,24 @@ const AuthForm = () => {
             required={!isLogin}
           />
         )}
-        
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          required
-        />
-        
+
+        <input name="email" type="email" placeholder="Email" required />
+
         <input
           name="password"
           type="password"
           placeholder="Password"
           required
         />
-        
+
         <button type="submit" disabled={isPending}>
-          {isPending 
-            ? (isLogin ? 'Logging in...' : 'Registering...') 
-            : (isLogin ? 'Login' : 'Register')
-          }
+          {isPending
+            ? isLogin
+              ? 'Logging in...'
+              : 'Registering...'
+            : isLogin
+              ? 'Login'
+              : 'Register'}
         </button>
       </form>
 
@@ -248,15 +265,14 @@ const AuthForm = () => {
         </div>
       )}
 
-      <button 
-        type="button" 
+      <button
+        type="button"
         onClick={() => setIsLogin(!isLogin)}
         className="toggle-mode"
       >
-        {isLogin 
-          ? "Don't have an account? Register" 
-          : "Already have an account? Login"
-        }
+        {isLogin
+          ? "Don't have an account? Register"
+          : 'Already have an account? Login'}
       </button>
     </div>
   );

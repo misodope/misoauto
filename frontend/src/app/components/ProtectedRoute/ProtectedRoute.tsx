@@ -20,7 +20,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         minHeight="100vh"
         p="8"
       >
-        <Text size="4" color="gray">Loading...</Text>
+        <Text size="4" color="gray">
+          Loading...
+        </Text>
       </Flex>
     );
   }
@@ -34,7 +36,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         minHeight="100vh"
         p="8"
       >
-        <Text size="4" color="gray">Redirecting to login...</Text>
+        <Text size="4" color="gray">
+          Redirecting to login...
+        </Text>
       </Flex>
     );
   }

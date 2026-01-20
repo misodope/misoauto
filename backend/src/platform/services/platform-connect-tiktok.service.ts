@@ -170,8 +170,10 @@ export class PlatformConnectTikTokService {
     try {
       this.logger.log('Fetching TikTok user information');
 
+      // Fields available with user.info.basic scope
+      // Additional fields require: user.info.profile (bio, profile_deep_link) or user.info.stats (follower/following counts)
       const fields =
-        'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count,video_count';
+        'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name';
 
       const response = await this.httpClient.get(
         `https://open.tiktokapis.com/v2/user/info/?fields=${fields}`,

@@ -30,7 +30,10 @@ export const clearAccessToken = (): void => {
   accessToken = null;
 };
 
-const processQueue = (error: Error | null, token: string | null = null): void => {
+const processQueue = (
+  error: Error | null,
+  token: string | null = null,
+): void => {
   failedQueue.forEach((promise) => {
     if (error) {
       promise.reject(error);
@@ -51,7 +54,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor - handle token refresh
@@ -115,7 +118,10 @@ api.interceptors.response.use(
       // Only redirect if not already on login/register pages
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
-        if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+        if (
+          !currentPath.includes('/login') &&
+          !currentPath.includes('/register')
+        ) {
           window.location.href = '/login';
         }
       }
@@ -124,7 +130,7 @@ api.interceptors.response.use(
     } finally {
       isRefreshing = false;
     }
-  }
+  },
 );
 
 export default api;

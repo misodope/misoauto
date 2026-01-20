@@ -1,5 +1,5 @@
-import { QueryClient } from '@tanstack/react-query'
-import axios, { AxiosError, AxiosResponse } from 'axios'
+import { QueryClient } from '@tanstack/react-query';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,4 +17,4 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-})
+});

@@ -11,11 +11,12 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { PlatformConnectTikTokService } from '../services/platform-connect-tiktok.service';
-import { JwtAuthGuard } from '@backend/common/guards/jwt-auth.guard';
 import {
+  JwtAuthGuard,
   CurrentUser,
   JwtPayload,
-} from '@backend/common/decorators/current-user.decorator';
+  getOAuthCookieOptions,
+} from '@backend/common';
 
 export interface TokenExchangeRequest {
   code: string;
@@ -28,6 +29,8 @@ export interface TokenRequest {
 export interface RefreshTokenRequest {
   refreshToken: string;
 }
+
+const isDev = () => process.env.NODE_ENV !== 'production';
 
 @Controller('platform/tiktok')
 export class TikTokController {
@@ -45,20 +48,24 @@ export class TikTokController {
     // Generate CSRF state token
     const csrfState = Math.random().toString(36).substring(2);
 
-    // Store CSRF state and userId in cookies for redirect validation
-    res.cookie('csrfState', csrfState, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 5 * 60 * 1000, // 5 minutes
-    });
-    res.cookie('oauthUserId', user.sub.toString(), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 5 * 60 * 1000, // 5 minutes
-    });
+    // In dev mode: encode userId in state to avoid cookie issues with ngrok
+    // In prod mode: use cookies for CSRF validation
+    const state = isDev() ? `${csrfState}:${user.sub}` : csrfState;
+
+    if (!isDev()) {
+      // Store CSRF state and userId in cookies for redirect validation (production only)
+      res.cookie('csrfState', csrfState, {
+        ...getOAuthCookieOptions(),
+        maxAge: 5 * 60 * 1000, // 5 minutes
+      });
+      res.cookie('oauthUserId', user.sub.toString(), {
+        ...getOAuthCookieOptions(),
+        maxAge: 5 * 60 * 1000, // 5 minutes
+      });
+    }
 
     // Generate auth URL and redirect
-    const authUrl = this.tiktokService.generateAuthUrl(csrfState);
+    const authUrl = this.tiktokService.generateAuthUrl(state);
     res.status(200).json({ url: authUrl });
   }
 
@@ -74,23 +81,32 @@ export class TikTokController {
     this.logger.log('Handling TikTok OAuth redirect');
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4000';
-    console.group('REQUEST COOKIS', req.cookies);
-    // Extract CSRF state and userId from cookies
-    const csrfState = req.cookies?.csrfState;
-    console.log('csrfState', csrfState);
-    const userId = req.cookies?.oauthUserId;
-    console.log('userId', userId);
 
-    // Verify CSRF state
-    if (!csrfState || csrfState !== state) {
-      this.logger.error('CSRF state mismatch');
-      res.clearCookie('csrfState');
-      res.clearCookie('oauthUserId');
-      return res.redirect(`${frontendUrl}/integrations?error=csrf_mismatch`);
+    let userId: string | undefined;
+
+    if (isDev()) {
+      // In dev mode: extract userId from state parameter (format: "csrf:userId")
+      const stateParts = state?.split(':');
+      if (stateParts?.length === 2) {
+        userId = stateParts[1];
+        this.logger.log(`Dev mode: extracted userId ${userId} from state`);
+      }
+    } else {
+      // In prod mode: use cookies for CSRF validation
+      const csrfState = req.cookies?.csrfState;
+      userId = req.cookies?.oauthUserId;
+
+      // Verify CSRF state
+      if (!csrfState || csrfState !== state) {
+        this.logger.error('CSRF state mismatch');
+        res.clearCookie('csrfState');
+        res.clearCookie('oauthUserId');
+        return res.redirect(`${frontendUrl}/integrations?error=csrf_mismatch`);
+      }
     }
 
     if (!userId) {
-      this.logger.error('Missing user ID from cookies');
+      this.logger.error('Missing user ID');
       res.clearCookie('csrfState');
       res.clearCookie('oauthUserId');
       return res.redirect(`${frontendUrl}/integrations?error=missing_user_id`);
@@ -116,9 +132,11 @@ export class TikTokController {
         tokenResponse,
       });
 
-      // Clear OAuth cookies
-      res.clearCookie('csrfState');
-      res.clearCookie('oauthUserId');
+      // Clear OAuth cookies (production)
+      if (!isDev()) {
+        res.clearCookie('csrfState');
+        res.clearCookie('oauthUserId');
+      }
 
       // Redirect to homepage on success
       this.logger.log('TikTok account connected successfully');

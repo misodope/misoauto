@@ -1,20 +1,49 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   UnauthorizedException,
   Res,
   Req,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { RegisterDto } from '@backend/auth/dto/auth-register.dto';
 import { LoginDto } from '@backend/auth/dto/login.dto';
 import { Request, Response } from 'express';
+import {
+  getAuthCookieOptions,
+  JwtAuthGuard,
+  CurrentUser,
+  JwtPayload,
+} from '@backend/common';
 
 const REFRESH_TOKEN_COOKIE_NAME = 'refreshToken';
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
+export interface SocialAccountResponse {
+  id: number;
+  platform: {
+    id: number;
+    name: string;
+    displayName: string;
+  };
+  username: string;
+  accountId: string;
+}
+
+export interface UserResponse {
+  id: number;
+  email: string;
+  name: string | null;
+}
+
+export interface UserProfileResponse extends UserResponse {
+  socialAccounts: SocialAccountResponse[];
+}
 
 @Controller('auth')
 export class AuthController {
@@ -42,7 +71,41 @@ export class AuthController {
 
     this.setRefreshTokenCookie(response, refreshToken);
 
-    return { accessToken };
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      } as UserResponse,
+    };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(
+    @CurrentUser() currentUser: JwtPayload,
+  ): Promise<UserProfileResponse> {
+    const user = await this.authService.getUserProfile(currentUser.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      socialAccounts: user.socialAccounts.map((account) => ({
+        id: account.id,
+        platform: {
+          id: account.platform.id,
+          name: account.platform.name,
+          displayName: account.platform.displayName,
+        },
+        username: account.username,
+        accountId: account.accountId,
+      })),
+    };
   }
 
   @Post('refresh')
@@ -84,9 +147,7 @@ export class AuthController {
 
   private setRefreshTokenCookie(response: Response, token: string): void {
     response.cookie(REFRESH_TOKEN_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      ...getAuthCookieOptions(),
       maxAge: REFRESH_TOKEN_MAX_AGE,
       path: '/api/v1/auth',
     });
@@ -94,9 +155,7 @@ export class AuthController {
 
   private clearRefreshTokenCookie(response: Response): void {
     response.clearCookie(REFRESH_TOKEN_COOKIE_NAME, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      ...getAuthCookieOptions(),
       path: '/api/v1/auth',
     });
   }

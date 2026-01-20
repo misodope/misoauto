@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navigation from './components/Navigation/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider, Toaster } from './components/Toaster';
 import { Theme } from '@radix-ui/themes';
-import { QueryProvider } from "@frontend/app/lib/api/Provider";
+import { QueryProvider } from '@frontend/app/lib/api/Provider';
 
 import './globals.css';
 import './layout.scss';
@@ -13,7 +14,8 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'MisoAuto - Social Media Automation',
-  description: 'Automate your social media content distribution across multiple platforms',
+  description:
+    'Automate your social media content distribution across multiple platforms',
 };
 
 export default function RootLayout({
@@ -24,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-      <QueryProvider>
+        <QueryProvider>
           <AuthProvider>
             <Theme
               appearance="dark"
@@ -32,13 +34,14 @@ export default function RootLayout({
               grayColor="slate"
               radius="medium"
             >
-              <Navigation />
-              <main className="main-content">
-                {children}
-              </main>
+              <ToastProvider>
+                <Navigation />
+                <main className="main-content">{children}</main>
+                <Toaster />
+              </ToastProvider>
             </Theme>
           </AuthProvider>
-      </QueryProvider>
+        </QueryProvider>
       </body>
     </html>
   );

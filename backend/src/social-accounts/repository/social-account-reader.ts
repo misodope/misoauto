@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { SocialAccount, Prisma } from '@prisma/client';
 
-type SocialAccountWithAllRelations = Prisma.SocialAccountGetPayload<{ include: { platform: true; user: true; posts: true; } }>;
+type SocialAccountWithAllRelations = Prisma.SocialAccountGetPayload<{
+  include: { platform: true; user: true; posts: true };
+}>;
 
 @Injectable()
 export class SocialAccountReader {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async findAll(params?: {
     skip?: number;

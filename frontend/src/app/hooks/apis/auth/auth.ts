@@ -1,7 +1,13 @@
 import { useMutation, UseMutationResult } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import api, { setAccessToken, clearAccessToken, getAccessToken } from '@frontend/app/lib/axios';
-import { useAuth } from '@frontend/app/contexts/AuthContext';
+import api, {
+  setAccessToken,
+  clearAccessToken,
+  getAccessToken,
+} from '@frontend/app/lib/axios';
+import { useAuth, User } from '@frontend/app/contexts/AuthContext';
+
+export type { User, SocialAccount } from '@frontend/app/contexts/AuthContext';
 
 export interface RegisterRequest {
   email: string;
@@ -21,6 +27,7 @@ export interface RegisterResponse {
 
 export interface LoginResponse {
   accessToken: string;
+  user: User;
 }
 
 export interface AuthError {
@@ -29,7 +36,9 @@ export interface AuthError {
   error?: string;
 }
 
-const registerUser = async (data: RegisterRequest): Promise<RegisterResponse> => {
+const registerUser = async (
+  data: RegisterRequest,
+): Promise<RegisterResponse> => {
   const response = await api.post('/auth/register', data);
   return response.data;
 };
@@ -43,27 +52,41 @@ const logoutUser = async (): Promise<void> => {
   await api.post('/auth/logout');
 };
 
-export const useRegister = (): UseMutationResult<RegisterResponse, AxiosError<AuthError>, RegisterRequest> => {
+export const useRegister = (): UseMutationResult<
+  RegisterResponse,
+  AxiosError<AuthError>,
+  RegisterRequest
+> => {
   return useMutation<RegisterResponse, AxiosError<AuthError>, RegisterRequest>({
     mutationFn: registerUser,
     onError: (error) => {
-      console.error('Registration failed:', error?.response?.data?.message || error?.message);
+      console.error(
+        'Registration failed:',
+        error?.response?.data?.message || error?.message,
+      );
     },
   });
 };
 
-export const useLogin = (): UseMutationResult<LoginResponse, AxiosError<AuthError>, LoginRequest> => {
+export const useLogin = (): UseMutationResult<
+  LoginResponse,
+  AxiosError<AuthError>,
+  LoginRequest
+> => {
   const { login } = useAuth();
 
   return useMutation<LoginResponse, AxiosError<AuthError>, LoginRequest>({
     mutationFn: loginUser,
-    onSuccess: (data) => {
-      // Store access token in memory (secure) and update auth context
+    onSuccess: async (data) => {
+      // Store access token in memory (secure) and update auth context with user
       setAccessToken(data.accessToken);
-      login(data.accessToken);
+      login(data.user);
     },
     onError: (error) => {
-      console.error('Login failed:', error.response?.data?.message || error.message);
+      console.error(
+        'Login failed:',
+        error.response?.data?.message || error.message,
+      );
     },
   });
 };

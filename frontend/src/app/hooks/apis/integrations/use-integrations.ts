@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 const connectTikTok = async () => {
   const response = await api.get('/platform/tiktok/oauth');
   return response.data;
-}
+};
 
 export const useTikTokIntegration = () => {
   return useMutation({
@@ -15,7 +15,7 @@ export const useTikTokIntegration = () => {
       }
     },
     onError: (error) => {
-      console.error(`Error connecting TikTok account: ${error.message}`)
-    }
-  })
-}
+      console.error(`Error connecting TikTok account: ${error.message}`);
+    },
+  });
+};

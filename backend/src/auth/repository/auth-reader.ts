@@ -18,6 +18,22 @@ export class AuthReader {
     });
   }
 
+  async findUserWithSocialAccounts(id: number) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        socialAccounts: {
+          where: {
+            OR: [{ tokenExpiry: null }, { tokenExpiry: { gt: new Date() } }],
+          },
+          include: {
+            platform: true,
+          },
+        },
+      },
+    });
+  }
+
   async findAllUsers(): Promise<User[]> {
     return this.prisma.user.findMany();
   }

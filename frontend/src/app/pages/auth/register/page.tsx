@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Text, Heading, Flex, Box, TextField } from '@radix-ui/themes';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useLogin, useRegister } from "@frontend/app/hooks";
+import { useLogin, useRegister } from '@frontend/app/hooks';
 
 export default function Register() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { isLoggedIn, isLoading } = useAuth();
@@ -30,13 +30,13 @@ export default function Register() {
   }, [isLoggedIn, isLoading, router]);
 
   const handleChange = (name: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     if (errors[name] || errors.submit) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
         delete newErrors.submit;
@@ -75,7 +75,10 @@ export default function Register() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log('Registration attempt:', { name: formData.name, email: formData.email });
+      console.log('Registration attempt:', {
+        name: formData.name,
+        email: formData.email,
+      });
 
       register(
         {
@@ -91,19 +94,23 @@ export default function Register() {
               name: '',
               email: '',
               password: '',
-              confirmPassword: ''
+              confirmPassword: '',
             });
             setErrors({});
 
-            router.push('/auth/login?message=Registration successful! Please login.');
+            router.push(
+              '/auth/login?message=Registration successful! Please login.',
+            );
           },
           onError: (error) => {
             console.error('Registration failed:', JSON.stringify(error));
 
-            const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+            const errorMessage =
+              error.response?.data?.message ||
+              'Registration failed. Please try again.';
             setErrors({ submit: errorMessage });
           },
-        }
+        },
       );
     }
   };
@@ -117,7 +124,9 @@ export default function Register() {
         minHeight="100vh"
         p="8"
       >
-        <Text size="4" color="gray">Loading...</Text>
+        <Text size="4" color="gray">
+          Loading...
+        </Text>
       </Flex>
     );
   }
@@ -131,7 +140,9 @@ export default function Register() {
         minHeight="100vh"
         p="8"
       >
-        <Text size="4" color="gray">Redirecting...</Text>
+        <Text size="4" color="gray">
+          Redirecting...
+        </Text>
       </Flex>
     );
   }
@@ -146,12 +157,16 @@ export default function Register() {
       maxWidth="400px"
       mx="auto"
     >
-      <Heading size="6" mb="4" align="center">Create an Account</Heading>
+      <Heading size="6" mb="4" align="center">
+        Create an Account
+      </Heading>
       <Box asChild width="100%">
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="4">
             <Box>
-              <Text as="label" size="2" weight="medium" mb="1">Full Name</Text>
+              <Text as="label" size="2" weight="medium" mb="1">
+                Full Name
+              </Text>
               <TextField.Root
                 type="text"
                 value={formData.name}
@@ -160,11 +175,17 @@ export default function Register() {
                 required
                 size="3"
               />
-              {errors.name && <Text size="1" color="red">{errors.name}</Text>}
+              {errors.name && (
+                <Text size="1" color="red">
+                  {errors.name}
+                </Text>
+              )}
             </Box>
 
             <Box>
-              <Text as="label" size="2" weight="medium" mb="1">Email</Text>
+              <Text as="label" size="2" weight="medium" mb="1">
+                Email
+              </Text>
               <TextField.Root
                 type="email"
                 value={formData.email}
@@ -173,11 +194,17 @@ export default function Register() {
                 required
                 size="3"
               />
-              {errors.email && <Text size="1" color="red">{errors.email}</Text>}
+              {errors.email && (
+                <Text size="1" color="red">
+                  {errors.email}
+                </Text>
+              )}
             </Box>
 
             <Box>
-              <Text as="label" size="2" weight="medium" mb="1">Password</Text>
+              <Text as="label" size="2" weight="medium" mb="1">
+                Password
+              </Text>
               <TextField.Root
                 type="password"
                 value={formData.password}
@@ -186,20 +213,32 @@ export default function Register() {
                 required
                 size="3"
               />
-              {errors.password && <Text size="1" color="red">{errors.password}</Text>}
+              {errors.password && (
+                <Text size="1" color="red">
+                  {errors.password}
+                </Text>
+              )}
             </Box>
 
             <Box>
-              <Text as="label" size="2" weight="medium" mb="1">Confirm Password</Text>
+              <Text as="label" size="2" weight="medium" mb="1">
+                Confirm Password
+              </Text>
               <TextField.Root
                 type="password"
                 value={formData.confirmPassword}
-                onChange={(e: any) => handleChange('confirmPassword', e.target.value)}
+                onChange={(e: any) =>
+                  handleChange('confirmPassword', e.target.value)
+                }
                 placeholder="Confirm your password"
                 required
                 size="3"
               />
-              {errors.confirmPassword && <Text size="1" color="red">{errors.confirmPassword}</Text>}
+              {errors.confirmPassword && (
+                <Text size="1" color="red">
+                  {errors.confirmPassword}
+                </Text>
+              )}
             </Box>
 
             {}
@@ -235,15 +274,19 @@ export default function Register() {
               textDecoration: 'none',
               transition: 'all 0.2s ease',
               borderRadius: '4px',
-              padding: '2px 4px'
+              padding: '2px 4px',
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent-12)';
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'var(--accent-3)';
+              (e.currentTarget as HTMLAnchorElement).style.color =
+                'var(--accent-12)';
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
+                'var(--accent-3)';
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent-11)';
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = 'transparent';
+              (e.currentTarget as HTMLAnchorElement).style.color =
+                'var(--accent-11)';
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
+                'transparent';
             }}
           >
             Login here

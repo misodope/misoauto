@@ -37,7 +37,7 @@ a {
 
 /* Ensure all buttons and CTAs have pointer cursor */
 button,
-[role="button"],
+[role='button'],
 .rt-Button,
 .rt-IconButton,
 .rt-Switch,
@@ -53,20 +53,20 @@ button,
 [data-radix-tabs-trigger],
 [data-radix-accordion-trigger],
 a[href],
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
+input[type='button'],
+input[type='submit'],
+input[type='reset'],
 label[for],
 select,
-[tabindex="0"],
+[tabindex='0'],
 [onclick],
-[data-clickable="true"] {
+[data-clickable='true'] {
   cursor: pointer !important;
 }
 
 /* Disabled states should show default cursor */
 button:disabled,
-[role="button"]:disabled,
+[role='button']:disabled,
 .rt-Button:disabled,
 .rt-Switch:disabled,
 .rt-Checkbox:disabled,
@@ -79,11 +79,11 @@ input:disabled {
 .rt-CheckboxIndicator,
 .rt-Badge[data-clickable],
 .rt-Card[data-clickable],
-[data-state="open"],
-[data-state="closed"],
-[role="menuitem"],
-[role="tab"],
-[role="combobox"] {
+[data-state='open'],
+[data-state='closed'],
+[role='menuitem'],
+[role='tab'],
+[role='combobox'] {
   cursor: pointer !important;
 }
 

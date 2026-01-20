@@ -51,6 +51,10 @@ export class AuthService {
     return this.authReader.findUserById(id);
   }
 
+  async getUserProfile(id: number) {
+    return this.authReader.findUserWithSocialAccounts(id);
+  }
+
   async getAllUsers(): Promise<User[]> {
     return this.authReader.findAllUsers();
   }
