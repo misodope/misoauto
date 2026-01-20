@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { Button, Box, Flex, Text } from '@radix-ui/themes';
-import DevAuthHelper from '../DevAuthHelper/DevAuthHelper';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface NavItem {
@@ -81,9 +80,6 @@ export default function Navigation() {
         )}
 
         <Flex align="center" gap="3">
-          {}
-          <DevAuthHelper />
-
           {isLoading ? (
             <Text size="2" color="gray">Loading...</Text>
           ) : !isLoggedIn ? (

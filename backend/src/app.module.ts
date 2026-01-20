@@ -1,23 +1,23 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaModule } from './prisma/prisma.module';
-import { UserModule } from '@backend/user';
-import { VideoModule } from './video/video.module';
+import { PrismaModule } from './database/prisma.module';
+import { UsersModule } from './users/users.module';
+import { VideosModule } from './videos/videos.module';
 import { PlatformModule } from './platform/platform.module';
-import { SocialAccountModule } from './social-account/social-account.module';
-import { VideoPostModule } from './video-post/video-post.module';
-import { AuthModule } from '@backend/auth/auth.module';
+import { SocialAccountsModule } from './social-accounts/social-accounts.module';
+import { VideoPostsModule } from './video-posts/video-posts.module';
+import { AuthModule } from './auth/auth.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
     PrismaModule,
-    UserModule,
-    VideoModule,
+    UsersModule,
+    VideosModule,
     PlatformModule,
-    SocialAccountModule,
-    VideoPostModule,
+    SocialAccountsModule,
+    VideoPostsModule,
     AuthModule,
     SchedulerModule.forRoot(),
   ],

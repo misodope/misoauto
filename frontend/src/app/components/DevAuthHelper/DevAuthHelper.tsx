@@ -1,10 +1,10 @@
 'use client';
 
-import { Button, Box, Text, Flex } from '@radix-ui/themes';
+import { Button, Text, Flex } from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function DevAuthHelper() {
-  const { isLoggedIn, impersonateLogin, logout } = useAuth();
+  const { isLoggedIn, logout } = useAuth();
 
   if (process.env.NODE_ENV !== 'development') {
     return null;
@@ -31,17 +31,7 @@ export default function DevAuthHelper() {
       <Text size="1" color="gray">
         {isLoggedIn ? '✅' : '❌'}
       </Text>
-      {!isLoggedIn ? (
-        <Button
-          size="1"
-          variant="solid"
-          color="green"
-          onClick={impersonateLogin}
-          style={{ height: '24px', fontSize: '11px' }}
-        >
-          🎭 Login
-        </Button>
-      ) : (
+      {isLoggedIn && (
         <Button
           size="1"
           variant="soft"
@@ -49,7 +39,7 @@ export default function DevAuthHelper() {
           onClick={logout}
           style={{ height: '24px', fontSize: '11px' }}
         >
-          🚪 Logout
+          Logout
         </Button>
       )}
     </Flex>

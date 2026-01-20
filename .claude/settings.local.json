@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(done)",
+      "Bash(npm run build:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npm run format:check:*)",
+      "Bash(tree:*)",
+      "Bash(npm run format:*)",
+      "Bash(npx prisma db pull:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm test:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:developers.tiktok.com)"
+    ]
+  }
+}

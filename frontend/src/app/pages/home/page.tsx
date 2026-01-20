@@ -6,7 +6,7 @@ import { Flex, Heading, Text, Button, Box, Card, Badge } from '@radix-ui/themes'
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function Home() {
-  const { isLoggedIn, isLoading, user } = useAuth();
+  const { isLoggedIn, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -46,7 +46,7 @@ export default function Home() {
             </Flex>
 
             <Text size="4" weight="medium">
-              Hello, {user?.email || 'User'}!
+              Welcome back!
             </Text>
 
             <Text size="3" color="gray" style={{ textAlign: 'center' }}>

@@ -9,4 +9,4 @@ export {
   type RegisterResponse,
   type LoginResponse,
   type AuthError,
-} from './apis/auth';
+} from './apis/auth/auth';

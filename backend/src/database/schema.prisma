@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/@prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  password       String
+  name           String?
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  socialAccounts SocialAccount[]
+  videos         Video[]
+  refreshTokens  RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique @map("token_hash")
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Video {
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String?
+  s3Key       String      @map("s3_key")
+  s3Bucket    String      @map("s3_bucket")
+  duration    Float?
+  fileSize    Int?        @map("file_size")
+  mimeType    String?     @map("mime_type")
+  status      VideoStatus @default(PROCESSING)
+  userId      Int         @map("user_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  user        User        @relation(fields: [userId], references: [id])
+  posts       VideoPost[]
+
+  @@map("videos")
+}
+
+model Platform {
+  id          Int             @id @default(autoincrement())
+  name        PlatformType    @unique
+  displayName String          @map("display_name")
+  isActive    Boolean         @default(true) @map("is_active")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  accounts    SocialAccount[]
+  posts       VideoPost[]
+
+  @@map("platforms")
+}
+
+model SocialAccount {
+  id           Int         @id @default(autoincrement())
+  platformId   Int         @map("platform_id")
+  userId       Int         @map("user_id")
+  accessToken  String      @map("access_token")
+  refreshToken String?     @map("refresh_token")
+  tokenExpiry  DateTime?   @map("token_expiry")
+  accountId    String      @map("account_id")
+  username     String
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  platform     Platform    @relation(fields: [platformId], references: [id])
+  user         User        @relation(fields: [userId], references: [id])
+  posts        VideoPost[]
+
+  @@unique([platformId, accountId])
+  @@map("social_accounts")
+}
+
+model VideoPost {
+  id              Int           @id @default(autoincrement())
+  videoId         Int           @map("video_id")
+  platformId      Int           @map("platform_id")
+  socialAccountId Int           @map("social_account_id")
+  platformPostId  String?       @map("platform_post_id")
+  postUrl         String?       @map("post_url")
+  status          PostStatus    @default(PENDING)
+  scheduledFor    DateTime?     @map("scheduled_for")
+  postedAt        DateTime?     @map("posted_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  platform        Platform      @relation(fields: [platformId], references: [id])
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id])
+  video           Video         @relation(fields: [videoId], references: [id])
+
+  @@map("video_posts")
+}
+
+enum VideoStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum PostStatus {
+  PENDING
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+enum PlatformType {
+  TIKTOK
+  YOUTUBE
+  INSTAGRAM
+  FACEBOOK
+}

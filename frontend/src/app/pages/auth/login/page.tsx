@@ -3,7 +3,6 @@
 import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import * as Form from "@radix-ui/react-form";
 import { Button, Text, Heading, Flex, Box, TextField } from "@radix-ui/themes";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useLogin } from "@frontend/app/hooks";
@@ -11,7 +10,7 @@ import { useLogin } from "@frontend/app/hooks";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { isLoggedIn, isLoading, impersonateLogin } = useAuth();
+  const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
   const { mutate: login, isPending: isLoggingIn, error: loginError } = useLogin();
 
