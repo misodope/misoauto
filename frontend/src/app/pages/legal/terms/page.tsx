@@ -29,7 +29,12 @@ export default function TermsOfService() {
             and other communications related to our services. These messages may
             include:
           </Text>
-          <ul style={{ paddingLeft: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
+          <ul
+            style={{
+              paddingLeft: 'var(--space-4)',
+              marginBottom: 'var(--space-3)',
+            }}
+          >
             <li>Account verification and security codes</li>
             <li>Service notifications and alerts</li>
             <li>Updates about your scheduled content and posts</li>

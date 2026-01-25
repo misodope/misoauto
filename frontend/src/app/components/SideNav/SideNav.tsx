@@ -204,7 +204,9 @@ export const SideNav = ({
         {(footer || footerItems) && (
           <div className={styles.footer}>
             {footerItems && (
-              <div className={styles.footerItems}>{renderItems(footerItems)}</div>
+              <div className={styles.footerItems}>
+                {renderItems(footerItems)}
+              </div>
             )}
             {footer}
           </div>

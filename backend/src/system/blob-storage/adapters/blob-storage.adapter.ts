@@ -5,10 +5,14 @@
  * Implement this interface to add support for new providers.
  */
 
-import { UploadOptions, UploadResult } from '../blob-storage.types';
+import {
+  UploadOptions,
+  UploadResult,
+  PresignedUploadResult,
+} from '../blob-storage.types';
 
 export interface IBlobStorageAdapter {
-  /** Upload a file */
+  /** Upload a file (server-side) */
   upload(
     key: string,
     data: Buffer,
@@ -24,8 +28,15 @@ export interface IBlobStorageAdapter {
   /** Check if a file exists */
   exists(key: string): Promise<boolean>;
 
-  /** Get a signed URL for downloading */
-  getSignedUrl(key: string, expiresIn?: number): Promise<string>;
+  /** Get a presigned URL for downloading */
+  getSignedDownloadUrl(key: string, expiresIn?: number): Promise<string>;
+
+  /** Get a presigned URL for uploading (client-side direct upload) */
+  getSignedUploadUrl(
+    key: string,
+    contentType: string,
+    expiresIn?: number,
+  ): Promise<PresignedUploadResult>;
 
   /** Get public URL for a file */
   getPublicUrl(key: string): string;

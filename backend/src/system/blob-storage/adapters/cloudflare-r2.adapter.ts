@@ -20,6 +20,7 @@ import {
   BlobStorageConfig,
   UploadOptions,
   UploadResult,
+  PresignedUploadResult,
 } from '../blob-storage.types';
 
 export class CloudflareR2Adapter implements IBlobStorageAdapter {
@@ -108,13 +109,32 @@ export class CloudflareR2Adapter implements IBlobStorageAdapter {
     }
   }
 
-  async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
+  async getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
     });
 
     return getSignedUrl(this.client, command, { expiresIn });
+  }
+
+  async getSignedUploadUrl(
+    key: string,
+    contentType: string,
+    expiresIn = 3600,
+  ): Promise<PresignedUploadResult> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    const url = await getSignedUrl(this.client, command, { expiresIn });
+    const expiresAt = new Date(Date.now() + expiresIn * 1000);
+
+    this.logger.debug(`Generated presigned upload URL for: ${key}`);
+
+    return { url, key, expiresAt };
   }
 
   getPublicUrl(key: string): string {

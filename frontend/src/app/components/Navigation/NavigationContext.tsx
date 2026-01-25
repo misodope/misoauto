@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 
 export const SIDENAV_WIDTH = 260;
 export const SIDENAV_COLLAPSED_WIDTH = 68;
@@ -12,9 +18,15 @@ interface NavigationContextType {
   sideNavWidth: number;
 }
 
-const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+const NavigationContext = createContext<NavigationContextType | undefined>(
+  undefined,
+);
 
-export const NavigationProvider = ({ children }: { children: React.ReactNode }) => {
+export const NavigationProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapsed = useCallback(() => {
@@ -25,7 +37,7 @@ export const NavigationProvider = ({ children }: { children: React.ReactNode }) 
 
   const value = useMemo(
     () => ({ collapsed, setCollapsed, toggleCollapsed, sideNavWidth }),
-    [collapsed, toggleCollapsed, sideNavWidth]
+    [collapsed, toggleCollapsed, sideNavWidth],
   );
 
   return (

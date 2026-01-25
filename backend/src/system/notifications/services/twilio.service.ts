@@ -1,5 +1,5 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { Twilio } from 'twilio';
+import { Twilio, validateRequest } from 'twilio';
 import { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
 import {
   SmsNotification,
@@ -38,7 +38,10 @@ export class TwilioService {
       return message;
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`Failed to send SMS to ${to}: ${err.message}`, err.stack);
+      this.logger.error(
+        `Failed to send SMS to ${to}: ${err.message}`,
+        err.stack,
+      );
       throw error;
     }
   }
@@ -66,7 +69,6 @@ export class TwilioService {
     url: string,
     params: Record<string, string>,
   ): boolean {
-    const { validateRequest } = require('twilio');
     return validateRequest(this.config.authToken, signature, url, params);
   }
 }

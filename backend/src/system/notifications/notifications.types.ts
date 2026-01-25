@@ -27,7 +27,9 @@ export interface TwilioWebhookPayload {
   ErrorMessage?: string;
 }
 
-export const NOTIFICATIONS_MODULE_OPTIONS = Symbol('NOTIFICATIONS_MODULE_OPTIONS');
+export const NOTIFICATIONS_MODULE_OPTIONS = Symbol(
+  'NOTIFICATIONS_MODULE_OPTIONS',
+);
 
 export interface NotificationsModuleOptions {
   twilio: TwilioConfig;

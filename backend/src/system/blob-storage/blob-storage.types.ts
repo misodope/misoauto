@@ -15,6 +15,12 @@ export interface UploadResult {
   url: string;
 }
 
+export interface PresignedUploadResult {
+  url: string;
+  key: string;
+  expiresAt: Date;
+}
+
 export interface BlobStorageConfig {
   provider: 'cloudflare-r2' | 's3' | 'gcs' | 'azure';
   bucket: string;

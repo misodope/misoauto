@@ -11,7 +11,9 @@ export class NotificationsService {
   /**
    * Sends an SMS.
    */
-  async sendSms(notification: SmsNotification): Promise<{ messageSid: string }> {
+  async sendSms(
+    notification: SmsNotification,
+  ): Promise<{ messageSid: string }> {
     const message = await this.twilioService.sendSms(notification);
     return { messageSid: message.sid };
   }
@@ -19,11 +21,13 @@ export class NotificationsService {
   /**
    * Sends multiple SMS messages.
    */
-  async sendBulkSms(
-    notifications: SmsNotification[],
-  ): Promise<{ results: Array<{ to: string; messageSid?: string; error?: string }> }> {
+  async sendBulkSms(notifications: SmsNotification[]): Promise<{
+    results: Array<{ to: string; messageSid?: string; error?: string }>;
+  }> {
     const results = await Promise.allSettled(
-      notifications.map((notification) => this.twilioService.sendSms(notification)),
+      notifications.map((notification) =>
+        this.twilioService.sendSms(notification),
+      ),
     );
 
     return {
@@ -31,7 +35,10 @@ export class NotificationsService {
         if (result.status === 'fulfilled') {
           return { to: notifications[index].to, messageSid: result.value.sid };
         }
-        return { to: notifications[index].to, error: result.reason?.message || 'Unknown error' };
+        return {
+          to: notifications[index].to,
+          error: result.reason?.message || 'Unknown error',
+        };
       }),
     };
   }

@@ -1,6 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Video, Prisma, VideoStatus } from '@prisma/client';
+import { Prisma, VideoStatus } from '@prisma/client';
+
+export type VideoWithRelations = Prisma.VideoGetPayload<{
+  include: { user: true; posts: true };
+}>;
+
+const VIDEO_INCLUDE = {
+  user: true,
+  posts: true,
+} as const;
 
 @Injectable()
 export class VideoReader {
@@ -12,7 +21,7 @@ export class VideoReader {
     cursor?: Prisma.VideoWhereUniqueInput;
     where?: Prisma.VideoWhereInput;
     orderBy?: Prisma.VideoOrderByWithRelationInput;
-  }): Promise<Video[]> {
+  }): Promise<VideoWithRelations[]> {
     const { skip, take, cursor, where, orderBy } = params || {};
     return this.prisma.video.findMany({
       skip,
@@ -20,41 +29,31 @@ export class VideoReader {
       cursor,
       where,
       orderBy,
-      include: {
-        user: true,
-        posts: true,
-      },
+      include: VIDEO_INCLUDE,
     });
   }
 
-  async findOne(where: Prisma.VideoWhereUniqueInput): Promise<Video | null> {
+  async findOne(
+    where: Prisma.VideoWhereUniqueInput,
+  ): Promise<VideoWithRelations | null> {
     return this.prisma.video.findUnique({
       where,
-      include: {
-        user: true,
-        posts: true,
-      },
+      include: VIDEO_INCLUDE,
     });
   }
 
-  async findByUserId(userId: number): Promise<Video[]> {
+  async findByUserId(userId: number): Promise<VideoWithRelations[]> {
     return this.prisma.video.findMany({
       where: { userId },
-      include: {
-        user: true,
-        posts: true,
-      },
+      include: VIDEO_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findByStatus(status: VideoStatus): Promise<Video[]> {
+  async findByStatus(status: VideoStatus): Promise<VideoWithRelations[]> {
     return this.prisma.video.findMany({
       where: { status },
-      include: {
-        user: true,
-        posts: true,
-      },
+      include: VIDEO_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -68,13 +67,10 @@ export class VideoReader {
     return count > 0;
   }
 
-  async findByS3Key(s3Key: string): Promise<Video | null> {
+  async findByS3Key(s3Key: string): Promise<VideoWithRelations | null> {
     return this.prisma.video.findFirst({
       where: { s3Key },
-      include: {
-        user: true,
-        posts: true,
-      },
+      include: VIDEO_INCLUDE,
     });
   }
 }

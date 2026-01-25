@@ -1,0 +1,76 @@
+.trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.active {
+  color: var(--accent-11);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  font-size: 10px;
+  padding: 0 4px;
+}
+
+.content {
+  width: 320px;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.uploadsList {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.uploadItem {
+  padding: var(--space-2);
+  background-color: var(--gray-2);
+  border-radius: var(--radius-2);
+
+  &:hover {
+    background-color: var(--gray-3);
+  }
+}
+
+.filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.clearLink {
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--gray-12);
+  }
+}

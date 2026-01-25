@@ -91,7 +91,12 @@ export default function PrivacyPolicy() {
             These messages are essential to the operation of our service and may
             include:
           </Text>
-          <ul style={{ paddingLeft: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
+          <ul
+            style={{
+              paddingLeft: 'var(--space-4)',
+              marginBottom: 'var(--space-3)',
+            }}
+          >
             <li>Two-factor authentication codes</li>
             <li>Account security alerts</li>
             <li>Notifications about your scheduled content</li>

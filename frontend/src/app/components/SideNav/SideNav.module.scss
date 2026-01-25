@@ -128,7 +128,9 @@
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 
   &:hover:not(.disabled) {
     background-color: var(--gray-a3);

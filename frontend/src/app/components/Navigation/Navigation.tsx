@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { SideNav, NavItem } from '../SideNav';
 import DropdownMenu from '../DropdownMenu';
+import UploadIndicator from '../UploadIndicator';
 import { useNavigation } from './NavigationContext';
 import styles from './Navigation.module.scss';
 
@@ -100,7 +101,8 @@ export default function Navigation() {
         onCollapsedChange={setCollapsed}
       />
       <Box className={styles.topNav} style={{ left: sideNavWidth }}>
-        <Flex justify="end" align="center" p="4" height="100%">
+        <Flex justify="end" align="center"  gap="3" p="4" height="100%">
+          <UploadIndicator />
           <DropdownMenu
             items={[
               {

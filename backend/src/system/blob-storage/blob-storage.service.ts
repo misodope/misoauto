@@ -4,6 +4,7 @@ import {
   BLOB_STORAGE_ADAPTER,
   UploadOptions,
   UploadResult,
+  PresignedUploadResult,
 } from './blob-storage.types';
 
 @Injectable()
@@ -33,8 +34,16 @@ export class BlobStorageService {
     return this.adapter.exists(key);
   }
 
-  async getSignedUrl(key: string, expiresIn?: number): Promise<string> {
-    return this.adapter.getSignedUrl(key, expiresIn);
+  async getSignedDownloadUrl(key: string, expiresIn?: number): Promise<string> {
+    return this.adapter.getSignedDownloadUrl(key, expiresIn);
+  }
+
+  async getSignedUploadUrl(
+    key: string,
+    contentType: string,
+    expiresIn?: number,
+  ): Promise<PresignedUploadResult> {
+    return this.adapter.getSignedUploadUrl(key, contentType, expiresIn);
   }
 
   getPublicUrl(key: string): string {

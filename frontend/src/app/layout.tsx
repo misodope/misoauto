@@ -4,6 +4,7 @@ import Navigation from './components/Navigation/Navigation';
 import { NavigationProvider } from './components/Navigation/NavigationContext';
 import { MainContent } from './components/MainContent';
 import { AuthProvider } from './contexts/AuthContext';
+import { UploadProvider } from './contexts/UploadContext';
 import { ToastProvider, Toaster } from './components/Toaster';
 import { Theme } from '@radix-ui/themes';
 import { QueryProvider } from '@frontend/app/lib/api/Provider';
@@ -30,20 +31,22 @@ export default function RootLayout({
       <body className={inter.className}>
         <QueryProvider>
           <AuthProvider>
-            <Theme
-              appearance="dark"
-              accentColor="yellow"
-              grayColor="slate"
-              radius="medium"
-            >
-              <ToastProvider>
-                <NavigationProvider>
-                  <Navigation />
-                  <MainContent>{children}</MainContent>
-                </NavigationProvider>
-                <Toaster />
-              </ToastProvider>
-            </Theme>
+            <UploadProvider>
+              <Theme
+                appearance="dark"
+                accentColor="yellow"
+                grayColor="slate"
+                radius="medium"
+              >
+                <ToastProvider>
+                  <NavigationProvider>
+                    <Navigation />
+                    <MainContent>{children}</MainContent>
+                  </NavigationProvider>
+                  <Toaster />
+                </ToastProvider>
+              </Theme>
+            </UploadProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

@@ -5,7 +5,8 @@
       "Bash(gh pr create:*)",
       "Bash(npm install:*)",
       "Bash(npm run prisma:generate:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
