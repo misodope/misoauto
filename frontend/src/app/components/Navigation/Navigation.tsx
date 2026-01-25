@@ -67,7 +67,7 @@ export default function Navigation() {
             </Link>
           </Text>
           {!isLoading && (
-            <Flex gap="2">
+            <Flex gap="2" align="center">
               <Button asChild variant="ghost" size="2">
                 <Link href="/auth/login">Login</Link>
               </Button>
@@ -101,7 +101,7 @@ export default function Navigation() {
         onCollapsedChange={setCollapsed}
       />
       <Box className={styles.topNav} style={{ left: sideNavWidth }}>
-        <Flex justify="end" align="center"  gap="3" p="4" height="100%">
+        <Flex justify="end" align="center" gap="3" p="4" height="100%">
           <UploadIndicator />
           <DropdownMenu
             items={[
