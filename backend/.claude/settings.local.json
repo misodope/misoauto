@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run prisma:generate:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

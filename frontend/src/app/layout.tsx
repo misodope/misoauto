@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navigation from './components/Navigation/Navigation';
+import { NavigationProvider } from './components/Navigation/NavigationContext';
+import { MainContent } from './components/MainContent';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider, Toaster } from './components/Toaster';
 import { Theme } from '@radix-ui/themes';
@@ -35,8 +37,10 @@ export default function RootLayout({
               radius="medium"
             >
               <ToastProvider>
-                <Navigation />
-                <main className="main-content">{children}</main>
+                <NavigationProvider>
+                  <Navigation />
+                  <MainContent>{children}</MainContent>
+                </NavigationProvider>
                 <Toaster />
               </ToastProvider>
             </Theme>

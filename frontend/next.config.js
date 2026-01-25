@@ -31,6 +31,18 @@ const nextConfig = {
         source: '/videos/upload',
         destination: '/pages/videos/upload',
       },
+      {
+        source: '/legal',
+        destination: '/pages/legal',
+      },
+      {
+        source: '/legal/terms',
+        destination: '/pages/legal/terms',
+      },
+      {
+        source: '/legal/privacy',
+        destination: '/pages/legal/privacy',
+      },
     ];
   },
 };

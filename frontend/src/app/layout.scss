@@ -4,13 +4,21 @@ body {
   min-height: 100vh;
 }
 
+// Main content positioned absolutely
 .main-content {
-  padding-top: 4rem;
-  min-height: calc(100vh - 4rem);
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  box-sizing: border-box;
+  position: absolute;
+  top: 60px; // TopNav height
+  left: 260px; // Default SideNav width, overridden by JS
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  padding: var(--space-6);
+  transition: left 0.2s ease;
+}
+
+// For non-authenticated pages (no sidenav)
+.main-content--no-sidebar {
+  left: 0 !important;
 }
 
 * {
