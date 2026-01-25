@@ -1,105 +1,71 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import * as NavigationMenu from '@radix-ui/react-navigation-menu';
-import { Button, Box, Flex, Text } from '@radix-ui/themes';
+import { Text, Avatar, Flex, Button, Box } from '@radix-ui/themes';
+import {
+  HomeIcon,
+  VideoIcon,
+  Link2Icon,
+  GearIcon,
+  FileTextIcon,
+} from '@radix-ui/react-icons';
 import { useAuth } from '../../contexts/AuthContext';
-
-interface NavItem {
-  path: string;
-  label: string;
-  icon: string;
-  active?: boolean;
-}
+import { SideNav, NavItem } from '../SideNav';
+import DropdownMenu from '../DropdownMenu';
+import { useNavigation } from './NavigationContext';
+import styles from './Navigation.module.scss';
 
 export default function Navigation() {
-  const pathname = usePathname();
-  const { isLoggedIn, isLoading, logout } = useAuth();
+  const { isLoggedIn, isLoading, logout, user } = useAuth();
+  const { collapsed, setCollapsed, sideNavWidth } = useNavigation();
 
   const navItems: NavItem[] = [
-    { path: '/home', label: 'Home', icon: '🏠' },
-    { path: '/videos', label: 'Videos', icon: '🎥' },
-    { path: '/integrations', label: 'Integrations', icon: '🔗' },
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      href: '/home',
+      icon: <HomeIcon />,
+    },
+    {
+      id: 'videos',
+      label: 'Videos',
+      href: '/videos',
+      icon: <VideoIcon />,
+    },
+    {
+      id: 'integrations',
+      label: 'Integrations',
+      href: '/integrations',
+      icon: <Link2Icon />,
+    },
   ];
 
-  return (
-    <Box
-      position="fixed"
-      top="0"
-      left="0"
-      right="0"
-      style={{
-        zIndex: 1000,
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid var(--gray-6)',
-      }}
-      p="4"
-    >
-      <Flex justify="between" align="center">
-        <Text size="6" weight="bold">
-          <Link
-            href="/home"
-            style={{ textDecoration: 'none', color: 'var(--accent-12)' }}
-          >
-            MisoAuto
-          </Link>
-        </Text>
+  const footerItems: NavItem[] = [
+    {
+      id: 'settings',
+      label: 'Settings',
+      href: '/settings',
+      icon: <GearIcon />,
+    },
+    {
+      id: 'legal',
+      label: 'Legal',
+      href: '/legal',
+      icon: <FileTextIcon />,
+    },
+  ];
 
-        {}
-        {isLoggedIn && (
-          <NavigationMenu.Root>
-            <NavigationMenu.List
-              style={{
-                display: 'flex',
-                gap: '0.5rem',
-                listStyle: 'none',
-                margin: 0,
-                padding: 0,
-                alignItems: 'center',
-              }}
-            >
-              {navItems.map((item) => (
-                <NavigationMenu.Item key={item.path}>
-                  <NavigationMenu.Link asChild>
-                    <Button
-                      asChild
-                      variant={pathname === item.path ? 'solid' : 'ghost'}
-                      size="2"
-                      style={{
-                        minHeight: '36px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Link
-                        href={item.path}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          textDecoration: 'none',
-                          padding: '0 12px',
-                        }}
-                      >
-                        <span>{item.icon}</span>
-                        <span>{item.label}</span>
-                      </Link>
-                    </Button>
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-              ))}
-            </NavigationMenu.List>
-          </NavigationMenu.Root>
-        )}
-
-        <Flex align="center" gap="3">
-          {isLoading ? (
-            <Text size="2" color="gray">
-              Loading...
-            </Text>
-          ) : !isLoggedIn ? (
+  // Non-authenticated: simple top nav
+  if (!isLoggedIn) {
+    return (
+      <Box className={styles.topNav}>
+        <Flex justify="between" align="center" p="4">
+          <Text size="6" weight="bold">
+            <Link href="/" className={styles.logo}>
+              MisoAuto
+            </Link>
+          </Text>
+          {!isLoading && (
             <Flex gap="2">
               <Button asChild variant="ghost" size="2">
                 <Link href="/auth/login">Login</Link>
@@ -108,13 +74,52 @@ export default function Navigation() {
                 <Link href="/auth/register">Sign Up</Link>
               </Button>
             </Flex>
-          ) : (
-            <Button onClick={logout} variant="soft" size="2" color="red">
-              Logout
-            </Button>
           )}
         </Flex>
-      </Flex>
-    </Box>
+      </Box>
+    );
+  }
+
+  // Authenticated: SideNav + TopNav with avatar
+  const sideNavHeader = (
+    <Link href="/home" className={styles.brandLink}>
+      <Text size="5" weight="bold">
+        MisoAuto
+      </Text>
+    </Link>
+  );
+
+  return (
+    <>
+      <SideNav
+        items={navItems}
+        header={sideNavHeader}
+        footerItems={footerItems}
+        variant="default"
+        collapsed={collapsed}
+        onCollapsedChange={setCollapsed}
+      />
+      <Box className={styles.topNav} style={{ left: sideNavWidth }}>
+        <Flex justify="end" align="center" p="4" height="100%">
+          <DropdownMenu
+            items={[
+              {
+                id: 'logout',
+                name: 'Logout',
+                onClick: logout,
+              },
+            ]}
+            trigger={
+              <Avatar
+                size="2"
+                fallback={user?.name?.charAt(0).toUpperCase() || 'U'}
+                radius="full"
+                className={styles.avatar}
+              />
+            }
+          />
+        </Flex>
+      </Box>
+    </>
   );
 }
