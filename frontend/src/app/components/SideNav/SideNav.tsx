@@ -34,7 +34,7 @@ const NavItemComponent = ({
   depth = 0,
 }: NavItemComponentProps) => {
   const pathname = usePathname();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = item.children && item.children.length > 0;
   const isActive = item.href
     ? pathname === item.href || pathname.startsWith(item.href + '/')

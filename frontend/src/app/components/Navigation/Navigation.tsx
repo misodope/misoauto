@@ -8,6 +8,8 @@ import {
   Link2Icon,
   GearIcon,
   FileTextIcon,
+  CalendarIcon,
+  UploadIcon,
 } from '@radix-ui/react-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { SideNav, NavItem } from '../SideNav';
@@ -32,6 +34,20 @@ export default function Navigation() {
       label: 'Videos',
       href: '/videos',
       icon: <VideoIcon />,
+      children: [
+        {
+          id: 'posted-videos',
+          label: 'Uploads',
+          href: '/videos',
+          icon: <UploadIcon />,
+        },
+        {
+          id: 'scheduled-videos',
+          label: 'Scheduled',
+          href: '/videos/scheduled',
+          icon: <CalendarIcon />,
+        },
+      ],
     },
     {
       id: 'integrations',

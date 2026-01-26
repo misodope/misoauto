@@ -1,6 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { User, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+
+export type UserWithRelations = Prisma.UserGetPayload<{
+  include: { socialAccounts: true; videos: true };
+}>;
+
+const USER_INCLUDE = {
+  socialAccounts: true,
+  videos: true,
+} as const;
 
 @Injectable()
 export class UserReader {
@@ -12,7 +21,7 @@ export class UserReader {
     cursor?: Prisma.UserWhereUniqueInput;
     where?: Prisma.UserWhereInput;
     orderBy?: Prisma.UserOrderByWithRelationInput;
-  }): Promise<User[]> {
+  }): Promise<UserWithRelations[]> {
     const { skip, take, cursor, where, orderBy } = params || {};
     return this.prisma.user.findMany({
       skip,
@@ -20,30 +29,23 @@ export class UserReader {
       cursor,
       where,
       orderBy,
-      include: {
-        socialAccounts: true,
-        videos: true,
-      },
+      include: USER_INCLUDE,
     });
   }
 
-  async findOne(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
+  async findOne(
+    where: Prisma.UserWhereUniqueInput,
+  ): Promise<UserWithRelations | null> {
     return this.prisma.user.findUnique({
       where,
-      include: {
-        socialAccounts: true,
-        videos: true,
-      },
+      include: USER_INCLUDE,
     });
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<UserWithRelations | null> {
     return this.prisma.user.findUnique({
       where: { email },
-      include: {
-        socialAccounts: true,
-        videos: true,
-      },
+      include: USER_INCLUDE,
     });
   }
 

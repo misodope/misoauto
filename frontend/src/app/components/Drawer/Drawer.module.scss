@@ -1,0 +1,40 @@
+.panel {
+  // Override Dialog to be a side panel
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: auto !important;
+  transform: none !important;
+  max-width: 400px !important;
+  width: 100% !important;
+  max-height: 100vh !important;
+  height: 100vh !important;
+  border-radius: 0 !important;
+  border-left: 1px solid var(--gray-6);
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.videoId {
+  font-family: monospace;
+  background-color: var(--gray-3);
+  padding: 4px 8px;
+  border-radius: var(--radius-2);
+  display: inline-block;
+}
+
+.thumbnail {
+  width: 100%;
+  max-width: 300px;
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-6);
+}

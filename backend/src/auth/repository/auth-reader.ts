@@ -2,6 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { User, Prisma } from '@prisma/client';
 
+export type UserWithSocialAccounts = Prisma.UserGetPayload<{
+  include: {
+    socialAccounts: {
+      include: { platform: true };
+    };
+  };
+}>;
+
 @Injectable()
 export class AuthReader {
   constructor(private prisma: PrismaService) {}
@@ -18,7 +26,9 @@ export class AuthReader {
     });
   }
 
-  async findUserWithSocialAccounts(id: number) {
+  async findUserWithSocialAccounts(
+    id: number,
+  ): Promise<UserWithSocialAccounts | null> {
     return this.prisma.user.findUnique({
       where: { id },
       include: {

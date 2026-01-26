@@ -28,6 +28,10 @@ const nextConfig = {
         destination: '/pages/videos',
       },
       {
+        source: '/videos/scheduled',
+        destination: '/pages/videos/scheduled',
+      },
+      {
         source: '/legal',
         destination: '/pages/legal',
       },
