@@ -23,18 +23,3 @@
     transform: translateX(0);
   }
 }
-
-.videoId {
-  font-family: monospace;
-  background-color: var(--gray-3);
-  padding: 4px 8px;
-  border-radius: var(--radius-2);
-  display: inline-block;
-}
-
-.thumbnail {
-  width: 100%;
-  max-width: 300px;
-  border-radius: var(--radius-3);
-  border: 1px solid var(--gray-6);
-}

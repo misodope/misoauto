@@ -14,6 +14,33 @@ import api from '@frontend/app/lib/axios';
 
 export type VideoStatus = 'PROCESSING' | 'READY' | 'FAILED';
 
+export type PostStatus =
+  | 'PENDING'
+  | 'SCHEDULED'
+  | 'PUBLISHING'
+  | 'PUBLISHED'
+  | 'FAILED';
+
+export type PlatformType = 'TIKTOK' | 'YOUTUBE' | 'INSTAGRAM' | 'FACEBOOK';
+
+export interface Platform {
+  id: number;
+  name: string;
+  slug: string;
+  type: PlatformType;
+}
+
+export interface VideoPostSummary {
+  id: number;
+  platformId: number;
+  socialAccountId: number;
+  status: PostStatus;
+  scheduledFor?: string;
+  postedAt?: string;
+  createdAt: string;
+  platform: Platform;
+}
+
 export interface Video {
   id: number;
   title: string;
@@ -26,6 +53,7 @@ export interface Video {
   status: VideoStatus;
   createdAt: string;
   updatedAt: string;
+  posts?: VideoPostSummary[];
 }
 
 export interface InitializeUploadRequest {

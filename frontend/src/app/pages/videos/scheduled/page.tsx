@@ -1,25 +1,56 @@
 'use client';
 
-import { Box, Heading, Text } from '@radix-ui/themes';
+import { useMemo } from 'react';
+import { Box, Heading, Text, Spinner, Callout } from '@radix-ui/themes';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { Calendar, CalendarEvent } from '../components';
+import {
+  useVideoPosts,
+  VideoPost,
+  PostStatus,
+} from '@frontend/app/hooks/apis/video-posts';
 
-// Example events - replace with actual data from API
-const mockEvents: CalendarEvent[] = [
-  {
-    id: '1',
-    title: 'Video Post - TikTok',
-    start: new Date().toISOString(),
-    end: new Date(new Date().getTime() + 60 * 60 * 1000).toISOString(),
+const mapStatusToCalendarStatus = (
+  status: PostStatus,
+): 'scheduled' | 'published' | 'failed' => {
+  switch (status) {
+    case 'PUBLISHED':
+      return 'published';
+    case 'FAILED':
+      return 'failed';
+    default:
+      return 'scheduled';
+  }
+};
+
+const mapVideoPostToCalendarEvent = (post: VideoPost): CalendarEvent => {
+  const startDate = post.scheduledFor || post.createdAt;
+
+  return {
+    id: post.id.toString(),
+    title: `${post.video.title} - ${post.platform.name}`,
+    start: startDate,
     allDay: false,
     extendedProps: {
-      videoId: 'vid-1',
-      platform: 'tiktok',
-      status: 'scheduled',
+      videoId: post.videoId.toString(),
+      videoPostId: post.id,
+      platform: post.platform.name.toLowerCase(),
+      status: mapStatusToCalendarStatus(post.status),
+      thumbnailUrl: undefined,
+      username: post.socialAccount.username,
+      postUrl: post.postUrl,
     },
-  },
-];
+  };
+};
 
 export default function ScheduledPage() {
+  const { data: videoPosts, isLoading, error } = useVideoPosts();
+
+  const events = useMemo(() => {
+    if (!videoPosts) return [];
+    return videoPosts.map(mapVideoPostToCalendarEvent);
+  }, [videoPosts]);
+
   const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked:', event);
   };
@@ -37,11 +68,30 @@ export default function ScheduledPage() {
         <Text color="gray">View and manage your scheduled video posts</Text>
       </Box>
 
-      <Calendar
-        events={mockEvents}
-        onEventClick={handleEventClick}
-        onDateClick={handleDateClick}
-      />
+      {isLoading && (
+        <Box py="8" style={{ textAlign: 'center' }}>
+          <Spinner size="3" />
+        </Box>
+      )}
+
+      {error && (
+        <Callout.Root color="red" mb="4">
+          <Callout.Icon>
+            <InfoCircledIcon />
+          </Callout.Icon>
+          <Callout.Text>
+            Failed to load scheduled posts. Please try again.
+          </Callout.Text>
+        </Callout.Root>
+      )}
+
+      {!isLoading && !error && (
+        <Calendar
+          events={events}
+          onEventClick={handleEventClick}
+          onDateClick={handleDateClick}
+        />
+      )}
     </Box>
   );
 }

@@ -51,7 +51,9 @@ export class VideoPostReader {
     });
   }
 
-  async findByPlatformId(platformId: number): Promise<VideoPostWithRelations[]> {
+  async findByPlatformId(
+    platformId: number,
+  ): Promise<VideoPostWithRelations[]> {
     return this.prisma.videoPost.findMany({
       where: { platformId },
       include: VIDEO_POST_INCLUDE,

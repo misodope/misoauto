@@ -49,6 +49,7 @@
     .fc-button-primary:not(:disabled):active {
       background-color: var(--accent-9);
       border-color: var(--accent-9);
+      color: black;
     }
 
     .fc-event {

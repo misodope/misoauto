@@ -3,12 +3,16 @@ import { PrismaService } from '../../database/prisma.service';
 import { Prisma, VideoStatus } from '@prisma/client';
 
 export type VideoWithRelations = Prisma.VideoGetPayload<{
-  include: { user: true; posts: true };
+  include: { user: true; posts: { include: { platform: true } } };
 }>;
 
 const VIDEO_INCLUDE = {
   user: true,
-  posts: true,
+  posts: {
+    include: {
+      platform: true,
+    },
+  },
 } as const;
 
 @Injectable()

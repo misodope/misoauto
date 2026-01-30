@@ -36,9 +36,7 @@ const NavItemComponent = ({
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = item.href
-    ? pathname === item.href || pathname.startsWith(item.href + '/')
-    : false;
+  const isActive = item.href ? pathname === item.href : false;
 
   const handleClick = useCallback(() => {
     if (hasChildren) {

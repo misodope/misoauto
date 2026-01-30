@@ -2,26 +2,33 @@
 
 import { Dialog, Flex, IconButton } from '@radix-ui/themes';
 import { Cross2Icon } from '@radix-ui/react-icons';
+import type { DrawerProps } from './types';
 import styles from './Drawer.module.scss';
-
-interface DrawerProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: React.ReactNode;
-  children: React.ReactNode;
-}
 
 export const Drawer = ({
   open,
   onOpenChange,
   title,
+  description,
   children,
+  width = 400,
 }: DrawerProps) => {
+  const panelStyle = {
+    maxWidth: typeof width === 'number' ? `${width}px` : width,
+  };
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content className={styles.panel}>
+      <Dialog.Content className={styles.panel} style={panelStyle}>
         <Flex justify="between" align="start" mb="4">
-          <Dialog.Title size="5">{title}</Dialog.Title>
+          <div>
+            <Dialog.Title size="5">{title}</Dialog.Title>
+            {description && (
+              <Dialog.Description size="2" color="gray" mt="1">
+                {description}
+              </Dialog.Description>
+            )}
+          </div>
           <Dialog.Close>
             <IconButton variant="ghost" size="1">
               <Cross2Icon />

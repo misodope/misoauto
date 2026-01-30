@@ -16,7 +16,9 @@ export const Calendar = ({
   initialView = 'dayGridMonth',
   className,
 }: CalendarProps) => {
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null,
+  );
   const [panelOpen, setPanelOpen] = useState(false);
 
   const handleEventClick = (info: EventClickArg) => {
@@ -43,7 +45,9 @@ export const Calendar = ({
     }
   };
 
-  const calendarClasses = [styles.calendar, className].filter(Boolean).join(' ');
+  const calendarClasses = [styles.calendar, className]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <Box className={calendarClasses}>
