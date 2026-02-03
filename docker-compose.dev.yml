@@ -2,8 +2,8 @@ version: '3.8'
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile
       target: development
     ports:
       - "3001:3001"
@@ -16,13 +16,14 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./frontend/Dockerfile
       target: builder
     ports:
-      - "4000:4000"
+      - "4000:3000"
     environment:
       NODE_ENV: development
+      PORT: 3000
     volumes:
       - ./frontend:/app
       - /app/node_modules

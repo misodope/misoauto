@@ -4,25 +4,30 @@ FROM node:20-alpine AS base
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy root package files and workspace package.json files for npm workspaces
 COPY package*.json ./
-COPY tsconfig*.json ./
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Development stage
 FROM base AS development
 RUN npm ci
-COPY . .
+COPY backend ./backend
+WORKDIR /app/backend
 EXPOSE 3001
 CMD ["npm", "run", "start:dev"]
 
 # Build stage
 FROM base AS build
 RUN npm ci
-COPY . .
-RUN npm run build
+COPY tsconfig.base.json ./
+COPY backend ./backend
+WORKDIR /app/backend
+# Generate Prisma client and build the application
+RUN npx prisma generate --schema=src/database/schema.prisma && npx nest build
 
 # Production stage
 FROM node:20-alpine AS production
@@ -30,15 +35,20 @@ FROM node:20-alpine AS production
 # Create app directory
 WORKDIR /app
 
-# Copy package files
+# Copy root package files and workspace package.json files for npm workspaces
 COPY package*.json ./
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
 
 # Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy built application
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma ./prisma
+# Copy built application from backend (output is at /app/dist/backend per tsconfig)
+COPY --from=build /app/dist/backend ./dist
+COPY --from=build /app/backend/src/database ./prisma
+# Copy generated Prisma client
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -53,7 +63,7 @@ EXPOSE 3001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/v1 || exit 1
 
 # Start the application
 CMD ["node", "dist/main"]

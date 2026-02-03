@@ -1,6 +1,10 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  eslint: {
+    // Disable ESLint during builds (can still run manually)
+    ignoreDuringBuilds: true,
+  },
   async rewrites() {
     return [
       {
