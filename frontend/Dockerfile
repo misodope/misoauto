@@ -31,7 +31,8 @@ COPY frontend ./frontend
 WORKDIR /app/frontend
 
 # Build the application (bypass NX, call Next.js directly)
-RUN npx next build
+# Use --no-turbopack to avoid SCSS :global block syntax issues
+RUN npx next build --no-turbopack
 
 # Production image, copy all the files and run next
 FROM base AS runner
