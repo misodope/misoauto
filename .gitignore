@@ -10,6 +10,9 @@ dist
 node_modules
 
 .env
+.env.*
+.env.local
+.env.production
 .idea
 .DS_Store
 
