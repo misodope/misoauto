@@ -10,7 +10,12 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // Build allowed origins list
-  const allowedOrigins = ['http://localhost:4000', 'http://localhost:4001'];
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:4000',
+    'http://localhost:4001',
+    'http://frontend:3000',
+  ];
   if (process.env.NGROK_URL) {
     allowedOrigins.push(process.env.NGROK_URL);
   }
@@ -21,6 +26,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(3000);
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
 }
 bootstrap();
