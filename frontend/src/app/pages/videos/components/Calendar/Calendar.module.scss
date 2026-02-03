@@ -1,69 +1,67 @@
 .calendar {
   // Override FullCalendar styles for dark theme
-  :global {
-    .fc {
-      --fc-border-color: var(--gray-6);
-      --fc-button-bg-color: var(--gray-3);
-      --fc-button-border-color: var(--gray-6);
-      --fc-button-text-color: var(--gray-12);
-      --fc-button-hover-bg-color: var(--gray-4);
-      --fc-button-hover-border-color: var(--gray-7);
-      --fc-button-active-bg-color: var(--accent-9);
-      --fc-button-active-border-color: var(--accent-9);
-      --fc-event-bg-color: var(--accent-9);
-      --fc-event-border-color: var(--accent-9);
-      --fc-event-text-color: var(--accent-contrast);
-      --fc-today-bg-color: var(--accent-a3);
-      --fc-page-bg-color: transparent;
-      --fc-neutral-bg-color: var(--gray-2);
-      --fc-list-event-hover-bg-color: var(--gray-3);
-    }
+  :global(.fc) {
+    --fc-border-color: var(--gray-6);
+    --fc-button-bg-color: var(--gray-3);
+    --fc-button-border-color: var(--gray-6);
+    --fc-button-text-color: var(--gray-12);
+    --fc-button-hover-bg-color: var(--gray-4);
+    --fc-button-hover-border-color: var(--gray-7);
+    --fc-button-active-bg-color: var(--accent-9);
+    --fc-button-active-border-color: var(--accent-9);
+    --fc-event-bg-color: var(--accent-9);
+    --fc-event-border-color: var(--accent-9);
+    --fc-event-text-color: var(--accent-contrast);
+    --fc-today-bg-color: var(--accent-a3);
+    --fc-page-bg-color: transparent;
+    --fc-neutral-bg-color: var(--gray-2);
+    --fc-list-event-hover-bg-color: var(--gray-3);
+  }
 
-    .fc-theme-standard td,
-    .fc-theme-standard th {
-      border-color: var(--gray-6);
-    }
+  :global(.fc-theme-standard td),
+  :global(.fc-theme-standard th) {
+    border-color: var(--gray-6);
+  }
 
-    .fc-col-header-cell-cushion,
-    .fc-daygrid-day-number {
-      color: var(--gray-11);
-      text-decoration: none;
-    }
+  :global(.fc-col-header-cell-cushion),
+  :global(.fc-daygrid-day-number) {
+    color: var(--gray-11);
+    text-decoration: none;
+  }
 
-    .fc-daygrid-day-number:hover {
-      color: var(--accent-11);
-    }
+  :global(.fc-daygrid-day-number:hover) {
+    color: var(--accent-11);
+  }
 
-    .fc-toolbar-title {
-      color: var(--gray-12);
-      font-size: 1.25rem;
-    }
+  :global(.fc-toolbar-title) {
+    color: var(--gray-12);
+    font-size: 1.25rem;
+  }
 
-    .fc-button {
-      font-weight: 500;
-      border-radius: var(--radius-2);
-      transition: background-color 0.15s ease;
-    }
+  :global(.fc-button) {
+    font-weight: 500;
+    border-radius: var(--radius-2);
+    transition: background-color 0.15s ease;
+  }
 
-    .fc-button-primary:not(:disabled).fc-button-active,
-    .fc-button-primary:not(:disabled):active {
-      background-color: var(--accent-9);
-      border-color: var(--accent-9);
-      color: black;
-    }
+  :global(.fc-button-primary:not(:disabled).fc-button-active),
+  :global(.fc-button-primary:not(:disabled):active) {
+    background-color: var(--accent-9);
+    border-color: var(--accent-9);
+    color: black;
+  }
 
-    .fc-event {
-      cursor: pointer;
-      border-radius: var(--radius-2);
-      padding: 2px 4px;
-    }
+  :global(.fc-event) {
+    cursor: pointer;
+    border-radius: var(--radius-2);
+    padding: 2px 4px;
+  }
 
-    .fc-daygrid-event-dot {
-      border-color: var(--accent-9);
-    }
+  :global(.fc-daygrid-event-dot) {
+    border-color: var(--accent-9);
+  }
 
-    .fc-day-today {
-      background-color: var(--accent-a2) !important;
-    }
+  :global(.fc-day-today) {
+    background-color: var(--accent-a2) !important;
   }
 }
