@@ -1,9 +1,15 @@
+const path = require('path');
+
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   eslint: {
     // Disable ESLint during builds (can still run manually)
     ignoreDuringBuilds: true,
+  },
+  turbopack: {
+    // Set root to monorepo root for Docker builds where node_modules is at parent level
+    root: path.resolve(__dirname, '..'),
   },
   async rewrites() {
     return [

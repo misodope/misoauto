@@ -6,13 +6,11 @@ services:
     container_name: misoauto-backend
     ports:
       - "3001:3001"
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       PORT: 3001
-      # Add your environment variables here or use .env file
-      # DATABASE_URL: ${DATABASE_URL}
-      # JWT_SECRET: ${JWT_SECRET}
-      # etc.
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
@@ -28,11 +26,11 @@ services:
     container_name: misoauto-frontend
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_API_URL: http://backend:3001
-      # Add other environment variables as needed
     restart: unless-stopped
     depends_on:
       backend:
