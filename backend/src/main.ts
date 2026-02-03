@@ -19,6 +19,9 @@ async function bootstrap() {
   if (process.env.NGROK_URL) {
     allowedOrigins.push(process.env.NGROK_URL);
   }
+  if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+  }
 
   app.enableCors({
     origin: allowedOrigins,
