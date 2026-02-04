@@ -31,7 +31,7 @@ COPY frontend ./frontend
 WORKDIR /app/frontend
 
 # Set build-time env vars for Next.js public variables
-ARG NEXT_PUBLIC_API_URL=https://auto.misodope.com
+ARG NEXT_PUBLIC_API_URL=https://auto.misodope.com/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 # Build the application (bypass NX, call Next.js directly)
