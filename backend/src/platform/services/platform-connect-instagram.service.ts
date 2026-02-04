@@ -1,6 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
-import { stringify } from 'query-string';
 import { SocialAccountWriter } from '../../social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '../../social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
@@ -100,7 +99,7 @@ export class PlatformConnectInstagramService {
       state: state || Math.random().toString(36).substring(7),
     };
 
-    const authUrl = `https://api.instagram.com/oauth/authorize?${stringify(params)}`;
+    const authUrl = `https://api.instagram.com/oauth/authorize?${new URLSearchParams(params).toString()}`;
     this.logger.log(`Generated Instagram auth URL: ${authUrl}`);
 
     return authUrl;
@@ -120,7 +119,7 @@ export class PlatformConnectInstagramService {
 
       const response = await this.httpClient.post(
         'https://api.instagram.com/oauth/access_token',
-        stringify(tokenData),
+        new URLSearchParams(tokenData).toString(),
       );
 
       if (response.data.error) {
@@ -150,7 +149,7 @@ export class PlatformConnectInstagramService {
       };
 
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/access_token?${stringify(params)}`,
+        `https://graph.instagram.com/access_token?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {
@@ -179,7 +178,7 @@ export class PlatformConnectInstagramService {
       };
 
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/refresh_access_token?${stringify(params)}`,
+        `https://graph.instagram.com/refresh_access_token?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {
@@ -280,7 +279,7 @@ export class PlatformConnectInstagramService {
       };
 
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/me?${stringify(params)}`,
+        `https://graph.instagram.com/me?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {
@@ -314,7 +313,7 @@ export class PlatformConnectInstagramService {
       };
 
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/me/media?${stringify(params)}`,
+        `https://graph.instagram.com/me/media?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {
@@ -345,7 +344,7 @@ export class PlatformConnectInstagramService {
       };
 
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/${mediaId}?${stringify(params)}`,
+        `https://graph.instagram.com/${mediaId}?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {

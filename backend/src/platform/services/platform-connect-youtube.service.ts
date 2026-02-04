@@ -1,6 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
-import { stringify } from 'query-string';
 import { SocialAccountWriter } from '../../social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '../../social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
@@ -141,7 +140,7 @@ export class PlatformConnectYouTubeService {
       state: state || Math.random().toString(36).substring(7),
     };
 
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${stringify(params)}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams(params).toString()}`;
     this.logger.log(`Generated YouTube auth URL: ${authUrl}`);
 
     return authUrl;
@@ -161,7 +160,7 @@ export class PlatformConnectYouTubeService {
 
       const response = await this.httpClient.post(
         'https://oauth2.googleapis.com/token',
-        stringify(tokenData),
+        new URLSearchParams(tokenData).toString(),
       );
 
       if (response.data.error) {
@@ -193,7 +192,7 @@ export class PlatformConnectYouTubeService {
 
       const response = await this.httpClient.post(
         'https://oauth2.googleapis.com/token',
-        stringify(tokenData),
+        new URLSearchParams(tokenData).toString(),
       );
 
       if (response.data.error) {
@@ -293,7 +292,7 @@ export class PlatformConnectYouTubeService {
       };
 
       const response = await this.httpClient.get(
-        `https://www.googleapis.com/youtube/v3/channels?${stringify(params)}`,
+        `https://www.googleapis.com/youtube/v3/channels?${new URLSearchParams(params).toString()}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -341,7 +340,7 @@ export class PlatformConnectYouTubeService {
       };
 
       const playlistResponse = await this.httpClient.get(
-        `https://www.googleapis.com/youtube/v3/playlistItems?${stringify(playlistParams)}`,
+        `https://www.googleapis.com/youtube/v3/playlistItems?${new URLSearchParams(playlistParams).toString()}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -369,7 +368,7 @@ export class PlatformConnectYouTubeService {
       };
 
       const videosResponse = await this.httpClient.get(
-        `https://www.googleapis.com/youtube/v3/videos?${stringify(videoParams)}`,
+        `https://www.googleapis.com/youtube/v3/videos?${new URLSearchParams(videoParams).toString()}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -404,7 +403,7 @@ export class PlatformConnectYouTubeService {
       };
 
       const response = await this.httpClient.get(
-        `https://www.googleapis.com/youtube/v3/videos?${stringify(params)}`,
+        `https://www.googleapis.com/youtube/v3/videos?${new URLSearchParams(params).toString()}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

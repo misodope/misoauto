@@ -1,6 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
-import { stringify } from 'query-string';
 import { SocialAccountWriter } from '@backend/social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '@backend/social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
@@ -99,7 +98,7 @@ export class PlatformConnectTikTokService {
       state: state || Math.random().toString(36).substring(7),
     };
 
-    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?${stringify(params)}`;
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?${new URLSearchParams(params).toString()}`;
     this.logger.log(`Generated TikTok auth URL: ${authUrl}`);
 
     return authUrl;
@@ -119,7 +118,7 @@ export class PlatformConnectTikTokService {
 
       const response = await this.httpClient.post(
         'https://open.tiktokapis.com/v2/oauth/token/',
-        stringify(tokenData),
+        new URLSearchParams(tokenData).toString(),
       );
 
       if (response.data.error) {
@@ -149,7 +148,7 @@ export class PlatformConnectTikTokService {
 
       const response = await this.httpClient.post(
         'https://open.tiktokapis.com/v2/oauth/token/',
-        stringify(tokenData),
+        new URLSearchParams(tokenData).toString(),
       );
 
       if (response.data.error) {
@@ -210,7 +209,7 @@ export class PlatformConnectTikTokService {
 
       await this.httpClient.post(
         'https://open.tiktokapis.com/v2/oauth/revoke/',
-        stringify(tokenData),
+        new URLSearchParams(tokenData).toString(),
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
