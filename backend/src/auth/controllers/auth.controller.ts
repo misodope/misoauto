@@ -50,9 +50,23 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() body: RegisterDto) {
+  async register(
+    @Body() body: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const user = await this.authService.register(body);
-    return { message: 'User registered successfully', userId: user.id };
+    const { accessToken, refreshToken } = await this.authService.login(user);
+
+    this.setRefreshTokenCookie(response, refreshToken);
+
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      } as UserResponse,
+    };
   }
 
   @Post('login')
