@@ -53,7 +53,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Try to refresh tokens first
+        // If we already have an access token (e.g., just logged in/register), skip refresh
+        if (getAccessToken()) {
+          const profileResponse = await api.get<User>('/auth/me');
+          setUser(profileResponse.data);
+          return;
+        }
+
+        // Otherwise try to refresh using httpOnly cookie
         const refreshResponse = await api.post<{ accessToken: string }>(
           '/auth/refresh',
         );
@@ -74,9 +81,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     initializeAuth();
   }, []);
 
-  const login = useCallback(async (_userData: User) => {
-    const profileResponse = await api.get<User>('/auth/me');
-    setUser(profileResponse.data);
+  const login = useCallback(async (userData: User) => {
+    // Optimistically set user so UI updates immediately after login/register
+    setUser(userData);
+    // Best-effort fetch to hydrate full profile (e.g., social accounts)
+    try {
+      const profileResponse = await api.get<User>('/auth/me');
+      setUser(profileResponse.data);
+    } catch {
+      // Ignore — interceptor will handle refresh if needed
+    }
   }, []);
 
   const logout = useCallback(async () => {

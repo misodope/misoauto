@@ -12,11 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
-  const {
-    mutate: login,
-    isPending: isLoggingIn,
-    error: loginError,
-  } = useLogin();
+  const { mutate: login } = useLogin();
 
   useEffect(() => {
     if (!isLoading && isLoggedIn) {
@@ -34,10 +30,20 @@ export default function Login() {
 
     console.log('Login attempt:', { email });
 
-    login({
-      email,
-      password,
-    });
+    login(
+      {
+        email,
+        password,
+      },
+      {
+        onError: (error) => {
+          console.error(
+            'Login failed:',
+            error?.response?.data?.message || error?.message,
+          );
+        },
+      },
+    );
   };
 
   if (isLoading) {

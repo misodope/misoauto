@@ -74,7 +74,8 @@ api.interceptors.response.use(
     // The calling code (AuthContext) will handle the redirect appropriately
     if (
       originalRequest.url?.includes('/auth/refresh') ||
-      originalRequest.url?.includes('/auth/login')
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/register')
     ) {
       clearAccessToken();
       return Promise.reject(error);
