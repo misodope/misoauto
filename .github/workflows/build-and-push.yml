@@ -89,3 +89,25 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "ghcr.io/${{ env.IMAGE_NAME_FRONTEND }}:latest" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Deploy to Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            cd /root/misoauto
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            # Wait for backend to be healthy
+            sleep 10
+            # Run database migrations
+            docker compose -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy --schema=./prisma/schema.prisma || true
+            echo "Deployment complete!"
