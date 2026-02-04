@@ -40,15 +40,16 @@ COPY package*.json ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
-# Install only production dependencies
-RUN npm ci --omit=dev && npm cache clean --force
+# Copy Prisma schema first
+COPY --from=build /app/backend/src/database ./prisma
+
+# Install only production dependencies and generate Prisma client
+RUN npm ci --omit=dev && \
+    npx prisma generate --schema=./prisma/schema.prisma && \
+    npm cache clean --force
 
 # Copy built application from backend (output is at /app/dist/backend per tsconfig)
 COPY --from=build /app/dist/backend ./dist
-COPY --from=build /app/backend/src/database ./prisma
-# Copy generated Prisma client
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
