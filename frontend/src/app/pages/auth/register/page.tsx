@@ -87,9 +87,7 @@ export default function Register() {
           name: formData.name,
         },
         {
-          onSuccess: (data) => {
-            console.log('Registration successful:', data.message);
-
+          onSuccess: () => {
             setFormData({
               name: '',
               email: '',
@@ -97,14 +95,10 @@ export default function Register() {
               confirmPassword: '',
             });
             setErrors({});
-
-            router.push(
-              '/auth/login?message=Registration successful! Please login.',
-            );
+            // useAuth effect will redirect once logged in
           },
           onError: (error) => {
             console.error('Registration failed:', JSON.stringify(error));
-
             const errorMessage =
               error.response?.data?.message ||
               'Registration failed. Please try again.';

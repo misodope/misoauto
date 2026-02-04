@@ -20,11 +20,6 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface RegisterResponse {
-  message: string;
-  userId: number;
-}
-
 export interface LoginResponse {
   accessToken: string;
   user: User;
@@ -38,7 +33,7 @@ export interface AuthError {
 
 const registerUser = async (
   data: RegisterRequest,
-): Promise<RegisterResponse> => {
+): Promise<LoginResponse> => {
   const response = await api.post('/auth/register', data);
   return response.data;
 };
@@ -53,12 +48,18 @@ const logoutUser = async (): Promise<void> => {
 };
 
 export const useRegister = (): UseMutationResult<
-  RegisterResponse,
+  LoginResponse,
   AxiosError<AuthError>,
   RegisterRequest
 > => {
-  return useMutation<RegisterResponse, AxiosError<AuthError>, RegisterRequest>({
+  const { login } = useAuth();
+
+  return useMutation<LoginResponse, AxiosError<AuthError>, RegisterRequest>({
     mutationFn: registerUser,
+    onSuccess: async (data) => {
+      setAccessToken(data.accessToken);
+      login(data.user);
+    },
     onError: (error) => {
       console.error(
         'Registration failed:',

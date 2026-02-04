@@ -6,7 +6,6 @@ export {
   useAuthStatus,
   type RegisterRequest,
   type LoginRequest,
-  type RegisterResponse,
   type LoginResponse,
   type AuthError,
 } from './apis/auth/auth';
