@@ -1,5 +1,6 @@
 'use client';
 
+import { Container } from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigation } from '../Navigation/NavigationContext';
 
@@ -18,8 +19,8 @@ export const MainContent = ({ children }: MainContentProps) => {
   const style = isLoggedIn ? { left: sideNavWidth } : undefined;
 
   return (
-    <main className={className} style={style}>
+    <Container size="4" p="50px" className={className} style={style}>
       {children}
-    </main>
+    </Container>
   );
 };

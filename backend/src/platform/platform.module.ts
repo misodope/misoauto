@@ -10,9 +10,17 @@ import { YouTubeController } from './controllers/platform-youtube.controller';
 import { PrismaModule } from '../database/prisma.module';
 import { SocialAccountsModule } from '../social-accounts/social-accounts.module';
 import { AuthModule } from '../auth/auth.module';
+import { VideosModule } from '../videos/videos.module';
+import { VideoPostsModule } from '@backend/video-posts/video-posts.module';
 
 @Module({
-  imports: [PrismaModule, SocialAccountsModule, AuthModule],
+  imports: [
+    PrismaModule,
+    SocialAccountsModule,
+    AuthModule,
+    VideosModule,
+    VideoPostsModule,
+  ],
   controllers: [InstagramController, TikTokController, YouTubeController],
   providers: [
     PlatformReader,

@@ -4,6 +4,7 @@ import { SocialAccountWriter } from '@backend/social-accounts/repository/social-
 import { SocialAccountReader } from '@backend/social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
 import { PlatformType } from '@prisma/client';
+import { VideoPostDraftWriter } from '@backend/video-posts/repository/video-post-draft-writer';
 
 export interface TikTokOAuthConfig {
   clientId: string;
@@ -38,6 +39,54 @@ export interface TikTokUserInfo {
   video_count: number;
 }
 
+export interface TikTokVideo {
+  id: string;
+  create_time: number;
+  cover_image_url: string;
+  share_url: string;
+  video_description: string;
+  duration: number;
+  height: number;
+  width: number;
+  title: string;
+  embed_html: string;
+  embed_link: string;
+  like_count: number;
+  comment_count: number;
+  share_count: number;
+  view_count: number;
+}
+
+export interface TikTokVideoListResponse {
+  videos: TikTokVideo[];
+  cursor: number;
+  has_more: boolean;
+}
+
+export interface TikTokVideoQueryResponse {
+  videos: TikTokVideo[];
+}
+
+export interface TikTokPublishResponse {
+  publish_id: string;
+  upload_url?: string;
+}
+
+export type TikTokPublishStatus =
+  | 'PROCESSING_UPLOAD'
+  | 'PROCESSING_DOWNLOAD'
+  | 'SEND_TO_USER_INBOX'
+  | 'PUBLISH_COMPLETE'
+  | 'FAILED';
+
+export interface TikTokPublishStatusResponse {
+  status: TikTokPublishStatus;
+  fail_reason: string;
+  publicaly_available_post_id: number[];
+  uploaded_bytes: number;
+  downloaded_bytes: number;
+}
+
 @Injectable()
 export class PlatformConnectTikTokService {
   private readonly logger = new Logger(PlatformConnectTikTokService.name);
@@ -48,6 +97,7 @@ export class PlatformConnectTikTokService {
     private readonly socialAccountWriter: SocialAccountWriter,
     private readonly socialAccountReader: SocialAccountReader,
     private readonly platformReader: PlatformReader,
+    private readonly videoPostDraftWriter: VideoPostDraftWriter,
   ) {
     this.config = {
       clientId: process.env.TIKTOK_CLIENT_ID || '',
@@ -55,7 +105,8 @@ export class PlatformConnectTikTokService {
       redirectUri:
         process.env.TIKTOK_REDIRECT_URI ||
         'https://darrel-unexcruciating-trent.ngrok-free.dev/api/v1/platform/tiktok/redirect',
-      scope: 'user.info.basic,video.list,video.upload,video.publish',
+      scope:
+        'user.info.basic,video.list,video.upload,video.publish,user.info.profile,user.info.stats',
     };
 
     this.httpClient = axios.create({
@@ -194,6 +245,186 @@ export class PlatformConnectTikTokService {
     } catch (error) {
       this.logger.error('Failed to fetch user information:', error);
       throw new BadRequestException('Failed to fetch TikTok user information');
+    }
+  }
+
+  async getAccessTokenForUser(userId: number): Promise<string> {
+    const platform = await this.platformReader.findByName(PlatformType.TIKTOK);
+    if (!platform) {
+      throw new BadRequestException('TikTok platform not found');
+    }
+
+    const accounts = await this.socialAccountReader.findByUserAndPlatform(
+      userId,
+      platform.id,
+    );
+
+    if (!accounts.length) {
+      throw new BadRequestException('No TikTok account connected');
+    }
+
+    return accounts[0].accessToken;
+  }
+
+  async getVideoList(
+    accessToken: string,
+    cursor?: number,
+    maxCount?: number,
+  ): Promise<TikTokVideoListResponse> {
+    try {
+      this.logger.log('Fetching TikTok video list');
+
+      const fields =
+        'id,create_time,cover_image_url,share_url,video_description,duration,height,width,title,embed_html,embed_link,like_count,comment_count,share_count,view_count';
+
+      const body: Record<string, unknown> = {};
+      if (cursor) body.cursor = cursor;
+      if (maxCount) body.max_count = maxCount;
+
+      const response = await this.httpClient.post(
+        `https://open.tiktokapis.com/v2/video/list/?fields=${fields}`,
+        body,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.data.error && response.data.error.code !== 'ok') {
+        throw new BadRequestException(
+          `TikTok API error: ${response.data.error.message}`,
+        );
+      }
+
+      this.logger.log('Successfully fetched video list');
+      return response.data.data;
+    } catch (error) {
+      this.logger.error('Failed to fetch video list:', error);
+      throw new BadRequestException('Failed to fetch TikTok video list');
+    }
+  }
+
+  async queryVideos(
+    accessToken: string,
+    videoIds: string[],
+  ): Promise<TikTokVideoQueryResponse> {
+    try {
+      this.logger.log(`Querying TikTok videos: ${videoIds.join(', ')}`);
+
+      if (videoIds.length > 20) {
+        throw new BadRequestException('Maximum 20 video IDs per request');
+      }
+
+      const fields =
+        'id,create_time,cover_image_url,share_url,video_description,duration,height,width,title,embed_html,embed_link,like_count,comment_count,share_count,view_count';
+
+      const response = await this.httpClient.post(
+        `https://open.tiktokapis.com/v2/video/query/?fields=${fields}`,
+        { filters: { video_ids: videoIds } },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.data.error && response.data.error.code !== 'ok') {
+        throw new BadRequestException(
+          `TikTok API error: ${response.data.error.message}`,
+        );
+      }
+
+      this.logger.log('Successfully queried videos');
+      return response.data.data;
+    } catch (error) {
+      this.logger.error('Failed to query videos:', error);
+      throw new BadRequestException('Failed to query TikTok videos');
+    }
+  }
+
+  async initializeVideoUploadDraft(
+    accessToken: string,
+    videoUrl: string,
+    videoId: number,
+  ): Promise<TikTokPublishResponse> {
+    try {
+      this.logger.log('Initializing TikTok video upload via PULL_FROM_URL');
+
+      const response = await this.httpClient.post(
+        'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/',
+        {
+          source_info: {
+            source: 'PULL_FROM_URL',
+            video_url: videoUrl,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        },
+      );
+
+      if (response.data.error && response.data.error.code !== 'ok') {
+        throw new BadRequestException(
+          `TikTok API error: ${response.data.error.message}`,
+        );
+      }
+
+      await this.videoPostDraftWriter.create({
+        video: {
+          connect: {
+            id: videoId,
+          },
+        },
+        platformVideoId: response.data.data.publish_id,
+      });
+
+      this.logger.log(
+        `Successfully initialized upload, publish_id: ${response.data.data.publish_id}`,
+      );
+      return response.data.data;
+    } catch (error) {
+      this.logger.error('Failed to initialize video upload:', error);
+      throw new BadRequestException('Failed to initialize TikTok video upload');
+    }
+  }
+
+  async getPublishStatus(
+    accessToken: string,
+    publishId: string,
+  ): Promise<TikTokPublishStatusResponse> {
+    try {
+      this.logger.log(`Fetching publish status for ${publishId}`);
+
+      const response = await this.httpClient.post(
+        'https://open.tiktokapis.com/v2/post/publish/status/fetch/',
+        { publish_id: publishId },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        },
+      );
+
+      if (response.data.error && response.data.error.code !== 'ok') {
+        throw new BadRequestException(
+          `TikTok API error: ${response.data.error.message}`,
+        );
+      }
+
+      this.logger.log(
+        `Publish status for ${publishId}: ${response.data.data.status}`,
+      );
+      return response.data.data;
+    } catch (error) {
+      this.logger.error('Failed to fetch publish status:', error);
+      throw new BadRequestException('Failed to fetch TikTok publish status');
     }
   }
 

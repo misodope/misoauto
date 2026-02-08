@@ -2,6 +2,7 @@ export { default as PlatformSelection } from './PlatformSelection';
 export { default as UploadVideoModal } from './UploadVideoModal';
 export { default as DeleteModal } from './DeleteModal';
 export { default as ScheduleModal } from './ScheduleModal';
+export { default as UploadDrawer } from './UploadDrawer';
 export { default as Calendar } from './Calendar';
 export type { CalendarEvent, CalendarProps } from './Calendar';
 export {

@@ -31,9 +31,7 @@ export interface AuthError {
   error?: string;
 }
 
-const registerUser = async (
-  data: RegisterRequest,
-): Promise<LoginResponse> => {
+const registerUser = async (data: RegisterRequest): Promise<LoginResponse> => {
   const response = await api.post('/auth/register', data);
   return response.data;
 };

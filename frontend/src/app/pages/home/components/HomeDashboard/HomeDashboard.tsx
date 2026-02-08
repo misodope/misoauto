@@ -1,14 +1,14 @@
 'use client';
 
-import Link from 'next/link';
-import { Flex, Heading, Text, Button, Card, Grid, Box } from '@radix-ui/themes';
+import { Flex, Heading, Text, Grid, Box } from '@radix-ui/themes';
 import { useAuth } from '../../../../contexts/AuthContext';
+import DashboardCard from '../../../../components/DashboardCard';
 
 export default function HomeDashboard() {
   const { user } = useAuth();
 
   return (
-    <Flex direction="column" p="6" gap="6" style={{ maxWidth: 1200 }}>
+    <Flex direction="column" gap="6">
       <Box>
         <Heading size="7" mb="2">
           Hey{user?.name ? `, ${user.name}` : ''}!
@@ -19,47 +19,24 @@ export default function HomeDashboard() {
       </Box>
 
       <Grid columns={{ initial: '1', sm: '2', md: '3' }} gap="4">
-        <Card size="3">
-          <Flex direction="column" gap="3">
-            <Text size="5" weight="bold">
-              Videos
-            </Text>
-            <Text size="2" color="gray">
-              Manage and upload your video content
-            </Text>
-            <Button asChild variant="soft" mt="2">
-              <Link href="/videos">View Videos</Link>
-            </Button>
-          </Flex>
-        </Card>
-
-        <Card size="3">
-          <Flex direction="column" gap="3">
-            <Text size="5" weight="bold">
-              Integrations
-            </Text>
-            <Text size="2" color="gray">
-              Connect your social media accounts
-            </Text>
-            <Button asChild variant="soft" mt="2">
-              <Link href="/integrations">Manage Integrations</Link>
-            </Button>
-          </Flex>
-        </Card>
-
-        <Card size="3">
-          <Flex direction="column" gap="3">
-            <Text size="5" weight="bold">
-              Upload
-            </Text>
-            <Text size="2" color="gray">
-              Upload new content to your platforms
-            </Text>
-            <Button asChild variant="soft" mt="2">
-              <Link href="/videos/upload">Upload Video</Link>
-            </Button>
-          </Flex>
-        </Card>
+        <DashboardCard
+          title="Videos"
+          description="Manage and upload your video content"
+          actionLabel="View Videos"
+          actionHref="/videos"
+        />
+        <DashboardCard
+          title="Integrations"
+          description="Connect your social media accounts"
+          actionLabel="Manage Integrations"
+          actionHref="/integrations"
+        />
+        <DashboardCard
+          title="Upload"
+          description="Upload new content to your platforms"
+          actionLabel="Upload Video"
+          actionHref="/videos/upload"
+        />
       </Grid>
     </Flex>
   );

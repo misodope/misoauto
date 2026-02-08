@@ -15,8 +15,11 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Development stage
 FROM base AS development
 RUN npm ci
+COPY tsconfig.base.json ./
 COPY backend ./backend
 WORKDIR /app/backend
+# Generate Prisma client
+RUN npx prisma generate --schema=src/database/schema.prisma
 EXPOSE 3001
 CMD ["npm", "run", "start:dev"]
 

@@ -47,8 +47,9 @@ model Video {
   userId      Int         @map("user_id")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
-  user        User        @relation(fields: [userId], references: [id])
+  user        User             @relation(fields: [userId], references: [id])
   posts       VideoPost[]
+  drafts      VideoPostDraft[]
 
   @@map("videos")
 }
@@ -97,11 +98,23 @@ model VideoPost {
   postedAt        DateTime?     @map("posted_at")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
-  platform        Platform      @relation(fields: [platformId], references: [id])
-  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id])
-  video           Video         @relation(fields: [videoId], references: [id])
+  platform        Platform         @relation(fields: [platformId], references: [id])
+  socialAccount   SocialAccount    @relation(fields: [socialAccountId], references: [id])
+  video           Video            @relation(fields: [videoId], references: [id])
 
   @@map("video_posts")
+}
+
+model VideoPostDraft {
+  id                Int       @id @default(autoincrement())
+  videoId           Int       @map("video_id")
+  platformVideoId   String    @map("platform_video_id")
+  uploadCompletedAt DateTime? @map("upload_completed_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  video             Video     @relation(fields: [videoId], references: [id])
+
+  @@map("video_post_drafts")
 }
 
 enum VideoStatus {

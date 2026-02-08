@@ -258,7 +258,9 @@ export const useDeleteVideoPost = (): UseMutationResult<
     mutationFn: deleteVideoPost,
     onSuccess: (_, videoPostId) => {
       // Remove from cache
-      queryClient.removeQueries({ queryKey: videoPostKeys.detail(videoPostId) });
+      queryClient.removeQueries({
+        queryKey: videoPostKeys.detail(videoPostId),
+      });
       // Invalidate lists to refetch
       queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
     },
