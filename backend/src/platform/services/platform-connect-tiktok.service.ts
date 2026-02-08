@@ -352,6 +352,8 @@ export class PlatformConnectTikTokService {
   ): Promise<TikTokPublishResponse> {
     try {
       this.logger.log('Initializing TikTok video upload via PULL_FROM_URL');
+      // TikTok will fetch the video from the provided URL, so we provide a signed R2 URL for the draft video
+      this.logger.debug(`Video URL for TikTok to pull: ${videoUrl}`);
 
       const response = await this.httpClient.post(
         'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/',
