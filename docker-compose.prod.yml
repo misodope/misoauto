@@ -9,10 +9,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U misodope -d misoauto"]
+      test: ['CMD-SHELL', 'pg_isready -U misodope -d misoauto']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
     image: ghcr.io/misodope/misoauto/backend:latest
     container_name: misoauto-backend
     ports:
-      - "3001:3001"
+      - '3001:3001'
     env_file:
       - ./backend/.env
     environment:
@@ -35,7 +35,15 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/v1"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://0.0.0.0:3001/api/v1',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -47,7 +55,7 @@ services:
     image: ghcr.io/misodope/misoauto/frontend:latest
     container_name: misoauto-frontend
     ports:
-      - "3000:3000"
+      - '3000:3000'
     env_file:
       - ./frontend/.env
     environment:
@@ -58,7 +66,7 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000']
       interval: 30s
       timeout: 10s
       retries: 3
