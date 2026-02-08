@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { PlatformConnectTikTokService } from '../services/platform-connect-tiktok.service';
+import { VideosService } from '@backend/videos/services/videos.service';
 import {
   JwtAuthGuard,
   CurrentUser,
@@ -30,13 +31,33 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface VideoListRequest {
+  cursor?: number;
+  maxCount?: number;
+}
+
+export interface VideoQueryRequest {
+  videoIds: string[];
+}
+
+export interface UploadDraftRequest {
+  videoId: number;
+}
+
+export interface PublishStatusRequest {
+  publishId: string;
+}
+
 const isDev = () => process.env.NODE_ENV !== 'production';
 
 @Controller('platform/tiktok')
 export class TikTokController {
   private readonly logger = new Logger(TikTokController.name);
 
-  constructor(private readonly tiktokService: PlatformConnectTikTokService) {}
+  constructor(
+    private readonly tiktokService: PlatformConnectTikTokService,
+    private readonly videosService: VideosService,
+  ) {}
 
   @Get('oauth')
   @UseGuards(JwtAuthGuard)
@@ -175,13 +196,115 @@ export class TikTokController {
     };
   }
 
-  @Post('user-info')
-  async getUserInfo(@Body() body: TokenRequest) {
-    this.logger.log('Fetching TikTok user information');
-    const userInfo = await this.tiktokService.getUserInfo(body.accessToken);
+  @Get('user')
+  @UseGuards(JwtAuthGuard)
+  async getUserInfo(@CurrentUser() user: JwtPayload) {
+    this.logger.log(`Fetching TikTok user info for user ${user.sub}`);
+    const accessToken = await this.tiktokService.getAccessTokenForUser(
+      user.sub,
+    );
+    const userInfo = await this.tiktokService.getUserInfo(accessToken);
 
     return {
       user: userInfo,
+      platform: 'tiktok',
+    };
+  }
+
+  @Post('videos')
+  @UseGuards(JwtAuthGuard)
+  async getVideoList(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: VideoListRequest,
+  ) {
+    this.logger.log(`Fetching TikTok video list for user ${user.sub}`);
+    const accessToken = await this.tiktokService.getAccessTokenForUser(
+      user.sub,
+    );
+    const videoList = await this.tiktokService.getVideoList(
+      accessToken,
+      body.cursor,
+      body.maxCount,
+    );
+
+    return {
+      ...videoList,
+      platform: 'tiktok',
+    };
+  }
+
+  @Post('videos/query')
+  @UseGuards(JwtAuthGuard)
+  async queryVideos(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: VideoQueryRequest,
+  ) {
+    this.logger.log(`Querying TikTok videos for user ${user.sub}`);
+    const accessToken = await this.tiktokService.getAccessTokenForUser(
+      user.sub,
+    );
+    const result = await this.tiktokService.queryVideos(
+      accessToken,
+      body.videoIds,
+    );
+
+    return {
+      ...result,
+      platform: 'tiktok',
+    };
+  }
+
+  @Post('upload-draft')
+  @UseGuards(JwtAuthGuard)
+  async uploadDraftVideo(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: UploadDraftRequest,
+  ) {
+    this.logger.log(
+      `Uploading draft video ${body.videoId} to TikTok for user ${user.sub}`,
+    );
+
+    const accessToken = await this.tiktokService.getAccessTokenForUser(
+      user.sub,
+    );
+
+    // Get signed R2 download URL for TikTok to pull from
+    const { url: videoUrl } = await this.videosService.getVideoDownloadUrl(
+      user.sub,
+      body.videoId,
+    );
+
+    const result = await this.tiktokService.initializeVideoUploadDraft(
+      accessToken,
+      videoUrl,
+      body.videoId,
+    );
+
+    return {
+      ...result,
+      platform: 'tiktok',
+    };
+  }
+
+  @Post('publish-status')
+  @UseGuards(JwtAuthGuard)
+  async getPublishStatus(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: PublishStatusRequest,
+  ) {
+    this.logger.log(
+      `Fetching publish status ${body.publishId} for user ${user.sub}`,
+    );
+    const accessToken = await this.tiktokService.getAccessTokenForUser(
+      user.sub,
+    );
+    const result = await this.tiktokService.getPublishStatus(
+      accessToken,
+      body.publishId,
+    );
+
+    return {
+      ...result,
       platform: 'tiktok',
     };
   }

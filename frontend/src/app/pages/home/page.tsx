@@ -2,9 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Flex, Text } from '@radix-ui/themes';
+import { Box, Flex, Text } from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
 import HomeDashboard from './components/HomeDashboard';
+import { Dashboard } from './components/Dashboard/Dashboard';
 
 export default function Home() {
   const router = useRouter();
@@ -37,5 +38,10 @@ export default function Home() {
     return null;
   }
 
-  return <HomeDashboard />;
+  return (
+    <Flex direction="column" gap="6">
+      <HomeDashboard />
+      <Dashboard />
+    </Flex>
+  );
 }

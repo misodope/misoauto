@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Badge, Text } from '@radix-ui/themes';
-import { CalendarIcon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
+import {
+  CalendarIcon,
+  Pencil1Icon,
+  TrashIcon,
+  UploadIcon,
+} from '@radix-ui/react-icons';
 
 import { DataTable } from '@frontend/app/components/DataTable';
 import ActionMenu from '@frontend/app/components/ActionMenu';
@@ -15,6 +20,7 @@ import {
 import { useUploads } from '@frontend/app/contexts/UploadContext/uploadContext';
 import DeleteModal from '../DeleteModal';
 import ScheduleModal from '../ScheduleModal';
+import UploadDrawer from '../UploadDrawer';
 
 const PLATFORMS: { type: PlatformType; label: string }[] = [
   { type: 'TIKTOK', label: 'TikTok' },
@@ -49,14 +55,21 @@ const getPostForPlatform = (
 };
 
 const getPostStatusBadge = (status: PostStatus) => {
-  const config: Record<PostStatus, { color: 'green' | 'yellow' | 'red' | 'blue' | 'gray'; label: string }> = {
+  const config: Record<
+    PostStatus,
+    { color: 'green' | 'yellow' | 'red' | 'blue' | 'gray'; label: string }
+  > = {
     PENDING: { color: 'gray', label: 'Pending' },
     SCHEDULED: { color: 'blue', label: 'Scheduled' },
     PUBLISHING: { color: 'yellow', label: 'Publishing' },
     PUBLISHED: { color: 'green', label: 'Published' },
     FAILED: { color: 'red', label: 'Failed' },
   };
-  return <Badge color={config[status].color} size="1">{config[status].label}</Badge>;
+  return (
+    <Badge color={config[status].color} size="1">
+      {config[status].label}
+    </Badge>
+  );
 };
 
 export const VideoTable: React.FC = () => {
@@ -66,6 +79,7 @@ export const VideoTable: React.FC = () => {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [uploadDrawerOpen, setUploadDrawerOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   useEffect(() => {
@@ -81,6 +95,11 @@ export const VideoTable: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [hasActiveUploads, refetch]);
+
+  const handleUploadClick = (video: Video) => {
+    setSelectedVideo(video);
+    setUploadDrawerOpen(true);
+  };
 
   const handleScheduleClick = (video: Video) => {
     setSelectedVideo(video);
@@ -145,10 +164,16 @@ export const VideoTable: React.FC = () => {
 
   const renderPlatformSchedule = (post: VideoPostSummary | undefined) => {
     if (!post) {
-      return <Text size="1" color="gray">—</Text>;
+      return (
+        <Text size="1" color="gray">
+          —
+        </Text>
+      );
     }
 
-    const scheduledDate = formatScheduledDate(post.scheduledFor || post.postedAt);
+    const scheduledDate = formatScheduledDate(
+      post.scheduledFor || post.postedAt,
+    );
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -186,10 +211,13 @@ export const VideoTable: React.FC = () => {
           },
           ...PLATFORMS.map((platform) => ({
             header: `${platform.label}`,
-            accessor: (row: Video) => getPostForPlatform(row.posts, platform.type),
+            accessor: (row: Video) =>
+              getPostForPlatform(row.posts, platform.type),
             id: `platform-${platform.type.toLowerCase()}`,
             cell: (_: unknown, row: Video) =>
-              renderPlatformSchedule(getPostForPlatform(row.posts, platform.type)),
+              renderPlatformSchedule(
+                getPostForPlatform(row.posts, platform.type),
+              ),
           })),
           {
             header: '',
@@ -200,17 +228,23 @@ export const VideoTable: React.FC = () => {
               <ActionMenu
                 items={[
                   {
+                    id: 'upload',
+                    label: 'Platform Upload',
+                    icon: <UploadIcon />,
+                    onClick: () => handleUploadClick(row),
+                  },
+                  {
                     id: 'schedule',
                     label: 'Schedule',
                     icon: <CalendarIcon />,
                     onClick: () => handleScheduleClick(row),
                   },
-                  {
-                    id: 'edit',
-                    label: 'Edit',
-                    icon: <Pencil1Icon />,
-                    onClick: () => handleEdit(row),
-                  },
+                  // {
+                  //   id: 'edit',
+                  //   label: 'Edit',
+                  //   icon: <Pencil1Icon />,
+                  //   onClick: () => handleEdit(row),
+                  // },
                   {
                     id: 'delete',
                     label: 'Delete',
@@ -242,6 +276,15 @@ export const VideoTable: React.FC = () => {
         isOpen={scheduleModalOpen}
         onOpenChange={(open) => {
           setScheduleModalOpen(open);
+          if (!open) setSelectedVideo(null);
+        }}
+        video={selectedVideo}
+      />
+
+      <UploadDrawer
+        open={uploadDrawerOpen}
+        onOpenChange={(open) => {
+          setUploadDrawerOpen(open);
           if (!open) setSelectedVideo(null);
         }}
         video={selectedVideo}

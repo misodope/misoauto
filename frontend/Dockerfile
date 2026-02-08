@@ -15,12 +15,19 @@ RUN npm ci
 
 # Development stage
 FROM base AS development
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy workspace config files
+COPY package*.json ./
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
+# Install dependencies directly (preserves workspace structure)
+RUN npm ci
+COPY tsconfig.base.json ./
 COPY frontend ./frontend
 WORKDIR /app/frontend
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["npx", "next", "dev", "--turbopack", "-p", "3000"]
 
 # Rebuild the source code only when needed
 FROM base AS builder

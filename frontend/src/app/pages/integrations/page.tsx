@@ -124,11 +124,7 @@ function IntegrationsContent() {
       </Heading>
       <Grid columns="2" gap="4">
         {integrations.map((integration) => (
-          <Card
-            key={integration.platform}
-            size="3"
-            style={{ padding: '24px' }}
-          >
+          <Card key={integration.platform} size="3" style={{ padding: '24px' }}>
             <Flex direction="column" gap="4">
               <Flex justify="between" align="center" gap="2">
                 <Heading size="5">{integration.platform}</Heading>
@@ -171,7 +167,13 @@ function IntegrationsContent() {
 export default function Integrations() {
   return (
     <ProtectedRoute>
-      <Suspense fallback={<Box p="6"><Text>Loading...</Text></Box>}>
+      <Suspense
+        fallback={
+          <Box p="6">
+            <Text>Loading...</Text>
+          </Box>
+        }
+      >
         <IntegrationsContent />
       </Suspense>
     </ProtectedRoute>

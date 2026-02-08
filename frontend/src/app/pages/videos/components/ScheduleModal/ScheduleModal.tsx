@@ -145,11 +145,12 @@ export default function ScheduleModal({
       // Reset and close on success
       setFormState(buildInitialState(connectedAccounts));
       onOpenChange(false);
-      showSuccess('Video scheduled', 'Your video has been scheduled for posting.');
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to schedule video',
+      showSuccess(
+        'Video scheduled',
+        'Your video has been scheduled for posting.',
       );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to schedule video');
     } finally {
       setIsSubmitting(false);
     }
