@@ -104,8 +104,16 @@ jobs:
           key: ${{ secrets.DROPLET_SSH_KEY }}
           script: |
             cd /root/misoauto
+            # Stop and remove containers
+            docker-compose -f docker-compose.prod.yml down
+            # Remove old images
+            docker rmi ghcr.io/misodope/misoauto/backend:latest || true
+            docker rmi ghcr.io/misodope/misoauto/frontend:latest || true
+            # Pull fresh images and start
             docker-compose -f docker-compose.prod.yml pull
             docker-compose -f docker-compose.prod.yml up -d
+            # Clean up dangling images
+            docker image prune -f
             # Wait for backend to be healthy
             sleep 10
             # Run database migrations
