@@ -1,0 +1,1 @@
+export { HeroBackground } from './HeroBackground';

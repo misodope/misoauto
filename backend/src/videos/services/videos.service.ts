@@ -117,6 +117,11 @@ export class VideosService {
     return { url, expiresIn: 3600 };
   }
 
+  async getVideoPublicUrl(userId: number, videoId: number) {
+    const video = await this.getVideo(userId, videoId);
+    return this.blobStorage.getPublicUrl(video.s3Key);
+  }
+
   async deleteVideo(userId: number, videoId: number) {
     const video = await this.getVideo(userId, videoId);
 

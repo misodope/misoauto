@@ -3,9 +3,18 @@
 import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Text, Heading, Flex, Box, TextField } from '@radix-ui/themes';
+import {
+  Button,
+  Text,
+  Heading,
+  Flex,
+  Box,
+  TextField,
+  Checkbox,
+} from '@radix-ui/themes';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useLogin, useRegister } from '@frontend/app/hooks';
+import { Footer } from '../../../components/Footer';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -14,6 +23,7 @@ export default function Register() {
     password: '',
     confirmPassword: '',
   });
+  const [smsConsent, setSmsConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
@@ -68,6 +78,11 @@ export default function Register() {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    if (!smsConsent) {
+      newErrors.smsConsent =
+        'You must agree to receive SMS notifications to create an account';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -85,6 +100,7 @@ export default function Register() {
           email: formData.email,
           password: formData.password,
           name: formData.name,
+          smsConsent,
         },
         {
           onSuccess: () => {
@@ -142,151 +158,206 @@ export default function Register() {
   }
 
   return (
-    <Flex
-      direction="column"
-      align="center"
-      justify="center"
-      minHeight="100vh"
-      p="6"
-      maxWidth="400px"
-      mx="auto"
-    >
-      <Heading size="6" mb="4" align="center">
-        Create an Account
-      </Heading>
-      <Box asChild width="100%">
-        <form onSubmit={handleSubmit}>
-          <Flex direction="column" gap="4">
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="1">
-                Full Name
-              </Text>
-              <TextField.Root
-                type="text"
-                value={formData.name}
-                onChange={(e: any) => handleChange('name', e.target.value)}
-                placeholder="Enter your full name"
-                required
-                size="3"
-              />
-              {errors.name && (
-                <Text size="1" color="red">
-                  {errors.name}
-                </Text>
-              )}
-            </Box>
-
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="1">
-                Email
-              </Text>
-              <TextField.Root
-                type="email"
-                value={formData.email}
-                onChange={(e: any) => handleChange('email', e.target.value)}
-                placeholder="Enter your email"
-                required
-                size="3"
-              />
-              {errors.email && (
-                <Text size="1" color="red">
-                  {errors.email}
-                </Text>
-              )}
-            </Box>
-
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="1">
-                Password
-              </Text>
-              <TextField.Root
-                type="password"
-                value={formData.password}
-                onChange={(e: any) => handleChange('password', e.target.value)}
-                placeholder="Enter your password"
-                required
-                size="3"
-              />
-              {errors.password && (
-                <Text size="1" color="red">
-                  {errors.password}
-                </Text>
-              )}
-            </Box>
-
-            <Box>
-              <Text as="label" size="2" weight="medium" mb="1">
-                Confirm Password
-              </Text>
-              <TextField.Root
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e: any) =>
-                  handleChange('confirmPassword', e.target.value)
-                }
-                placeholder="Confirm your password"
-                required
-                size="3"
-              />
-              {errors.confirmPassword && (
-                <Text size="1" color="red">
-                  {errors.confirmPassword}
-                </Text>
-              )}
-            </Box>
-
-            {}
-            {errors.submit && (
+    <Flex direction="column" minHeight="90vh">
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        flexGrow="1"
+        p="6"
+        maxWidth="400px"
+        mx="auto"
+        width="100%"
+      >
+        <Heading size="6" mb="4" align="center">
+          Create an Account
+        </Heading>
+        <Box asChild width="100%">
+          <form onSubmit={handleSubmit}>
+            <Flex direction="column" gap="4">
               <Box>
-                <Text size="2" color="red" align="center">
-                  {errors.submit}
+                <Text as="label" size="2" weight="medium" mb="1">
+                  Full Name
                 </Text>
+                <TextField.Root
+                  type="text"
+                  value={formData.name}
+                  onChange={(e: any) => handleChange('name', e.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                  size="3"
+                />
+                {errors.name && (
+                  <Text size="1" color="red">
+                    {errors.name}
+                  </Text>
+                )}
               </Box>
-            )}
 
-            <Button
-              type="submit"
-              size="3"
-              variant="solid"
-              mt="2"
-              style={{ width: '100%' }}
-              disabled={isRegistering}
+              <Box>
+                <Text as="label" size="2" weight="medium" mb="1">
+                  Email
+                </Text>
+                <TextField.Root
+                  type="email"
+                  value={formData.email}
+                  onChange={(e: any) => handleChange('email', e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  size="3"
+                />
+                {errors.email && (
+                  <Text size="1" color="red">
+                    {errors.email}
+                  </Text>
+                )}
+              </Box>
+
+              <Box>
+                <Text as="label" size="2" weight="medium" mb="1">
+                  Password
+                </Text>
+                <TextField.Root
+                  type="password"
+                  value={formData.password}
+                  onChange={(e: any) =>
+                    handleChange('password', e.target.value)
+                  }
+                  placeholder="Enter your password"
+                  required
+                  size="3"
+                />
+                {errors.password && (
+                  <Text size="1" color="red">
+                    {errors.password}
+                  </Text>
+                )}
+              </Box>
+
+              <Box>
+                <Text as="label" size="2" weight="medium" mb="1">
+                  Confirm Password
+                </Text>
+                <TextField.Root
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e: any) =>
+                    handleChange('confirmPassword', e.target.value)
+                  }
+                  placeholder="Confirm your password"
+                  required
+                  size="3"
+                />
+                {errors.confirmPassword && (
+                  <Text size="1" color="red">
+                    {errors.confirmPassword}
+                  </Text>
+                )}
+              </Box>
+
+              <Box>
+                <Flex gap="2" align="start">
+                  <Checkbox
+                    checked={smsConsent}
+                    onCheckedChange={(checked) => {
+                      setSmsConsent(checked === true);
+                      if (errors.smsConsent) {
+                        setErrors((prev) => {
+                          const newErrors = { ...prev };
+                          delete newErrors.smsConsent;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    mt="1"
+                  />
+                  <Text size="2" color="gray" style={{ lineHeight: 1.5 }}>
+                    I agree to receive SMS notifications about my account
+                    activity and service updates from MisoAuto. Message and data
+                    rates may apply. Message frequency varies. Reply STOP to opt
+                    out. View our{' '}
+                    <Link
+                      href="/legal/terms"
+                      style={{
+                        color: 'var(--accent-11)',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Terms of Service
+                    </Link>{' '}
+                    and{' '}
+                    <Link
+                      href="/legal/privacy"
+                      style={{
+                        color: 'var(--accent-11)',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Privacy Policy
+                    </Link>
+                    .
+                  </Text>
+                </Flex>
+                {errors.smsConsent && (
+                  <Text size="1" color="red" mt="1">
+                    {errors.smsConsent}
+                  </Text>
+                )}
+              </Box>
+
+              {errors.submit && (
+                <Box>
+                  <Text size="2" color="red" align="center">
+                    {errors.submit}
+                  </Text>
+                </Box>
+              )}
+
+              <Button
+                type="submit"
+                size="3"
+                variant="solid"
+                mt="2"
+                style={{ width: '100%' }}
+                disabled={isRegistering}
+              >
+                {isRegistering ? 'Creating Account...' : 'Register'}
+              </Button>
+            </Flex>
+          </form>
+        </Box>
+
+        <Flex justify="center" mt="4">
+          <Text size="2">
+            Already have an account?{' '}
+            <Link
+              href="/auth/login"
+              style={{
+                color: 'var(--accent-11)',
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+                borderRadius: '4px',
+                padding: '2px 4px',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color =
+                  'var(--accent-12)';
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
+                  'var(--accent-3)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color =
+                  'var(--accent-11)';
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
+                  'transparent';
+              }}
             >
-              {isRegistering ? 'Creating Account...' : 'Register'}
-            </Button>
-          </Flex>
-        </form>
-      </Box>
-
-      <Flex justify="center" mt="4">
-        <Text size="2">
-          Already have an account?{' '}
-          <Link
-            href="/auth/login"
-            style={{
-              color: 'var(--accent-11)',
-              textDecoration: 'none',
-              transition: 'all 0.2s ease',
-              borderRadius: '4px',
-              padding: '2px 4px',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.color =
-                'var(--accent-12)';
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                'var(--accent-3)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.color =
-                'var(--accent-11)';
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                'transparent';
-            }}
-          >
-            Login here
-          </Link>
-        </Text>
+              Login here
+            </Link>
+          </Text>
+        </Flex>
       </Flex>
+      <Footer />
     </Flex>
   );
 }
