@@ -55,7 +55,7 @@ export default function RootPage() {
           align="center"
           justify="center"
           py="9"
-          px="6"
+          px={{ initial: '3', sm: '6' }}
           style={{ minHeight: '40vh', position: 'relative', zIndex: 1 }}
         >
           <Heading size="9" mb="4" align="center">
