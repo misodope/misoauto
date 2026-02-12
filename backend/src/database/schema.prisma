@@ -12,6 +12,7 @@ model User {
   email          String          @unique
   password       String
   name           String?
+  smsConsent     Boolean         @default(false) @map("sms_consent")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
   socialAccounts SocialAccount[]

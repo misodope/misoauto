@@ -2,10 +2,12 @@
 
 import { Box, Heading, Text, Flex, Link as RadixLink } from '@radix-ui/themes';
 import Link from 'next/link';
+import { Footer } from '../../../components/Footer';
 
 export default function PrivacyPolicy() {
   return (
-    <Box p="6" style={{ maxWidth: 800, margin: '0 auto' }}>
+    <Flex direction="column" minHeight="100vh">
+    <Box p="6" flexGrow="1" style={{ maxWidth: 800, margin: '0 auto' }}>
       <Flex direction="column" gap="5">
         <Box>
           <Heading size="8" mb="2">
@@ -193,6 +195,8 @@ export default function PrivacyPolicy() {
         </Box>
       </Flex>
     </Box>
+    <Footer />
+    </Flex>
   );
 }
 

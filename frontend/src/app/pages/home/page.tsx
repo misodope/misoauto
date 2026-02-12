@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Flex, Text } from '@radix-ui/themes';
+import { Flex, Text } from '@radix-ui/themes';
 import { useAuth } from '../../contexts/AuthContext';
 import HomeDashboard from './components/HomeDashboard';
 import { Dashboard } from './components/Dashboard/Dashboard';

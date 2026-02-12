@@ -268,8 +268,8 @@ export class TikTokController {
       user.sub,
     );
 
-    // Get signed R2 download URL for TikTok to pull from
-    const { url: videoUrl } = await this.videosService.getVideoDownloadUrl(
+    // Get public CDN URL for TikTok to pull from (custom domain required for TikTok verification)
+    const videoUrl = await this.videosService.getVideoPublicUrl(
       user.sub,
       body.videoId,
     );

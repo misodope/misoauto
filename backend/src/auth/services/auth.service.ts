@@ -33,13 +33,14 @@ export class AuthService {
   ) {}
 
   async register(data: RegisterDto): Promise<User> {
-    const { email, password, name } = data;
+    const { email, password, name, smsConsent } = data;
     const hashedPassword = await bcrypt.hash(password, this.saltRounds);
 
     return this.authWriter.createUser({
       email: email.trim().toLowerCase(),
       password: hashedPassword,
       name,
+      smsConsent: smsConsent ?? false,
     });
   }
 
