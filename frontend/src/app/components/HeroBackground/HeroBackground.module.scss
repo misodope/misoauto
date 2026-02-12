@@ -6,6 +6,11 @@
   mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 30%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 30%, transparent 100%);
 
+  @media (max-width: 600px) {
+    mask-image: radial-gradient(ellipse 100% 80% at 50% 40%, black 20%, transparent 90%);
+    -webkit-mask-image: radial-gradient(ellipse 100% 80% at 50% 40%, black 20%, transparent 90%);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     display: none;
   }
