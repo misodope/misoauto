@@ -77,14 +77,23 @@ export default function PrivacyPolicy() {
           </Section>
 
           <Section title="Contact Us">
-            <Text as="p">
-              Questions? Contact us at{' '}
+          <Text as="p" mb="2">
+            If you have any questions or concerns about this Privacy Policy or our 
+            data practices, please contact us at:
+          </Text>
+          <Box mt="2" pl="2" style={{ borderLeft: '2px solid var(--gray-5)' }}>
+            <Text as="p" weight="bold">MisoAuto by MisoDope LLC.</Text>
+            {/* REPLACE THE ADDRESS BELOW WITH YOUR ACTUAL BUSINESS OR MAILING ADDRESS */}
+            <Text as="p">5900 Balcones Dr. STE 100</Text>
+            <Text as="p">Austin, TX, 78731-4298</Text>
+            <Text as="p" mt="2">
+              Email:{' '}
               <RadixLink href="mailto:jerry+support@misodope.com">
                 jerry+support@misodope.com
               </RadixLink>
-              .
             </Text>
-          </Section>
+          </Box>
+        </Section>
         </Flex>
       </Box>
       <Footer />

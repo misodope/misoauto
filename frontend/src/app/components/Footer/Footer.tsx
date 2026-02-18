@@ -24,7 +24,7 @@ export function Footer() {
           style={{ maxWidth: 1200, width: '100%' }}
         >
           <Text size="2" color="gray">
-            &copy; {currentYear} MisoAuto. All rights reserved.
+            &copy; {currentYear} MisoDope LLC. MisoAuto is a service provided by MisoDope LLC.
           </Text>
 
           <Flex gap="4" align="center" wrap="wrap" justify="center">
