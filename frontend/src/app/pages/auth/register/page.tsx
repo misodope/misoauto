@@ -105,6 +105,7 @@ export default function Register() {
               email: '',
               password: '',
               confirmPassword: '',
+              phoneNumber: '',
             });
             setErrors({});
             // useAuth effect will redirect once logged in
