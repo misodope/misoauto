@@ -22,6 +22,7 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
+    phoneNumber: '',
   });
   const [smsConsent, setSmsConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -76,11 +77,6 @@ export default function Register() {
 
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (!smsConsent) {
-      newErrors.smsConsent =
-        'You must agree to receive SMS notifications to create an account';
     }
 
     setErrors(newErrors);
@@ -256,26 +252,39 @@ export default function Register() {
               </Box>
 
               <Box>
+                <Text as="label" size="2" weight="medium" mb="1">
+                  Phone Number: 
+                </Text>
+                <TextField.Root
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={(e: any) => handleChange('phoneNumber', e.target.value)}
+                  placeholder="Enter your phone number"
+                  required
+                  size="3"
+                />
+                {errors.email && (
+                  <Text size="1" color="red">
+                    {errors.email}
+                  </Text>
+                )}
+              </Box>
+
+              <Box>
                 <Flex gap="2" align="start">
                   <Checkbox
                     checked={smsConsent}
-                    onCheckedChange={(checked) => {
-                      setSmsConsent(checked === true);
-                      if (errors.smsConsent) {
-                        setErrors((prev) => {
-                          const newErrors = { ...prev };
-                          delete newErrors.smsConsent;
-                          return newErrors;
-                        });
-                      }
-                    }}
+                    onCheckedChange={(checked) =>
+                      setSmsConsent(checked === true)
+                    }
                     mt="1"
                   />
                   <Text size="2" color="gray" style={{ lineHeight: 1.5 }}>
-                    I agree to receive SMS notifications about my account
-                    activity and service updates from MisoAuto. Message and data
-                    rates may apply. Message frequency varies. Reply STOP to opt
-                    out. View our{' '}
+                    I agree to receive recurring automated SMS notifications and
+                    service updates from MisoAuto. Message and data rates may
+                    apply. Message frequency varies. Text <strong>HELP</strong>{' '}
+                    for help or <strong>STOP</strong> to opt out. Consent is not
+                    a condition of purchase or account creation. View our{' '}
                     <Link
                       href="/legal/terms"
                       style={{
@@ -298,11 +307,6 @@ export default function Register() {
                     .
                   </Text>
                 </Flex>
-                {errors.smsConsent && (
-                  <Text size="1" color="red" mt="1">
-                    {errors.smsConsent}
-                  </Text>
-                )}
               </Box>
 
               {errors.submit && (

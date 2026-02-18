@@ -33,16 +33,17 @@ export class AuthService {
   ) {}
 
   async register(data: RegisterDto): Promise<User> {
-    const { email, password, name, smsConsent } = data;
+    const { email, password, name, smsConsent, phoneNumber } = data;
     const hashedPassword = await bcrypt.hash(password, this.saltRounds);
 
     return this.authWriter.createUser({
       email: email.trim().toLowerCase(),
       password: hashedPassword,
+      phoneNumber: phoneNumber?.trim()?.toLowerCase(),
       name,
       smsConsent: smsConsent ?? false,
     });
-  }
+  } 
 
   async getUserByEmail(email: string): Promise<User | null> {
     return this.authReader.findUserByEmail(email);
@@ -50,7 +51,7 @@ export class AuthService {
 
   async getUserById(id: number): Promise<User | null> {
     return this.authReader.findUserById(id);
-  }
+  } 
 
   async getUserProfile(id: number) {
     return this.authReader.findUserWithSocialAccounts(id);

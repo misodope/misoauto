@@ -1,5 +1,11 @@
 import Link from 'next/link';
-import { Box, Flex, Text, Separator, Link as RadixLink } from '@radix-ui/themes';
+import {
+  Box,
+  Flex,
+  Text,
+  Separator,
+  Link as RadixLink,
+} from '@radix-ui/themes';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -28,7 +34,11 @@ export function Footer() {
             <RadixLink asChild size="2" color="gray">
               <Link href="/legal/privacy">Privacy Policy</Link>
             </RadixLink>
-            <RadixLink href="mailto:jerry+support@misodope.com" size="2" color="gray">
+            <RadixLink
+              href="mailto:jerry+support@misodope.com"
+              size="2"
+              color="gray"
+            >
               Contact
             </RadixLink>
           </Flex>

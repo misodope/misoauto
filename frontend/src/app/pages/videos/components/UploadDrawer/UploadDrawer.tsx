@@ -121,8 +121,8 @@ export default function UploadDrawer({
               <Select.Content>
                 {connectedAccounts.map((account) => (
                   <Select.Item key={account.id} value={String(account.id)}>
-                    {account.platform.displayName || account.platform.name} —
-                    @{account.username}
+                    {account.platform.displayName || account.platform.name} — @
+                    {account.username}
                   </Select.Item>
                 ))}
               </Select.Content>

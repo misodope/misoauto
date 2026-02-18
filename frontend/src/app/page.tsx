@@ -10,8 +10,11 @@ import { useAuth } from './contexts/AuthContext';
 import { Footer } from './components/Footer';
 
 const HeroBackground = dynamic(
-  () => import('./components/HeroBackground/HeroBackground').then((m) => m.HeroBackground),
-  { ssr: false }
+  () =>
+    import('./components/HeroBackground/HeroBackground').then(
+      (m) => m.HeroBackground,
+    ),
+  { ssr: false },
 );
 
 export default function RootPage() {
@@ -68,8 +71,9 @@ export default function RootPage() {
             align="center"
             style={{ maxWidth: 600 }}
           >
-            MisoAuto helps you upload videos, schedule posts across platforms, and
-            get notified when your content goes live — all from one dashboard.
+            MisoAuto helps you upload videos, schedule posts across platforms,
+            and get notified when your content goes live — all from one
+            dashboard.
           </Text>
 
           <Flex gap="4" justify="center" wrap="wrap">

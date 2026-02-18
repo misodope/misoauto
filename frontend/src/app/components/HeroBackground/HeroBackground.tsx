@@ -19,7 +19,11 @@ function RotatingIcosahedron() {
   });
 
   return (
-    <mesh ref={ref} position={isMobile ? [0, 0, 0] : [-1.5, 0.3, 0]} scale={isMobile ? 0.9 : 1}>
+    <mesh
+      ref={ref}
+      position={isMobile ? [0, 0, 0] : [-1.5, 0.3, 0]}
+      scale={isMobile ? 0.9 : 1}
+    >
       <icosahedronGeometry args={[1.6, 1]} />
       <meshBasicMaterial color="#b8a400" wireframe opacity={0.15} transparent />
     </mesh>
