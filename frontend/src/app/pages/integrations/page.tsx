@@ -14,7 +14,10 @@ import {
 } from '@radix-ui/themes';
 import ProtectedRoute from '../../components/ProtectedRoute/ProtectedRoute';
 import { useToast } from '../../components/Toaster';
-import { useTikTokIntegration } from '@frontend/app/hooks/apis/integrations/use-integrations';
+import {
+  useTikTokIntegration,
+  useYouTubeIntegration,
+} from '@frontend/app/hooks/apis/integrations/use-integrations';
 import { useAuth } from '@frontend/app/contexts/AuthContext';
 
 interface Integration {
@@ -46,6 +49,7 @@ function IntegrationsContent() {
   ]);
 
   const { mutate: connectTikTok } = useTikTokIntegration();
+  const { mutate: connectYouTube } = useYouTubeIntegration();
 
   // Handle OAuth callback results from URL params
   useEffect(() => {
@@ -62,6 +66,14 @@ function IntegrationsContent() {
       setIntegrations((prev) =>
         prev.map((i) =>
           i.platform === Platform.TIKTOK ? { ...i, connected: true } : i,
+        ),
+      );
+      toastShownRef.current = true;
+    } else if (successParam === 'youtube_connected') {
+      success('YouTube connected', 'Your account was linked successfully.');
+      setIntegrations((prev) =>
+        prev.map((i) =>
+          i.platform === Platform.YOUTUBE ? { ...i, connected: true } : i,
         ),
       );
       toastShownRef.current = true;
@@ -96,7 +108,7 @@ function IntegrationsContent() {
   }, [user]);
 
   const isSupported = (platform: Platform): boolean => {
-    return platform === Platform.TIKTOK;
+    return platform === Platform.TIKTOK || platform === Platform.YOUTUBE;
   };
 
   const isConnected = (platform: Platform): boolean => {
@@ -107,6 +119,9 @@ function IntegrationsContent() {
     switch (platform) {
       case Platform.TIKTOK:
         connectTikTok();
+        break;
+      case Platform.YOUTUBE:
+        connectYouTube();
         break;
       default:
         console.log('Unsupported Integration');

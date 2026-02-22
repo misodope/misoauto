@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { PlatformConnectYouTubeService } from '../services/platform-connect-youtube.service';
+import { VideosService } from '@backend/videos/services/videos.service';
 import {
   JwtAuthGuard,
   CurrentUser,
@@ -31,16 +32,28 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
-export interface ChannelVideosRequest {
-  accessToken: string;
+export interface UploadDraftRequest {
+  videoId: number;
+}
+
+export interface PublishStatusRequest {
+  videoId: string; // YouTube's video ID (returned from upload-draft)
+}
+
+export interface ChannelVideosQueryRequest {
   maxResults?: number;
 }
+
+const isDev = () => process.env.NODE_ENV !== 'production';
 
 @Controller('platform/youtube')
 export class YouTubeController {
   private readonly logger = new Logger(YouTubeController.name);
 
-  constructor(private readonly youtubeService: PlatformConnectYouTubeService) {}
+  constructor(
+    private readonly youtubeService: PlatformConnectYouTubeService,
+    private readonly videosService: VideosService,
+  ) {}
 
   @Get('oauth')
   @UseGuards(JwtAuthGuard)
@@ -49,22 +62,22 @@ export class YouTubeController {
       `Initiating YouTube OAuth flow for user ${user.sub} (${user.email})`,
     );
 
-    // Generate CSRF state token
     const csrfState = Math.random().toString(36).substring(2);
+    const state = isDev() ? `${csrfState}:${user.sub}` : csrfState;
 
-    // Store CSRF state and userId in cookies for redirect validation
-    res.cookie('csrfState', csrfState, {
-      ...getOAuthCookieOptions(),
-      maxAge: 5 * 60 * 1000, // 5 minutes
-    });
-    res.cookie('oauthUserId', user.sub.toString(), {
-      ...getOAuthCookieOptions(),
-      maxAge: 5 * 60 * 1000, // 5 minutes
-    });
+    if (!isDev()) {
+      res.cookie('csrfState', csrfState, {
+        ...getOAuthCookieOptions(),
+        maxAge: 5 * 60 * 1000,
+      });
+      res.cookie('oauthUserId', user.sub.toString(), {
+        ...getOAuthCookieOptions(),
+        maxAge: 5 * 60 * 1000,
+      });
+    }
 
-    // Generate auth URL and redirect
-    const authUrl = this.youtubeService.generateAuthUrl(csrfState);
-    res.redirect(authUrl);
+    const authUrl = this.youtubeService.generateAuthUrl(state);
+    res.status(200).json({ url: authUrl });
   }
 
   @Get('redirect')
@@ -79,27 +92,35 @@ export class YouTubeController {
     this.logger.log('Handling YouTube OAuth redirect');
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4000';
+    let userId: string | undefined;
 
-    // Extract CSRF state and userId from cookies
-    const csrfState = req.cookies?.csrfState;
-    const userId = req.cookies?.oauthUserId;
+    if (isDev()) {
+      // Dev mode: extract userId from state parameter (format: "csrf:userId")
+      const stateParts = state?.split(':');
+      if (stateParts?.length === 2) {
+        userId = stateParts[1];
+        this.logger.log(`Dev mode: extracted userId ${userId} from state`);
+      }
+    } else {
+      // Prod mode: validate CSRF via cookies
+      const csrfState = req.cookies?.csrfState;
+      userId = req.cookies?.oauthUserId;
 
-    // Verify CSRF state
-    if (!csrfState || csrfState !== state) {
-      this.logger.error('CSRF state mismatch');
-      res.clearCookie('csrfState');
-      res.clearCookie('oauthUserId');
-      return res.redirect(`${frontendUrl}/integrations?error=csrf_mismatch`);
+      if (!csrfState || csrfState !== state) {
+        this.logger.error('CSRF state mismatch');
+        res.clearCookie('csrfState');
+        res.clearCookie('oauthUserId');
+        return res.redirect(`${frontendUrl}/integrations?error=csrf_mismatch`);
+      }
     }
 
     if (!userId) {
-      this.logger.error('Missing user ID from cookies');
+      this.logger.error('Missing user ID');
       res.clearCookie('csrfState');
       res.clearCookie('oauthUserId');
       return res.redirect(`${frontendUrl}/integrations?error=missing_user_id`);
     }
 
-    // Handle OAuth error
     if (error) {
       this.logger.error(`YouTube OAuth error: ${error} - ${errorDescription}`);
       res.clearCookie('csrfState');
@@ -110,21 +131,17 @@ export class YouTubeController {
     }
 
     try {
-      // Exchange code for token
-      const tokenResponse =
-        await this.youtubeService.exchangeCodeForToken(code);
-
-      // Save account to database
+      const tokenResponse = await this.youtubeService.exchangeCodeForToken(code);
       await this.youtubeService.saveOAuthAccount({
         userId: parseInt(userId),
         tokenResponse,
       });
 
-      // Clear OAuth cookies
-      res.clearCookie('csrfState');
-      res.clearCookie('oauthUserId');
+      if (!isDev()) {
+        res.clearCookie('csrfState');
+        res.clearCookie('oauthUserId');
+      }
 
-      // Redirect to homepage on success
       this.logger.log('YouTube account connected successfully');
       res.redirect(`${frontendUrl}/?success=youtube_connected`);
     } catch (err) {
@@ -161,49 +178,105 @@ export class YouTubeController {
     };
   }
 
-  @Post('channel-info')
-  async getChannelInfo(@Body() body: TokenRequest) {
-    this.logger.log('Fetching YouTube channel information');
-    const channelInfo = await this.youtubeService.getChannelInfo(
-      body.accessToken,
+  @Get('user')
+  @UseGuards(JwtAuthGuard)
+  async getUserInfo(@CurrentUser() user: JwtPayload) {
+    this.logger.log(`Fetching YouTube channel info for user ${user.sub}`);
+    const accessToken = await this.youtubeService.getAccessTokenForUser(
+      user.sub,
     );
+    const channelInfo = await this.youtubeService.getChannelInfo(accessToken);
+    return { channel: channelInfo, platform: 'youtube' };
+  }
 
-    return {
-      channel: channelInfo,
-      platform: 'youtube',
-    };
+  @Post('channel-info')
+  @UseGuards(JwtAuthGuard)
+  async getChannelInfo(@CurrentUser() user: JwtPayload) {
+    this.logger.log(`Fetching YouTube channel info for user ${user.sub}`);
+    const accessToken = await this.youtubeService.getAccessTokenForUser(
+      user.sub,
+    );
+    const channelInfo = await this.youtubeService.getChannelInfo(accessToken);
+    return { channel: channelInfo, platform: 'youtube' };
   }
 
   @Post('channel-videos')
-  async getChannelVideos(@Body() body: ChannelVideosRequest) {
-    this.logger.log('Fetching YouTube channel videos');
+  @UseGuards(JwtAuthGuard)
+  async getChannelVideos(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: ChannelVideosQueryRequest,
+  ) {
+    this.logger.log(`Fetching YouTube channel videos for user ${user.sub}`);
+    const accessToken = await this.youtubeService.getAccessTokenForUser(
+      user.sub,
+    );
     const videos = await this.youtubeService.getChannelVideos(
-      body.accessToken,
+      accessToken,
       body.maxResults,
     );
-
-    return {
-      videos,
-      platform: 'youtube',
-      count: videos.length,
-    };
+    return { videos, platform: 'youtube', count: videos.length };
   }
 
   @Post('video/:videoId')
+  @UseGuards(JwtAuthGuard)
   async getVideoById(
+    @CurrentUser() user: JwtPayload,
     @Param('videoId') videoId: string,
-    @Body() body: TokenRequest,
   ) {
-    this.logger.log(`Fetching YouTube video by ID: ${videoId}`);
-    const video = await this.youtubeService.getVideoById(
-      videoId,
-      body.accessToken,
+    this.logger.log(`Fetching YouTube video ${videoId} for user ${user.sub}`);
+    const accessToken = await this.youtubeService.getAccessTokenForUser(
+      user.sub,
+    );
+    const video = await this.youtubeService.getVideoById(videoId, accessToken);
+    return { video, platform: 'youtube' };
+  }
+
+  @Post('upload-draft')
+  @UseGuards(JwtAuthGuard)
+  async uploadDraftVideo(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: UploadDraftRequest,
+  ) {
+    this.logger.log(
+      `Uploading draft video ${body.videoId} to YouTube for user ${user.sub}`,
     );
 
-    return {
-      video,
-      platform: 'youtube',
-    };
+    const accessToken = await this.youtubeService.getAccessTokenForUser(
+      user.sub,
+    );
+
+    const video = await this.videosService.getVideo(user.sub, body.videoId);
+
+    const result = await this.youtubeService.initializeVideoUpload({
+      accessToken,
+      s3Key: video.s3Key,
+      videoId: body.videoId,
+      title: video.title,
+      description: video.description ?? '',
+    });
+
+    return { ...result, platform: 'youtube' };
+  }
+
+  @Post('publish-status')
+  @UseGuards(JwtAuthGuard)
+  async getPublishStatus(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: PublishStatusRequest,
+  ) {
+    this.logger.log(
+      `Fetching processing status for YouTube video ${body.videoId} for user ${user.sub}`,
+    );
+
+    const accessToken = await this.youtubeService.getAccessTokenForUser(
+      user.sub,
+    );
+    const result = await this.youtubeService.getVideoProcessingStatus(
+      accessToken,
+      body.videoId,
+    );
+
+    return { ...result, platform: 'youtube' };
   }
 
   @Post('validate-token')

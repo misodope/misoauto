@@ -1,4 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { Readable } from 'stream';
 import { IBlobStorageAdapter } from './adapters/blob-storage.adapter';
 import {
   BLOB_STORAGE_ADAPTER,
@@ -24,6 +25,14 @@ export class BlobStorageService {
 
   async download(key: string): Promise<Buffer> {
     return this.adapter.download(key);
+  }
+
+  async downloadStream(key: string): Promise<{
+    stream: Readable;
+    contentLength: number;
+    contentType: string;
+  }> {
+    return this.adapter.downloadStream(key);
   }
 
   async delete(key: string): Promise<void> {

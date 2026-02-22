@@ -79,6 +79,25 @@ export class CloudflareR2Adapter implements IBlobStorageAdapter {
     return this.streamToBuffer(response.Body as Readable);
   }
 
+  async downloadStream(key: string): Promise<{
+    stream: Readable;
+    contentLength: number;
+    contentType: string;
+  }> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    const response = await this.client.send(command);
+
+    return {
+      stream: response.Body as Readable,
+      contentLength: response.ContentLength ?? 0,
+      contentType: response.ContentType ?? 'application/octet-stream',
+    };
+  }
+
   async delete(key: string): Promise<void> {
     const command = new DeleteObjectCommand({
       Bucket: this.bucket,

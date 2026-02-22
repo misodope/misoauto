@@ -108,6 +108,72 @@ export interface TikTokApiError {
 }
 
 // ============================================================================
+// YouTube Types
+// ============================================================================
+
+export interface YouTubeChannelInfo {
+  id: string;
+  snippet: {
+    title: string;
+    description: string;
+    customUrl: string;
+    publishedAt: string;
+    thumbnails: {
+      default: { url: string };
+      medium: { url: string };
+      high: { url: string };
+    };
+    country?: string;
+  };
+  statistics: {
+    viewCount: string;
+    subscriberCount: string;
+    hiddenSubscriberCount: boolean;
+    videoCount: string;
+  };
+}
+
+export interface YouTubeUserInfoResponse {
+  channel: YouTubeChannelInfo;
+  platform: 'youtube';
+}
+
+export interface YouTubeUploadDraftRequest {
+  videoId: number;
+}
+
+export type YouTubeProcessingStatus =
+  | 'processing'
+  | 'succeeded'
+  | 'failed'
+  | 'terminated';
+
+export interface YouTubeUploadDraftResponse {
+  videoId: string;
+  title: string;
+  status: string;
+  platform: 'youtube';
+}
+
+export interface YouTubePublishStatusRequest {
+  videoId: string;
+}
+
+export interface YouTubePublishStatusResponse {
+  videoId: string;
+  processingStatus: YouTubeProcessingStatus;
+  uploadStatus: string;
+  privacyStatus: string;
+  platform: 'youtube';
+}
+
+export interface YouTubeApiError {
+  message: string;
+  statusCode?: number;
+  error?: string;
+}
+
+// ============================================================================
 // API Functions
 // ============================================================================
 
@@ -146,6 +212,34 @@ const getTikTokPublishStatus = async (
   params: TikTokPublishStatusRequest,
 ): Promise<TikTokPublishStatusResponse> => {
   const response = await api.post('/platform/tiktok/publish-status', params);
+  return response.data;
+};
+
+// ============================================================================
+// YouTube API Functions
+// ============================================================================
+
+const connectYouTube = async () => {
+  const response = await api.get('/platform/youtube/oauth');
+  return response.data;
+};
+
+const getYouTubeUserInfo = async (): Promise<YouTubeUserInfoResponse> => {
+  const response = await api.get('/platform/youtube/user');
+  return response.data;
+};
+
+const uploadDraftToYouTube = async (
+  data: YouTubeUploadDraftRequest,
+): Promise<YouTubeUploadDraftResponse> => {
+  const response = await api.post('/platform/youtube/upload-draft', data);
+  return response.data;
+};
+
+const getYouTubePublishStatus = async (
+  params: YouTubePublishStatusRequest,
+): Promise<YouTubePublishStatusResponse> => {
+  const response = await api.post('/platform/youtube/publish-status', params);
   return response.data;
 };
 
@@ -251,6 +345,73 @@ export const useTikTokPublishStatus = (): UseMutationResult<
     onError: (error) => {
       console.error(
         'Failed to fetch TikTok publish status:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
+// ============================================================================
+// YouTube Hooks
+// ============================================================================
+
+export const youtubeKeys = {
+  all: ['youtube'] as const,
+  userInfo: () => [...youtubeKeys.all, 'user-info'] as const,
+  publishStatus: (videoId: string) =>
+    [...youtubeKeys.all, 'publish-status', videoId] as const,
+};
+
+export const useYouTubeIntegration = () => {
+  return useMutation({
+    mutationFn: connectYouTube,
+    onSuccess: (data) => {
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: (error) => {
+      console.error(`Error connecting YouTube account: ${error.message}`);
+    },
+  });
+};
+
+export const useYouTubeUserInfo = (
+  enabled = true,
+): UseQueryResult<YouTubeUserInfoResponse, AxiosError<YouTubeApiError>> => {
+  return useQuery({
+    queryKey: youtubeKeys.userInfo(),
+    queryFn: getYouTubeUserInfo,
+    enabled,
+  });
+};
+
+export const useYouTubeUploadDraft = (): UseMutationResult<
+  YouTubeUploadDraftResponse,
+  AxiosError<YouTubeApiError>,
+  YouTubeUploadDraftRequest
+> => {
+  return useMutation({
+    mutationFn: uploadDraftToYouTube,
+    onError: (error) => {
+      console.error(
+        'Failed to upload draft to YouTube:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
+export const useYouTubePublishStatus = (): UseMutationResult<
+  YouTubePublishStatusResponse,
+  AxiosError<YouTubeApiError>,
+  YouTubePublishStatusRequest
+> => {
+  return useMutation({
+    mutationFn: getYouTubePublishStatus,
+    onError: (error) => {
+      console.error(
+        'Failed to fetch YouTube publish status:',
         error.response?.data?.message || error.message,
       );
     },

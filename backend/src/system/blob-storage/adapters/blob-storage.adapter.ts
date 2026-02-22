@@ -5,6 +5,7 @@
  * Implement this interface to add support for new providers.
  */
 
+import { Readable } from 'stream';
 import {
   UploadOptions,
   UploadResult,
@@ -21,6 +22,13 @@ export interface IBlobStorageAdapter {
 
   /** Download a file */
   download(key: string): Promise<Buffer>;
+
+  /** Download a file as a stream with metadata (for large file proxying) */
+  downloadStream(key: string): Promise<{
+    stream: Readable;
+    contentLength: number;
+    contentType: string;
+  }>;
 
   /** Delete a file */
   delete(key: string): Promise<void>;

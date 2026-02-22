@@ -3,6 +3,8 @@ import axios, { AxiosInstance } from 'axios';
 import { SocialAccountWriter } from '../../social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '../../social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
+import { VideoPostDraftWriter } from '../../video-posts/repository/video-post-draft-writer';
+import { BlobStorageService } from '../../system/blob-storage/blob-storage.service';
 import { PlatformType } from '@prisma/client';
 
 export interface YouTubeOAuthConfig {
@@ -47,6 +49,25 @@ export interface YouTubeChannelInfo {
   };
 }
 
+export interface YouTubeUploadResponse {
+  videoId: string;
+  title: string;
+  status: string;
+}
+
+export type YouTubeProcessingStatus =
+  | 'processing'
+  | 'succeeded'
+  | 'failed'
+  | 'terminated';
+
+export interface YouTubeVideoStatusResponse {
+  videoId: string;
+  processingStatus: YouTubeProcessingStatus;
+  uploadStatus: string;
+  privacyStatus: string;
+}
+
 export interface YouTubeVideo {
   id: string;
   snippet: {
@@ -83,12 +104,15 @@ export interface YouTubeVideo {
 export class PlatformConnectYouTubeService {
   private readonly logger = new Logger(PlatformConnectYouTubeService.name);
   private readonly httpClient: AxiosInstance;
+  private readonly uploadClient: AxiosInstance;
   private readonly config: YouTubeOAuthConfig;
 
   constructor(
     private readonly socialAccountWriter: SocialAccountWriter,
     private readonly socialAccountReader: SocialAccountReader,
     private readonly platformReader: PlatformReader,
+    private readonly videoPostDraftWriter: VideoPostDraftWriter,
+    private readonly blobStorage: BlobStorageService,
   ) {
     this.config = {
       clientId: process.env.YOUTUBE_CLIENT_ID || '',
@@ -127,6 +151,13 @@ export class PlatformConnectYouTubeService {
         return Promise.reject(error);
       },
     );
+
+    // Dedicated upload client — no timeout, supports large streaming bodies
+    this.uploadClient = axios.create({
+      timeout: 0,
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
   }
 
   generateAuthUrl(state?: string): string {
@@ -426,6 +457,147 @@ export class PlatformConnectYouTubeService {
     } catch (error) {
       this.logger.error('Failed to fetch video details:', error);
       throw new BadRequestException('Failed to fetch YouTube video details');
+    }
+  }
+
+  async getAccessTokenForUser(userId: number): Promise<string> {
+    const platform = await this.platformReader.findByName(PlatformType.YOUTUBE);
+    if (!platform) {
+      throw new BadRequestException('YouTube platform not found');
+    }
+
+    const accounts = await this.socialAccountReader.findByUserAndPlatform(
+      userId,
+      platform.id,
+    );
+
+    if (!accounts.length) {
+      throw new BadRequestException('No YouTube account connected');
+    }
+
+    return accounts[0].accessToken;
+  }
+
+  async initializeVideoUpload(params: {
+    accessToken: string;
+    s3Key: string;
+    videoId: number;
+    title: string;
+    description: string;
+  }): Promise<YouTubeUploadResponse> {
+    const { accessToken, s3Key, videoId, title, description } = params;
+
+    try {
+      this.logger.log(`Initializing YouTube upload for video ${videoId}`);
+
+      // Step 1: Get stream + metadata from R2
+      const { stream, contentLength, contentType } =
+        await this.blobStorage.downloadStream(s3Key);
+
+      // Step 2: Initialize resumable upload session — get the upload URI
+      const initResponse = await this.httpClient.post(
+        'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable',
+        {
+          snippet: {
+            title,
+            description,
+            categoryId: '22', // People & Blogs — sensible default
+          },
+          status: {
+            privacyStatus: 'private',
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Upload-Content-Type': contentType,
+            'X-Upload-Content-Length': contentLength,
+          },
+        },
+      );
+
+      const uploadUri = initResponse.headers['location'];
+      if (!uploadUri) {
+        throw new BadRequestException('YouTube did not return an upload URI');
+      }
+
+      this.logger.log(
+        `Got YouTube upload URI, streaming ${contentLength} bytes`,
+      );
+
+      // Step 3: Stream video bytes from R2 directly to YouTube
+      const uploadResponse = await this.uploadClient.put(uploadUri, stream, {
+        headers: {
+          'Content-Type': contentType,
+          'Content-Length': contentLength,
+        },
+      });
+
+      const youtubeVideoId: string = uploadResponse.data.id;
+
+      this.logger.log(`YouTube upload complete, videoId: ${youtubeVideoId}`);
+
+      // Step 4: Save draft record (mirrors TikTok's initializeVideoUploadDraft)
+      await this.videoPostDraftWriter.create({
+        video: { connect: { id: videoId } },
+        platformVideoId: youtubeVideoId,
+      });
+
+      return {
+        videoId: youtubeVideoId,
+        title: uploadResponse.data.snippet?.title ?? title,
+        status: uploadResponse.data.status?.uploadStatus ?? 'uploaded',
+      };
+    } catch (error) {
+      this.logger.error('Failed to upload video to YouTube:', error);
+      throw new BadRequestException('Failed to upload video to YouTube');
+    }
+  }
+
+  async getVideoProcessingStatus(
+    accessToken: string,
+    youtubeVideoId: string,
+  ): Promise<YouTubeVideoStatusResponse> {
+    try {
+      this.logger.log(
+        `Fetching processing status for YouTube video ${youtubeVideoId}`,
+      );
+
+      const params = new URLSearchParams({
+        part: 'status,processingDetails',
+        id: youtubeVideoId,
+      });
+
+      const response = await this.httpClient.get(
+        `https://www.googleapis.com/youtube/v3/videos?${params.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+
+      if (!response.data.items || response.data.items.length === 0) {
+        throw new BadRequestException('YouTube video not found');
+      }
+
+      const item = response.data.items[0];
+
+      this.logger.log(
+        `Processing status for ${youtubeVideoId}: ${item.processingDetails?.processingStatus}`,
+      );
+
+      return {
+        videoId: youtubeVideoId,
+        processingStatus:
+          item.processingDetails?.processingStatus ?? 'processing',
+        uploadStatus: item.status?.uploadStatus ?? 'uploaded',
+        privacyStatus: item.status?.privacyStatus ?? 'private',
+      };
+    } catch (error) {
+      this.logger.error('Failed to fetch YouTube video status:', error);
+      throw new BadRequestException(
+        'Failed to fetch YouTube video processing status',
+      );
     }
   }
 
