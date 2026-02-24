@@ -39,6 +39,8 @@ export interface UserResponse {
   id: number;
   email: string;
   name: string | null;
+  smsConsent: boolean;
+  emailConsent: boolean;
 }
 
 export interface UserProfileResponse extends UserResponse {
@@ -119,6 +121,8 @@ export class AuthController {
         username: account.username,
         accountId: account.accountId,
       })),
+      emailConsent: user.emailConsent,
+      smsConsent: user.smsConsent,
     };
   }
 

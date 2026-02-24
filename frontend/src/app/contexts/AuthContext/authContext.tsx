@@ -28,6 +28,8 @@ export interface User {
   id: number;
   email: string;
   name: string | null;
+  smsConsent: boolean;
+  emailConsent: boolean;
   socialAccounts?: SocialAccount[];
 }
 

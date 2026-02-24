@@ -11,6 +11,7 @@ import {
 export class NotificationsModule {
   static forRoot(options: NotificationsModuleOptions): DynamicModule {
     return {
+      global: true,
       module: NotificationsModule,
       controllers: [NotificationsController],
       providers: [
@@ -33,6 +34,7 @@ export class NotificationsModule {
     ) => Promise<NotificationsModuleOptions> | NotificationsModuleOptions;
   }): DynamicModule {
     return {
+      global: true,
       module: NotificationsModule,
       imports: options.imports || [],
       controllers: [NotificationsController],

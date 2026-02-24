@@ -8,6 +8,7 @@ import { RefreshTokenWriter } from '../repository/refresh-token-writer';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { RegisterDto } from '@backend/auth/dto/auth-register.dto';
+import { NotificationsService } from '@backend/system/notifications/services/notifications.service';
 
 export interface TokenPayload {
   email: string;
@@ -30,19 +31,29 @@ export class AuthService {
     private readonly authWriter: AuthWriter,
     private readonly refreshTokenReader: RefreshTokenReader,
     private readonly refreshTokenWriter: RefreshTokenWriter,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async register(data: RegisterDto): Promise<User> {
     const { email, password, name, smsConsent, phoneNumber } = data;
     const hashedPassword = await bcrypt.hash(password, this.saltRounds);
 
-    return this.authWriter.createUser({
+    const user = await this.authWriter.createUser({
       email: email.trim().toLowerCase(),
       password: hashedPassword,
       phoneNumber: phoneNumber?.trim()?.toLowerCase(),
       name,
       smsConsent: smsConsent ?? false,
     });
+
+    if (smsConsent && phoneNumber) {
+      await this.notificationsService.sendSms({
+        to: phoneNumber.trim(),
+        body: 'You\'ve opted in to receive messages from MisoAuto by MisoDope LLC. Reply STOP to opt-out.',
+      });
+    }
+
+    return user;
   } 
 
   async getUserByEmail(email: string): Promise<User | null> {

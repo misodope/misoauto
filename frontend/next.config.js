@@ -53,6 +53,10 @@ const nextConfig = {
         source: '/legal/privacy',
         destination: '/pages/legal/privacy',
       },
+      {
+        source: '/settings',
+        destination: '/pages/settings',
+      },
     ];
   },
 };

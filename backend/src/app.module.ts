@@ -42,7 +42,7 @@ import { NotificationsModule } from './system/notifications';
       twilio: {
         accountSid: process.env.TWILIO_ACCOUNT_SID || '',
         authToken: process.env.TWILIO_AUTH_TOKEN || '',
-        defaultFrom: process.env.TWILIO_DEFAULT_FROM || '',
+        defaultFrom: process.env.TWILIO_PHONE_NUMBER || '',
       },
     }),
   ],
