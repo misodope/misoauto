@@ -23,8 +23,16 @@ export function Footer() {
           py="4"
           style={{ maxWidth: 1200, width: '100%' }}
         >
-          <Text size="2" color="gray">
-            &copy; {currentYear} MisoDope LLC. MisoAuto is a service provided by MisoDope LLC.
+          <Text size="2" color="gray" style={{ maxWidth: 400 }}>
+            &copy; {currentYear} MisoDope LLC. MisoAuto is a service provided by{' '}
+            <RadixLink href="https://misodope.com" size="2" color="blue" target="_blank" rel="noopener noreferrer">
+              MisoDope LLC
+            </RadixLink>
+            . All SMS notifications are sent by MisoAuto on behalf of{' '}
+            <RadixLink href="https://misodope.com" size="2" color="blue" target="_blank" rel="noopener noreferrer">
+              MisoDope LLC
+            </RadixLink>
+            .
           </Text>
 
           <Flex gap="4" align="center" wrap="wrap" justify="center">
