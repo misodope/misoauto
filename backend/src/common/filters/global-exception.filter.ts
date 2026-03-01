@@ -119,9 +119,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           : mapped.logLabel;
         return {
           statusCode: mapped.statusCode,
-          clientMessage: mapped.clientMessage(
-            exception.meta as Record<string, unknown> | undefined,
-          ),
+          clientMessage: mapped.clientMessage(exception.meta ?? undefined),
           logMessage,
           logLevel: 'warn',
         };
