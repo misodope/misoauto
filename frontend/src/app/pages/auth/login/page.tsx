@@ -3,7 +3,8 @@
 import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Text, Heading, Flex, Box, TextField } from '@radix-ui/themes';
+import { Button, Text, Heading, Flex, Box, TextField, Callout } from '@radix-ui/themes';
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useLogin } from '@frontend/app/hooks';
 import { Footer } from '../../../components/Footer';
@@ -11,6 +12,7 @@ import { Footer } from '../../../components/Footer';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
   const { mutate: login } = useLogin();
@@ -31,6 +33,7 @@ export default function Login() {
 
     console.log('Login attempt:', { email });
 
+    setLoginError('');
     login(
       {
         email,
@@ -38,10 +41,8 @@ export default function Login() {
       },
       {
         onError: (error) => {
-          console.error(
-            'Login failed:',
-            error?.response?.data?.message || error?.message,
-          );
+          const message = error?.response?.data?.message || error?.message || 'Login failed. Please try again.';
+          setLoginError(message);
         },
       },
     );
@@ -124,6 +125,15 @@ export default function Login() {
                   size="3"
                 />
               </Box>
+
+              {loginError && (
+                <Callout.Root color="red">
+                  <Callout.Icon>
+                    <ExclamationTriangleIcon />
+                  </Callout.Icon>
+                  <Callout.Text>{loginError}</Callout.Text>
+                </Callout.Root>
+              )}
 
               <Button
                 type="submit"

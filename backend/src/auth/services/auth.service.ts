@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { AuthReader } from '../repository/auth-reader';
@@ -90,10 +90,13 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.authReader.findUserByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return user;
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return null;
     }
-    return null;
+    if (!user.approvedAt) {
+      throw new ForbiddenException('Account pending approval');
+    }
+    return user;
   }
 
   async login(user: User): Promise<AuthTokens> {

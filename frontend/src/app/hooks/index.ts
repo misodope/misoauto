@@ -5,6 +5,7 @@ export {
   useLogout,
   useAuthStatus,
   type RegisterRequest,
+  type RegisterResponse,
   type LoginRequest,
   type LoginResponse,
   type AuthError,

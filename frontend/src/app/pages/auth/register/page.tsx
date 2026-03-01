@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Button,
   Text,
@@ -11,9 +10,10 @@ import {
   Box,
   TextField,
   Checkbox,
+  Callout,
 } from '@radix-ui/themes';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useLogin, useRegister } from '@frontend/app/hooks';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
+import { useRegister } from '@frontend/app/hooks';
 import { Footer } from '../../../components/Footer';
 
 export default function Register() {
@@ -26,19 +26,11 @@ export default function Register() {
   });
   const [smsConsent, setSmsConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { isLoggedIn, isLoading } = useAuth();
-  const router = useRouter();
+  const [successMessage, setSuccessMessage] = useState('');
   const {
     mutate: register,
     isPending: isRegistering,
-    error: registerError,
   } = useRegister();
-
-  useEffect(() => {
-    if (!isLoading && isLoggedIn) {
-      router.push('/home');
-    }
-  }, [isLoggedIn, isLoading, router]);
 
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => ({
@@ -86,11 +78,6 @@ export default function Register() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log('Registration attempt:', {
-        name: formData.name,
-        email: formData.email,
-      });
-
       register(
         {
           email: formData.email,
@@ -99,7 +86,8 @@ export default function Register() {
           smsConsent,
         },
         {
-          onSuccess: () => {
+          onSuccess: (data) => {
+            setSuccessMessage(data.message);
             setFormData({
               name: '',
               email: '',
@@ -108,10 +96,8 @@ export default function Register() {
               phoneNumber: '',
             });
             setErrors({});
-            // useAuth effect will redirect once logged in
           },
           onError: (error) => {
-            console.error('Registration failed:', JSON.stringify(error));
             const errorMessage =
               error.response?.data?.message ||
               'Registration failed. Please try again.';
@@ -121,38 +107,6 @@ export default function Register() {
       );
     }
   };
-
-  if (isLoading) {
-    return (
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        minHeight="100vh"
-        p="8"
-      >
-        <Text size="4" color="gray">
-          Loading...
-        </Text>
-      </Flex>
-    );
-  }
-
-  if (isLoggedIn) {
-    return (
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        minHeight="100vh"
-        p="8"
-      >
-        <Text size="4" color="gray">
-          Redirecting...
-        </Text>
-      </Flex>
-    );
-  }
 
   return (
     <Flex direction="column" minHeight="90vh">
@@ -169,6 +123,18 @@ export default function Register() {
         <Heading size="6" mb="4" align="center">
           Create an Account
         </Heading>
+
+        {successMessage && (
+          <Box mb="4" width="100%">
+            <Callout.Root color="green">
+              <Callout.Icon>
+                <InfoCircledIcon />
+              </Callout.Icon>
+              <Callout.Text>{successMessage}</Callout.Text>
+            </Callout.Root>
+          </Box>
+        )}
+
         <Box asChild width="100%">
           <form onSubmit={handleSubmit}>
             <Flex direction="column" gap="4">
@@ -254,7 +220,7 @@ export default function Register() {
 
               <Box>
                 <Text as="label" size="2" weight="medium" mb="1">
-                  Phone Number: 
+                  Phone Number:
                 </Text>
                 <TextField.Root
                   type="tel"
@@ -264,11 +230,6 @@ export default function Register() {
                   required
                   size="3"
                 />
-                {errors.email && (
-                  <Text size="1" color="red">
-                    {errors.email}
-                  </Text>
-                )}
               </Box>
 
               <Box>
