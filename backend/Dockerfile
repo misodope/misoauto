@@ -18,8 +18,8 @@ RUN npm ci
 COPY tsconfig.base.json ./
 COPY backend ./backend
 WORKDIR /app/backend
-# Generate Prisma client
-RUN npx prisma generate --schema=src/database/schema.prisma
+# Generate Prisma client (config read from prisma.config.ts)
+RUN npx prisma generate
 EXPOSE 3001
 CMD ["npm", "run", "start:dev"]
 
@@ -30,7 +30,8 @@ COPY tsconfig.base.json ./
 COPY backend ./backend
 WORKDIR /app/backend
 # Generate Prisma client and build the application
-RUN npx prisma generate --schema=src/database/schema.prisma && npx nest build
+# In v7, the generated client is TypeScript compiled into dist/ by nest build
+RUN npx prisma generate && npx nest build
 
 # Production stage
 FROM node:20-alpine AS production
@@ -43,13 +44,9 @@ COPY package*.json ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
-# Copy Prisma schema first
-COPY --from=build /app/backend/src/database ./prisma
-
-# Install only production dependencies and generate Prisma client
-RUN npm ci --omit=dev && \
-    npx prisma generate --schema=./prisma/schema.prisma && \
-    npm cache clean --force
+# Install only production dependencies
+# The compiled Prisma client is already in dist/ from the build stage
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built application from backend (output is at /app/dist/backend per tsconfig)
 COPY --from=build /app/dist/backend ./dist

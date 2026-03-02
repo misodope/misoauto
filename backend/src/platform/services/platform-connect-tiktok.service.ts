@@ -3,7 +3,7 @@ import axios, { AxiosInstance } from 'axios';
 import { SocialAccountWriter } from '@backend/social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '@backend/social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
-import { PlatformType } from '@prisma/client';
+import { PlatformType } from '@backend/generated/prisma/client';
 import { VideoPostDraftWriter } from '@backend/video-posts/repository/video-post-draft-writer';
 
 export interface TikTokOAuthConfig {

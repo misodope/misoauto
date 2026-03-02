@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@backend/generated/prisma/client';
 
 export type UserWithRelations = Prisma.UserGetPayload<{
   include: { socialAccounts: true; videos: true };

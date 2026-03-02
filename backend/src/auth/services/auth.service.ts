@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { User } from '@backend/generated/prisma/client';
 import { AuthReader } from '../repository/auth-reader';
 import { AuthWriter } from '../repository/auth-writer';
 import { RefreshTokenReader } from '../repository/refresh-token-reader';

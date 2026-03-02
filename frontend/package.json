@@ -26,8 +26,10 @@
     "@radix-ui/themes": "^3.2.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "@tanstack/react-form": "^1.28.3",
     "@tanstack/react-query": "^5.83.0",
     "@tanstack/react-query-devtools": "^5.83.0",
+    "@tanstack/zod-form-adapter": "^0.42.1",
     "@types/js-cookie": "^3.0.6",
     "axios": "^1.11.0",
     "js-cookie": "^3.0.5",
@@ -35,7 +37,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.182.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

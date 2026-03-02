@@ -77,11 +77,23 @@ export default function Navigation() {
     return (
       <Box className={styles.topNav}>
         <Flex justify="between" align="center" p="4">
-          <Text size="6" weight="bold">
-            <Link href="/" className={styles.logo}>
-              MisoAuto
-            </Link>
-          </Text>
+          <Flex align="center" gap="4">
+            <Text size="6" weight="bold">
+              <Link href="/" className={styles.logo}>
+                MisoAuto
+              </Link>
+            </Text>
+            {!isLoading && (
+              <Flex gap="4" align="center">
+                <Button asChild variant="ghost" size="3">
+                  <Link href="/learn-more">Learn More</Link>
+                </Button>
+                <Button asChild variant="ghost" size="3">
+                  <Link href="/about">About</Link>
+                </Button>
+              </Flex>
+            )}
+          </Flex>
           {!isLoading && (
             <Flex gap="2" align="center">
               <Button asChild variant="ghost" size="2">

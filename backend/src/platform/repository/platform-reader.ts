@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma, PlatformType } from '@prisma/client';
+import { Prisma, PlatformType } from '@backend/generated/prisma/client';
 
 export type PlatformWithRelations = Prisma.PlatformGetPayload<{
   include: { accounts: true; posts: true };

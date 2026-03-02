@@ -5,7 +5,7 @@ import { SocialAccountWriter } from '@backend/social-accounts/repository/social-
 import { PlatformConnectTikTokService } from '@backend/platform/services/platform-connect-tiktok.service';
 import { PlatformConnectYouTubeService } from '@backend/platform/services/platform-connect-youtube.service';
 import { PlatformConnectInstagramService } from '@backend/platform/services/platform-connect-instagram.service';
-import { PlatformType } from '@prisma/client';
+import { PlatformType } from '@backend/generated/prisma/client';
 
 @Injectable()
 export class TokenRefreshCron {

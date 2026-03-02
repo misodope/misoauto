@@ -27,10 +27,7 @@ export default function Register() {
   const [smsConsent, setSmsConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState('');
-  const {
-    mutate: register,
-    isPending: isRegistering,
-  } = useRegister();
+  const { mutate: register, isPending: isRegistering } = useRegister();
 
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => ({
@@ -225,7 +222,9 @@ export default function Register() {
                 <TextField.Root
                   type="tel"
                   value={formData.phoneNumber}
-                  onChange={(e: any) => handleChange('phoneNumber', e.target.value)}
+                  onChange={(e: any) =>
+                    handleChange('phoneNumber', e.target.value)
+                  }
                   placeholder="Enter your phone number"
                   required
                   size="3"

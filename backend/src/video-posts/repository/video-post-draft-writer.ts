@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { VideoPostDraft, Prisma } from '@prisma/client';
+import { VideoPostDraft, Prisma } from '@backend/generated/prisma/client';
 
 @Injectable()
 export class VideoPostDraftWriter {

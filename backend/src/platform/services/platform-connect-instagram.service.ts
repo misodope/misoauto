@@ -3,7 +3,7 @@ import axios, { AxiosInstance } from 'axios';
 import { SocialAccountWriter } from '../../social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '../../social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
-import { PlatformType } from '@prisma/client';
+import { PlatformType } from '@backend/generated/prisma/client';
 
 export interface InstagramOAuthConfig {
   clientId: string;

@@ -3,7 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PostStatus, VideoStatus } from '@prisma/client';
+import { PostStatus, VideoStatus } from '@backend/generated/prisma/client';
 import {
   VideoPostReader,
   VideoPostWithRelations,

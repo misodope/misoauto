@@ -57,6 +57,14 @@ const nextConfig = {
         source: '/settings',
         destination: '/pages/settings',
       },
+      {
+        source: '/about',
+        destination: '/pages/about',
+      },
+      {
+        source: '/learn-more',
+        destination: '/pages/learn-more',
+      },
     ];
   },
 };

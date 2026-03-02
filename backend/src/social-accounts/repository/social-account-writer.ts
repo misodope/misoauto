@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { SocialAccount, Prisma } from '@prisma/client';
+import { SocialAccount, Prisma } from '@backend/generated/prisma/client';
 
 @Injectable()
 export class SocialAccountWriter {

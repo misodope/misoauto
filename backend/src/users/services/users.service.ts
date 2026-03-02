@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, User } from '@backend/generated/prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UserReader } from '../repository/user-reader';
 import { UserWriter } from '../repository/user-writer';

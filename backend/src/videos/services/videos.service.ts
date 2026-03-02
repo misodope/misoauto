@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { VideoStatus } from '@prisma/client';
+import { VideoStatus } from '@backend/generated/prisma/client';
 import { BlobStorageService } from '@backend/system';
 import { VideoReader } from '../repository/video-reader';
 import { VideoWriter } from '../repository/video-writer';

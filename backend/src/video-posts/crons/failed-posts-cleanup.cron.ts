@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { VideoPostWriter } from '@backend/video-posts/repository/video-post-writer';
-import { PostStatus } from '@prisma/client';
+import { PostStatus } from '@backend/generated/prisma/client';
 
 @Injectable()
 export class FailedPostsCleanupCron {

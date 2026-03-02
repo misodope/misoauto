@@ -5,7 +5,7 @@ import { SocialAccountReader } from '../../social-accounts/repository/social-acc
 import { PlatformReader } from '../repository/platform-reader';
 import { VideoPostDraftWriter } from '../../video-posts/repository/video-post-draft-writer';
 import { BlobStorageService } from '../../system/blob-storage/blob-storage.service';
-import { PlatformType } from '@prisma/client';
+import { PlatformType } from '@backend/generated/prisma/client';
 
 export interface YouTubeOAuthConfig {
   clientId: string;
