@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { VideoPostReader } from '@backend/video-posts/repository/video-post-reader';
+import { JobsService } from '@backend/jobs/jobs.service';
 
 @Injectable()
 export class ScheduledPostsCron {
   private readonly logger = new Logger(ScheduledPostsCron.name);
 
-  constructor(private readonly videoPostReader: VideoPostReader) {}
+  constructor(
+    private readonly videoPostReader: VideoPostReader,
+    private readonly jobsService: JobsService,
+  ) {}
 
   /**
    * Check for scheduled posts that are ready to publish
@@ -28,13 +32,13 @@ export class ScheduledPostsCron {
           `Found ${scheduledPosts.length} posts ready to publish`,
         );
 
-        for (const post of scheduledPosts) {
-          this.logger.log(
-            `Publishing post ${post.id} to platform ${post.platformId}`,
-          );
-          // TODO: Implement platform-specific publishing logic
-          // This will depend on the platform and video details
-        }
+        await this.jobsService.enqueuePublishVideoPostBulk(
+          scheduledPosts.map((post) => ({ videoPostId: post.id })),
+        );
+
+        this.logger.log(
+          `Enqueued ${scheduledPosts.length} publish jobs`,
+        );
       }
     } catch (error) {
       this.logger.error('Failed to process scheduled posts', error);
