@@ -1,8 +1,11 @@
-import { Module, DynamicModule, Global } from '@nestjs/common';
+import { Module, DynamicModule } from '@nestjs/common';
 import { QueueService } from './queue.service';
-import { QueueModuleOptions, QUEUE_MODULE_OPTIONS } from './queue.types';
+import {
+  QueueModuleOptions,
+  QueueModuleAsyncOptions,
+  QUEUE_MODULE_OPTIONS,
+} from './queue.types';
 
-@Global()
 @Module({})
 export class QueueModule {
   /**
@@ -21,6 +24,7 @@ export class QueueModule {
    */
   static forRoot(options: QueueModuleOptions): DynamicModule {
     return {
+      global: true,
       module: QueueModule,
       providers: [
         {
@@ -52,14 +56,9 @@ export class QueueModule {
    * })
    * ```
    */
-  static forRootAsync(options: {
-    imports?: any[];
-    inject?: any[];
-    useFactory: (
-      ...args: any[]
-    ) => Promise<QueueModuleOptions> | QueueModuleOptions;
-  }): DynamicModule {
+  static forRootAsync(options: QueueModuleAsyncOptions): DynamicModule {
     return {
+      global: true,
       module: QueueModule,
       imports: options.imports || [],
       providers: [
