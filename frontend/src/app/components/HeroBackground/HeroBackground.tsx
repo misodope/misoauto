@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Wireframe } from '@react-three/drei';
 import type { Mesh } from 'three';
 import styles from './HeroBackground.module.scss';
 
@@ -25,7 +26,7 @@ function RotatingIcosahedron() {
       scale={isMobile ? 0.9 : 1}
     >
       <icosahedronGeometry args={[1.6, 1]} />
-      <meshBasicMaterial color="#b8a400" wireframe opacity={0.15} transparent />
+      <Wireframe stroke="#b8a400" thickness={0.025} fillOpacity={0} squeeze />
     </mesh>
   );
 }
@@ -47,7 +48,7 @@ function RotatingTorusKnot() {
   return (
     <mesh ref={ref} position={[2, -0.2, 0]}>
       <torusKnotGeometry args={[1, 0.3, 80, 12]} />
-      <meshBasicMaterial color="#b8a400" wireframe opacity={0.15} transparent />
+      <Wireframe stroke="#b8a400" thickness={0.025} fillOpacity={0} squeeze />
     </mesh>
   );
 }
