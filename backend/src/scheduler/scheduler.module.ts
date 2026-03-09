@@ -4,6 +4,7 @@ import { SchedulerService } from './scheduler.service';
 import { SocialAccountsModule } from '@backend/social-accounts/social-accounts.module';
 import { VideoPostsModule } from '@backend/video-posts/video-posts.module';
 import { PlatformModule } from '@backend/platform/platform.module';
+import { JobsModule } from '@backend/jobs/jobs.module';
 import { readdirSync, existsSync, statSync } from 'fs';
 import { join } from 'path';
 
@@ -41,6 +42,7 @@ export class SchedulerModule {
         SocialAccountsModule,
         VideoPostsModule,
         PlatformModule,
+        JobsModule,
       ],
       providers: [SchedulerService, ...cronProviders],
       exports: [SchedulerService],
