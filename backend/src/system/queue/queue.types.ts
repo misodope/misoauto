@@ -23,3 +23,11 @@ export const QUEUE_MODULE_OPTIONS = Symbol('QUEUE_MODULE_OPTIONS');
 export interface QueueModuleOptions {
   redis: RedisConfig;
 }
+
+export interface QueueModuleAsyncOptions {
+  imports?: any[];
+  inject?: any[];
+  useFactory: (
+    ...args: any[]
+  ) => Promise<QueueModuleOptions> | QueueModuleOptions;
+}
