@@ -5,6 +5,7 @@ import { Logger } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common';
 
 async function bootstrap() {
+  console.log('pls work this time');
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
