@@ -52,7 +52,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       onSubmit={(e) => e.preventDefault()}
     >
       <div
-        className={`w-96 h-40 border-dashed rounded border-2 flex flex-col items-center justify-center gap-1 ${
+        className={`w-full max-w-xl min-h-[12rem] border-dashed rounded-lg border-2 flex flex-col items-center justify-center gap-2 p-6 text-center bg-gray-50 ${
           dragActive ? `border-violet-200` : "border-violet-500"
         }`}
       >
@@ -75,6 +75,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           className="hidden"
           ref={inputRef}
           multiple={false}
+          accept="video/mp4,video/quicktime,video/webm"
           onChange={handleChooseFile}
         />
         {selectedFile === null ? (
@@ -83,6 +84,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               <div className="flex flex-col items-center gap-1">
                 <p>Drag and drop your video here or</p>
                 <button
+                  type="button"
                   className="cursor-pointer underline hover:text-violet-400 text-violet-500"
                   onClick={handleUploadClick}
                 >
@@ -95,6 +97,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <div className="flex flex-col items-center">
             <p className="font-bold">{selectedFile.name}</p>
             <button
+              type="button"
               className="cursor-pointer underline hover:text-violet-400 text-violet-500"
               onClick={handleUploadClick}
             >
