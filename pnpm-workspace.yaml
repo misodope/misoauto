@@ -1,0 +1,14 @@
+packages:
+  - frontend
+  - backend
+
+allowBuilds:
+  '@nestjs/core': false
+  '@parcel/watcher': false
+  '@prisma/engines': false
+  bcrypt: true
+  msgpackr-extract: false
+  nx: false
+  prisma: false
+  sharp: false
+  unrs-resolver: false
