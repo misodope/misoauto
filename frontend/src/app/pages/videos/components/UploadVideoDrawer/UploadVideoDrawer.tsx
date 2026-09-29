@@ -3,18 +3,18 @@
 import { useState, useRef } from 'react';
 import { Box, Flex, Button, Text, TextArea, TextField } from '@radix-ui/themes';
 import { UploadIcon, Cross2Icon } from '@radix-ui/react-icons';
-import Modal from '@frontend/app/components/Modal';
+import Drawer from '@frontend/app/components/Drawer';
 import { useUploads } from '../../../../contexts/UploadContext';
 
-interface UploadVideoModalProps {
+interface UploadVideoDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function UploadVideoModal({
+export default function UploadVideoDrawer({
   open,
   onOpenChange,
-}: UploadVideoModalProps) {
+}: UploadVideoDrawerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { startVideoUpload } = useUploads();
 
@@ -102,24 +102,22 @@ export default function UploadVideoModal({
   const isValid = file && title.trim();
 
   return (
-    <Modal
-      isOpen={open}
+    <Drawer
+      open={open}
       onOpenChange={handleOpenChange}
-      title="Upload Video"
-      onConfirm={handleSubmit}
-      confirmLabel={isSubmitting ? 'Uploading...' : 'Upload'}
-      confirmDisabled={!isValid || isSubmitting}
-      confirmLoading={isSubmitting}
-      maxWidth={500}
+      title="Upload video"
+      description="Add a video to your library"
+      width={500}
     >
-      <Text size="2" color="gray" mb="4" as="p">
-        Upload a video to your library
-      </Text>
-
       <Flex direction="column" gap="4">
         {/* File Selection */}
         <Box>
-          <Text size="2" weight="medium" mb="2">
+          <Text
+            id="upload-video-file-label"
+            size="2"
+            weight="medium"
+            mb="2"
+          >
             Video File *
           </Text>
           {file ? (
@@ -152,9 +150,19 @@ export default function UploadVideoModal({
             </Box>
           ) : (
             <Box
+              role="button"
+              tabIndex={0}
               onClick={handleFileSelect}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleFileSelect();
+                }
+              }}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
+              aria-labelledby="upload-video-file-label"
+              aria-describedby="upload-video-help"
               style={{
                 border: '2px dashed var(--gray-7)',
                 borderRadius: '8px',
@@ -163,6 +171,9 @@ export default function UploadVideoModal({
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 backgroundColor: 'var(--gray-2)',
+                color: 'inherit',
+                font: 'inherit',
+                width: '100%',
               }}
             >
               <Flex direction="column" align="center" gap="2">
@@ -171,7 +182,9 @@ export default function UploadVideoModal({
                   Click or drag to select
                 </Text>
                 <Text size="1" color="gray">
-                  MP4, MOV, AVI (Max 500MB)
+                  <span id="upload-video-help">
+                    MP4, MOV, AVI (Max 500MB)
+                  </span>
                 </Text>
               </Flex>
             </Box>
@@ -187,10 +200,17 @@ export default function UploadVideoModal({
 
         {/* Title */}
         <Box>
-          <Text size="2" weight="medium" mb="2">
+          <Text
+            as="label"
+            htmlFor="upload-video-title"
+            size="2"
+            weight="medium"
+            mb="2"
+          >
             Title *
           </Text>
           <TextField.Root
+            id="upload-video-title"
             placeholder="Enter video title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -199,17 +219,42 @@ export default function UploadVideoModal({
 
         {/* Description */}
         <Box>
-          <Text size="2" weight="medium" mb="2">
+          <Text
+            as="label"
+            htmlFor="upload-video-description"
+            size="2"
+            weight="medium"
+            mb="2"
+          >
             Description
           </Text>
           <TextArea
+            id="upload-video-description"
             placeholder="Enter video description (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
           />
         </Box>
+
+        <Flex justify="end" gap="3" mt="2">
+          <Button
+            variant="soft"
+            color="gray"
+            onClick={() => handleOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!isValid || isSubmitting}
+            loading={isSubmitting}
+          >
+            Upload video
+          </Button>
+        </Flex>
       </Flex>
-    </Modal>
+    </Drawer>
   );
 }
