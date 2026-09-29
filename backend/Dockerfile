@@ -1,5 +1,5 @@
-# Use Node.js 20 as base image
-FROM node:20-alpine AS base
+# Use Node.js 22 as base image
+FROM node:22-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -34,7 +34,7 @@ WORKDIR /app/backend
 RUN npx prisma generate && npx nest build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Create app directory
 WORKDIR /app
