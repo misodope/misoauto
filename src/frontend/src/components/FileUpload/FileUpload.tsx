@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Button } from "../ui";
 
 interface FileUploadProps {
   handleFileChange: (f: File) => void;
@@ -27,7 +28,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    e.target?.files && handleFileChange(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (file) handleFileChange(file);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -36,7 +38,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
     setDragActive(false);
 
-    e.dataTransfer.files && handleFileChange(e.dataTransfer.files[0]);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileChange(file);
   };
 
   const handleUploadClick = () => {
@@ -52,7 +55,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       onSubmit={(e) => e.preventDefault()}
     >
       <div
-        className={`w-96 h-40 border-dashed rounded border-2 flex flex-col items-center justify-center gap-1 ${
+        className={`w-full max-w-xl min-h-[12rem] border-dashed rounded-lg border-2 flex flex-col items-center justify-center gap-2 p-6 text-center bg-gray-50 ${
           dragActive ? `border-violet-200` : "border-violet-500"
         }`}
       >
@@ -60,13 +63,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <img
             className="w-8 h-8 animate-bounce"
             src="https://img.icons8.com/ios/100/upload--v1.png"
-            alt="upload--v1"
+            alt=""
           />
         ) : (
           <img
             className="w-8 h-8"
             src="https://img.icons8.com/office/40/checked--v1.png"
-            alt="upload--v1"
+            alt=""
           />
         )}
         <input
@@ -75,31 +78,30 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           className="hidden"
           ref={inputRef}
           multiple={false}
+          accept="video/mp4,video/quicktime,video/webm"
           onChange={handleChooseFile}
         />
         {selectedFile === null ? (
-          <>
-            <label htmlFor="input-file-upload">
-              <div className="flex flex-col items-center gap-1">
-                <p>Drag and drop your video here or</p>
-                <button
-                  className="cursor-pointer underline hover:text-violet-400 text-violet-500"
-                  onClick={handleUploadClick}
-                >
-                  Upload Video
-                </button>
-              </div>
-            </label>
-          </>
+          <div className="flex flex-col items-center gap-1">
+            <p>Drag and drop your video here or</p>
+            <Button
+              variant="text"
+              className="px-1 py-1"
+              onClick={handleUploadClick}
+            >
+              Upload Video
+            </Button>
+          </div>
         ) : (
           <div className="flex flex-col items-center">
             <p className="font-bold">{selectedFile.name}</p>
-            <button
-              className="cursor-pointer underline hover:text-violet-400 text-violet-500"
+            <Button
+              variant="text"
+              className="px-1 py-1"
               onClick={handleUploadClick}
             >
               Choose Another Video
-            </button>
+            </Button>
           </div>
         )}
       </div>

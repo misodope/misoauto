@@ -3,69 +3,110 @@ import {
   internalServerError,
   sendResponseBody,
 } from "@services/utils/response";
-
 import {
-  Context,
-  APIGatewayProxyEventV2WithRequestContext,
-  Handler,
+  APIGatewayProxyEventV2,
   APIGatewayProxyStructuredResultV2,
+  Handler,
 } from "aws-lambda";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { randomUUID } from "crypto";
 
-import dotenv from "dotenv";
-import path from "path";
-dotenv.config({ path: path.resolve(__dirname, "../../../", ".env") });
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
+const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024;
+const VIDEO_TYPES = new Set(["video/mp4", "video/quicktime", "video/webm"]);
+const THUMBNAIL_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB
+interface UploadRequest {
+  filename?: string;
+  filesize?: number;
+  filetype?: string;
+  thumbnailFilename?: string;
+  thumbnailFilesize?: number;
+  thumbnailFiletype?: string;
+}
+
+const extensionFor = (filename: string, fallback: string) => {
+  const extension = filename.split(".").pop()?.toLowerCase();
+  return extension && /^[a-z0-9]+$/.test(extension) ? extension : fallback;
+};
 
 export const handler: Handler = async (
-  event: APIGatewayProxyEventV2WithRequestContext<{
-    filename: string;
-    filesize: string;
-  }>,
-  context: Context,
+  event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   try {
-    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
-    console.log(`Context: ${JSON.stringify(context, null, 2)}`);
+    let requestBody: UploadRequest;
 
-    const requestBody = JSON.parse(event.body);
-    const { filename, filesize, filetype } = requestBody;
-    if (!filename) {
-      badRequest("No file provided");
+    try {
+      requestBody = JSON.parse(event.body ?? "{}");
+    } catch {
+      return badRequest("Request body must be valid JSON.");
     }
 
-    const parts = Math.ceil(Number(filesize) / CHUNK_SIZE);
-    console.log("Part Size", parts);
+    const {
+      filename,
+      filesize,
+      filetype,
+      thumbnailFilename,
+      thumbnailFilesize,
+      thumbnailFiletype,
+    } = requestBody;
 
-    const REGION = process.env.LAMBDA_AWS_REGION;
-    const ACCESS_KEY_ID = process.env.LAMBDA_AWS_ACCESS_KEY;
-    const SECRET_ACCESS_KEY = process.env.LAMBDA_AWS_SECRET_ACCESS_KEY;
+    if (!filename || !filesize || !filetype) {
+      return badRequest("Video filename, size, and type are required.");
+    }
+    if (!thumbnailFilename || !thumbnailFilesize || !thumbnailFiletype) {
+      return badRequest("A selected thumbnail is required.");
+    }
+    if (!VIDEO_TYPES.has(filetype) || filesize > MAX_VIDEO_SIZE) {
+      return badRequest("Video must be MP4, MOV, or WebM and no larger than 500 MB.");
+    }
+    if (
+      !THUMBNAIL_TYPES.has(thumbnailFiletype) ||
+      thumbnailFilesize > MAX_THUMBNAIL_SIZE
+    ) {
+      return badRequest("Thumbnail must be JPEG, PNG, or WebP and no larger than 10 MB.");
+    }
 
-    const s3Client = new S3Client({
-      region: REGION,
-      credentials: {
-        accessKeyId: ACCESS_KEY_ID,
-        secretAccessKey: SECRET_ACCESS_KEY,
-      },
-    });
+    const region = process.env.LAMBDA_AWS_REGION ?? process.env.AWS_REGION;
+    const bucket = process.env.VIDEO_UPLOAD_BUCKET ?? "misoauto";
+    if (!region) {
+      throw new Error("AWS region is not configured.");
+    }
 
-    const putObjectCommand = new PutObjectCommand({
-      Bucket: "misoauto",
-      Key: `videos/${filename}`,
-      ContentType: filetype,
-    });
+    const uploadId = randomUUID();
+    const videoKey = `videos/${uploadId}.${extensionFor(filename, "mp4")}`;
+    const thumbnailKey = `thumbnails/${uploadId}.${extensionFor(
+      thumbnailFilename,
+      "jpg",
+    )}`;
+    const s3Client = new S3Client({ region });
 
-    const url = await getSignedUrl(s3Client, putObjectCommand, {
-      expiresIn: 15 * 60, // minutes multiplier * seconds
-    });
+    const [videoUrl, thumbnailUrl] = await Promise.all([
+      getSignedUrl(
+        s3Client,
+        new PutObjectCommand({ Bucket: bucket, Key: videoKey, ContentType: filetype }),
+        { expiresIn: 15 * 60 },
+      ),
+      getSignedUrl(
+        s3Client,
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: thumbnailKey,
+          ContentType: thumbnailFiletype,
+        }),
+        { expiresIn: 15 * 60 },
+      ),
+    ]);
 
     return sendResponseBody({
       status: 200,
-      message: "Successfully Uploaded Video.",
-      success: url,
+      message: "Upload destinations created.",
+      success: {
+        uploadId,
+        video: { url: videoUrl, key: videoKey },
+        thumbnail: { url: thumbnailUrl, key: thumbnailKey },
+      },
     });
   } catch (error) {
     return internalServerError(error);
