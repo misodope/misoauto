@@ -10,6 +10,7 @@ import {
 } from 'react';
 import axios from 'axios';
 import api from '../../lib/axios';
+import type { InitializeUploadResponse } from '../../hooks/apis/videos/use-videos';
 
 export type UploadStatus =
   | 'initializing'
@@ -34,6 +35,7 @@ interface UploadInternal extends Upload {
 
 export interface StartVideoUploadOptions {
   file: File;
+  thumbnail?: Blob;
   title: string;
   description?: string;
   onProgress?: (progress: number) => void;
@@ -105,13 +107,14 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
 
   /**
    * Start a video upload with the full flow:
-   * 1. Initialize upload (create video record + get presigned URL)
-   * 2. Upload file to R2
+   * 1. Initialize upload and get presigned URLs
+   * 2. Upload the video and optional thumbnail to R2
    * 3. Confirm upload (mark video as READY)
    */
   const startVideoUpload = useCallback(
     ({
       file,
+      thumbnail,
       title,
       description,
       onProgress,
@@ -138,13 +141,17 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
       (async () => {
         try {
           // Step 1: Initialize upload with backend
-          const initResponse = await api.post('/videos/upload/initialize', {
-            filename: file.name,
-            contentType: file.type,
-            title,
-            description,
-            fileSize: file.size,
-          });
+          const initResponse = await api.post<InitializeUploadResponse>(
+            '/videos/upload/initialize',
+            {
+              filename: file.name,
+              contentType: file.type,
+              ...(thumbnail && { thumbnailContentType: thumbnail.type }),
+              title,
+              description,
+              fileSize: file.size,
+            },
+          );
 
           const { video, upload: uploadInfo } = initResponse.data;
 
@@ -155,6 +162,8 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
           currentUpload.status = 'uploading';
           syncUploadsState();
 
+          const totalSize = file.size + (thumbnail?.size ?? 0);
+
           // Step 2: Upload file directly to R2
           await axios.put(uploadInfo.url, file, {
             headers: {
@@ -162,8 +171,9 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
             },
             signal: abortController.signal,
             onUploadProgress: (progressEvent) => {
-              const progress = progressEvent.total
-                ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              const loaded = Math.min(progressEvent.loaded, file.size);
+              const progress = totalSize
+                ? Math.round((loaded * 100) / totalSize)
                 : 0;
 
               const upload = uploadsRef.current.get(id);
@@ -174,6 +184,30 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
               }
             },
           });
+
+          if (thumbnail) {
+            if (!uploadInfo.thumbnailUpload) {
+              throw new Error('Thumbnail upload was not initialized');
+            }
+
+            await axios.put(uploadInfo.thumbnailUpload.url, thumbnail, {
+              headers: { 'Content-Type': thumbnail.type },
+              signal: abortController.signal,
+              onUploadProgress: (progressEvent) => {
+                const loaded = Math.min(progressEvent.loaded, thumbnail.size);
+                const progress = totalSize
+                  ? Math.round(((file.size + loaded) * 100) / totalSize)
+                  : 0;
+
+                const upload = uploadsRef.current.get(id);
+                if (upload) {
+                  upload.progress = progress;
+                  syncUploadsState();
+                  onProgress?.(progress);
+                }
+              },
+            });
+          }
 
           const uploadAfterR2 = uploadsRef.current.get(id);
           if (!uploadAfterR2) return; // Was cancelled

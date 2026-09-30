@@ -42,8 +42,9 @@ model Video {
   id          Int         @id @default(autoincrement())
   title       String
   description String?
-  s3Key       String      @map("s3_key")
-  s3Bucket    String      @map("s3_bucket")
+  s3Key        String      @map("s3_key")
+  s3ThumbnailKey String?   @map("s3_thumbnail_key")
+  s3Bucket     String      @map("s3_bucket")
   duration    Float?
   fileSize    Int?        @map("file_size")
   mimeType    String?     @map("mime_type")

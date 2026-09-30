@@ -46,6 +46,7 @@ export interface Video {
   title: string;
   description?: string;
   s3Key: string;
+  s3ThumbnailKey?: string | null;
   s3Bucket: string;
   mimeType: string;
   fileSize?: number;
@@ -59,6 +60,7 @@ export interface Video {
 export interface InitializeUploadRequest {
   filename: string;
   contentType: string;
+  thumbnailContentType?: string;
   title: string;
   description?: string;
   fileSize?: number;
@@ -72,6 +74,11 @@ export interface InitializeUploadResponse {
     status: VideoStatus;
   };
   upload: {
+    url: string;
+    key: string;
+    expiresAt: string;
+  };
+  thumbnailUpload?: {
     url: string;
     key: string;
     expiresAt: string;

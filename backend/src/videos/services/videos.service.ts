@@ -17,6 +17,11 @@ export interface InitializeUploadResult {
     key: string;
     expiresAt: Date;
   };
+  thumbnailUpload?: {
+    url: string;
+    key: string;
+    expiresAt: Date;
+  };
 }
 
 @Injectable()
@@ -34,19 +39,27 @@ export class VideosService {
     const timestamp = Date.now();
     const sanitizedFilename = dto.filename.replace(/[^a-zA-Z0-9.-]/g, '_');
     const key = `videos/${userId}/${timestamp}-${sanitizedFilename}`;
+    const thumbnailKey = dto.thumbnailContentType
+      ? `thumbnails/${userId}/${timestamp}-${sanitizedFilename}.jpg`
+      : undefined;
 
-    // Get presigned upload URL
-    const presignedUrl = await this.blobStorage.getSignedUploadUrl(
-      key,
-      dto.contentType,
-      600, // 10 minutes
-    );
+    const [presignedUrl, thumbnailPresignedUrl] = await Promise.all([
+      this.blobStorage.getSignedUploadUrl(key, dto.contentType, 600),
+      thumbnailKey && dto.thumbnailContentType
+        ? this.blobStorage.getSignedUploadUrl(
+            thumbnailKey,
+            dto.thumbnailContentType,
+            600,
+          )
+        : Promise.resolve(undefined),
+    ]);
 
     // Create video record with PROCESSING status
     const video = await this.videoWriter.create({
       title: dto.title,
       description: dto.description,
       s3Key: key,
+      s3ThumbnailKey: thumbnailKey,
       s3Bucket: 'r2', // Could be made dynamic from config
       mimeType: dto.contentType,
       fileSize: dto.fileSize,
@@ -66,6 +79,13 @@ export class VideosService {
         key: presignedUrl.key,
         expiresAt: presignedUrl.expiresAt,
       },
+      ...(thumbnailPresignedUrl && {
+        thumbnailUpload: {
+          url: thumbnailPresignedUrl.url,
+          key: thumbnailPresignedUrl.key,
+          expiresAt: thumbnailPresignedUrl.expiresAt,
+        },
+      }),
     };
   }
 
@@ -84,6 +104,13 @@ export class VideosService {
     const exists = await this.blobStorage.exists(video.s3Key);
     if (!exists) {
       throw new NotFoundException('Upload not found in storage');
+    }
+
+    if (video.s3ThumbnailKey) {
+      const thumbnailExists = await this.blobStorage.exists(video.s3ThumbnailKey);
+      if (!thumbnailExists) {
+        throw new NotFoundException('Thumbnail upload not found in storage');
+      }
     }
 
     // Update video status to READY
@@ -126,7 +153,12 @@ export class VideosService {
     const video = await this.getVideo(userId, videoId);
 
     // Delete from storage
-    await this.blobStorage.delete(video.s3Key);
+    await Promise.all([
+      this.blobStorage.delete(video.s3Key),
+      ...(video.s3ThumbnailKey
+        ? [this.blobStorage.delete(video.s3ThumbnailKey)]
+        : []),
+    ]);
 
     // Delete from database
     return this.videoWriter.delete({ id: videoId });

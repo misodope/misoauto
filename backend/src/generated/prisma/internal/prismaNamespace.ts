@@ -999,6 +999,7 @@ export const VideoScalarFieldEnum = {
   title: 'title',
   description: 'description',
   s3Key: 's3Key',
+  s3ThumbnailKey: 's3ThumbnailKey',
   s3Bucket: 's3Bucket',
   duration: 'duration',
   fileSize: 'fileSize',

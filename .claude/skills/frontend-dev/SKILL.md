@@ -139,6 +139,10 @@ ComponentName/
 | `Navigation` | `components/Navigation/` | Top nav + sidebar |
 | `ProtectedRoute` | `components/ProtectedRoute/` | Auth-gated wrapper |
 
+## Component Structure for Large Features
+
+For guidance on decomposing larger UI features into grouped components, read [Component Structure](component-structure.md). This is especially important for multi-step flows, drawers, dialogs, and pages that combine several independent areas of UI.
+
 ---
 
 ## API Hook Pattern (CRITICAL — Follow This Exactly)
@@ -413,6 +417,7 @@ toast.success('Saved successfully');
 
 - [ ] Read existing patterns in similar hook files before writing new ones
 - [ ] Use existing shared components (Modal, DataTable, Drawer, etc.) before creating new ones
+- [ ] Split large features into logically grouped components and feature-local subdirectories; keep the parent focused on orchestration
 - [ ] Layout and spacing done with `<Box />`, `<Flex />`, `<Grid />` — not SCSS
 - [ ] Radix UI components used for all interactive elements
 - [ ] SCSS only written if overriding Radix UI defaults with no prop equivalent

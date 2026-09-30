@@ -45,6 +45,7 @@ export type VideoMinAggregateOutputType = {
   title: string | null
   description: string | null
   s3Key: string | null
+  s3ThumbnailKey: string | null
   s3Bucket: string | null
   duration: number | null
   fileSize: number | null
@@ -60,6 +61,7 @@ export type VideoMaxAggregateOutputType = {
   title: string | null
   description: string | null
   s3Key: string | null
+  s3ThumbnailKey: string | null
   s3Bucket: string | null
   duration: number | null
   fileSize: number | null
@@ -75,6 +77,7 @@ export type VideoCountAggregateOutputType = {
   title: number
   description: number
   s3Key: number
+  s3ThumbnailKey: number
   s3Bucket: number
   duration: number
   fileSize: number
@@ -106,6 +109,7 @@ export type VideoMinAggregateInputType = {
   title?: true
   description?: true
   s3Key?: true
+  s3ThumbnailKey?: true
   s3Bucket?: true
   duration?: true
   fileSize?: true
@@ -121,6 +125,7 @@ export type VideoMaxAggregateInputType = {
   title?: true
   description?: true
   s3Key?: true
+  s3ThumbnailKey?: true
   s3Bucket?: true
   duration?: true
   fileSize?: true
@@ -136,6 +141,7 @@ export type VideoCountAggregateInputType = {
   title?: true
   description?: true
   s3Key?: true
+  s3ThumbnailKey?: true
   s3Bucket?: true
   duration?: true
   fileSize?: true
@@ -238,6 +244,7 @@ export type VideoGroupByOutputType = {
   title: string
   description: string | null
   s3Key: string
+  s3ThumbnailKey: string | null
   s3Bucket: string
   duration: number | null
   fileSize: number | null
@@ -276,6 +283,7 @@ export type VideoWhereInput = {
   title?: Prisma.StringFilter<"Video"> | string
   description?: Prisma.StringNullableFilter<"Video"> | string | null
   s3Key?: Prisma.StringFilter<"Video"> | string
+  s3ThumbnailKey?: Prisma.StringNullableFilter<"Video"> | string | null
   s3Bucket?: Prisma.StringFilter<"Video"> | string
   duration?: Prisma.FloatNullableFilter<"Video"> | number | null
   fileSize?: Prisma.IntNullableFilter<"Video"> | number | null
@@ -294,6 +302,7 @@ export type VideoOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   s3Key?: Prisma.SortOrder
+  s3ThumbnailKey?: Prisma.SortOrderInput | Prisma.SortOrder
   s3Bucket?: Prisma.SortOrder
   duration?: Prisma.SortOrderInput | Prisma.SortOrder
   fileSize?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -315,6 +324,7 @@ export type VideoWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"Video"> | string
   description?: Prisma.StringNullableFilter<"Video"> | string | null
   s3Key?: Prisma.StringFilter<"Video"> | string
+  s3ThumbnailKey?: Prisma.StringNullableFilter<"Video"> | string | null
   s3Bucket?: Prisma.StringFilter<"Video"> | string
   duration?: Prisma.FloatNullableFilter<"Video"> | number | null
   fileSize?: Prisma.IntNullableFilter<"Video"> | number | null
@@ -333,6 +343,7 @@ export type VideoOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   s3Key?: Prisma.SortOrder
+  s3ThumbnailKey?: Prisma.SortOrderInput | Prisma.SortOrder
   s3Bucket?: Prisma.SortOrder
   duration?: Prisma.SortOrderInput | Prisma.SortOrder
   fileSize?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -356,6 +367,7 @@ export type VideoScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"Video"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Video"> | string | null
   s3Key?: Prisma.StringWithAggregatesFilter<"Video"> | string
+  s3ThumbnailKey?: Prisma.StringNullableWithAggregatesFilter<"Video"> | string | null
   s3Bucket?: Prisma.StringWithAggregatesFilter<"Video"> | string
   duration?: Prisma.FloatNullableWithAggregatesFilter<"Video"> | number | null
   fileSize?: Prisma.IntNullableWithAggregatesFilter<"Video"> | number | null
@@ -370,6 +382,7 @@ export type VideoCreateInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -387,6 +400,7 @@ export type VideoUncheckedCreateInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -403,6 +417,7 @@ export type VideoUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -420,6 +435,7 @@ export type VideoUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -437,6 +453,7 @@ export type VideoCreateManyInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -451,6 +468,7 @@ export type VideoUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -465,6 +483,7 @@ export type VideoUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -490,6 +509,7 @@ export type VideoCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   s3Key?: Prisma.SortOrder
+  s3ThumbnailKey?: Prisma.SortOrder
   s3Bucket?: Prisma.SortOrder
   duration?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
@@ -512,6 +532,7 @@ export type VideoMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   s3Key?: Prisma.SortOrder
+  s3ThumbnailKey?: Prisma.SortOrder
   s3Bucket?: Prisma.SortOrder
   duration?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
@@ -527,6 +548,7 @@ export type VideoMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   s3Key?: Prisma.SortOrder
+  s3ThumbnailKey?: Prisma.SortOrder
   s3Bucket?: Prisma.SortOrder
   duration?: Prisma.SortOrder
   fileSize?: Prisma.SortOrder
@@ -643,6 +665,7 @@ export type VideoCreateWithoutUserInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -659,6 +682,7 @@ export type VideoUncheckedCreateWithoutUserInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -704,6 +728,7 @@ export type VideoScalarWhereInput = {
   title?: Prisma.StringFilter<"Video"> | string
   description?: Prisma.StringNullableFilter<"Video"> | string | null
   s3Key?: Prisma.StringFilter<"Video"> | string
+  s3ThumbnailKey?: Prisma.StringNullableFilter<"Video"> | string | null
   s3Bucket?: Prisma.StringFilter<"Video"> | string
   duration?: Prisma.FloatNullableFilter<"Video"> | number | null
   fileSize?: Prisma.IntNullableFilter<"Video"> | number | null
@@ -718,6 +743,7 @@ export type VideoCreateWithoutPostsInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -734,6 +760,7 @@ export type VideoUncheckedCreateWithoutPostsInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -765,6 +792,7 @@ export type VideoUpdateWithoutPostsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -781,6 +809,7 @@ export type VideoUncheckedUpdateWithoutPostsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -796,6 +825,7 @@ export type VideoCreateWithoutDraftsInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -812,6 +842,7 @@ export type VideoUncheckedCreateWithoutDraftsInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -843,6 +874,7 @@ export type VideoUpdateWithoutDraftsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -859,6 +891,7 @@ export type VideoUncheckedUpdateWithoutDraftsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -875,6 +908,7 @@ export type VideoCreateManyUserInput = {
   title: string
   description?: string | null
   s3Key: string
+  s3ThumbnailKey?: string | null
   s3Bucket: string
   duration?: number | null
   fileSize?: number | null
@@ -888,6 +922,7 @@ export type VideoUpdateWithoutUserInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -904,6 +939,7 @@ export type VideoUncheckedUpdateWithoutUserInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -920,6 +956,7 @@ export type VideoUncheckedUpdateManyWithoutUserInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Key?: Prisma.StringFieldUpdateOperationsInput | string
+  s3ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   s3Bucket?: Prisma.StringFieldUpdateOperationsInput | string
   duration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   fileSize?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -974,6 +1011,7 @@ export type VideoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   title?: boolean
   description?: boolean
   s3Key?: boolean
+  s3ThumbnailKey?: boolean
   s3Bucket?: boolean
   duration?: boolean
   fileSize?: boolean
@@ -993,6 +1031,7 @@ export type VideoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   title?: boolean
   description?: boolean
   s3Key?: boolean
+  s3ThumbnailKey?: boolean
   s3Bucket?: boolean
   duration?: boolean
   fileSize?: boolean
@@ -1009,6 +1048,7 @@ export type VideoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   title?: boolean
   description?: boolean
   s3Key?: boolean
+  s3ThumbnailKey?: boolean
   s3Bucket?: boolean
   duration?: boolean
   fileSize?: boolean
@@ -1025,6 +1065,7 @@ export type VideoSelectScalar = {
   title?: boolean
   description?: boolean
   s3Key?: boolean
+  s3ThumbnailKey?: boolean
   s3Bucket?: boolean
   duration?: boolean
   fileSize?: boolean
@@ -1035,7 +1076,7 @@ export type VideoSelectScalar = {
   updatedAt?: boolean
 }
 
-export type VideoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "s3Key" | "s3Bucket" | "duration" | "fileSize" | "mimeType" | "status" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["video"]>
+export type VideoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "s3Key" | "s3ThumbnailKey" | "s3Bucket" | "duration" | "fileSize" | "mimeType" | "status" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["video"]>
 export type VideoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   posts?: boolean | Prisma.Video$postsArgs<ExtArgs>
@@ -1061,6 +1102,7 @@ export type $VideoPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     title: string
     description: string | null
     s3Key: string
+    s3ThumbnailKey: string | null
     s3Bucket: string
     duration: number | null
     fileSize: number | null
@@ -1499,6 +1541,7 @@ export interface VideoFieldRefs {
   readonly title: Prisma.FieldRef<"Video", 'String'>
   readonly description: Prisma.FieldRef<"Video", 'String'>
   readonly s3Key: Prisma.FieldRef<"Video", 'String'>
+  readonly s3ThumbnailKey: Prisma.FieldRef<"Video", 'String'>
   readonly s3Bucket: Prisma.FieldRef<"Video", 'String'>
   readonly duration: Prisma.FieldRef<"Video", 'Float'>
   readonly fileSize: Prisma.FieldRef<"Video", 'Int'>
