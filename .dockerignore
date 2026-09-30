@@ -1,0 +1,24 @@
+# Keep host dependencies and build outputs out of Docker contexts.
+node_modules
+**/node_modules
+.next
+**/.next
+out
+**/out
+dist
+**/dist
+coverage
+**/coverage
+
+# Do not send repository metadata, local secrets, or editor files to the builder.
+.git
+**/.git
+.env
+.env.*
+**/.env
+**/.env.*
+.DS_Store
+**/.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
