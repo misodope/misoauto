@@ -1,4 +1,10 @@
-import { Injectable, OnModuleDestroy, Logger, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+  Inject,
+} from '@nestjs/common';
 import { Queue, Worker, Job, Processor, QueueEvents } from 'bullmq';
 import {
   QueueConfig,
@@ -9,7 +15,7 @@ import {
 } from './queue.types';
 
 @Injectable()
-export class QueueService implements OnModuleDestroy {
+export class QueueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(QueueService.name);
   private readonly queues = new Map<string, Queue>();
   private readonly workers = new Map<string, Worker>();
@@ -19,6 +25,16 @@ export class QueueService implements OnModuleDestroy {
   constructor(@Inject(QUEUE_MODULE_OPTIONS) options: QueueModuleOptions) {
     this.redisConfig = options.redis;
   }
+
+  onModuleInit(): void {
+    this.logger.log(
+      `Queue service initialised (redis ${this.redisConfig.host}:${this.redisConfig.port})`,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Queue & Worker lifecycle
+  // ---------------------------------------------------------------------------
 
   /**
    * Creates or retrieves a queue by name.
@@ -30,18 +46,16 @@ export class QueueService implements OnModuleDestroy {
     const queueConfig: QueueConfig =
       typeof config === 'string' ? { name: config } : config;
 
-    if (this.queues.has(queueConfig.name)) {
-      return this.queues.get(queueConfig.name) as Queue<TData, TResult>;
+    const existing = this.queues.get(queueConfig.name);
+    if (existing) {
+      return existing as Queue<TData, TResult>;
     }
 
     const queue = new Queue<TData, TResult>(queueConfig.name, {
       connection: this.redisConfig,
       defaultJobOptions: {
         attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
+        backoff: { type: 'exponential', delay: 1000 },
         removeOnComplete: 100,
         removeOnFail: 500,
         ...queueConfig.defaultJobOptions,
@@ -51,7 +65,6 @@ export class QueueService implements OnModuleDestroy {
 
     this.queues.set(queueConfig.name, queue);
     this.logger.log(`Queue "${queueConfig.name}" created`);
-
     return queue;
   }
 
@@ -66,11 +79,12 @@ export class QueueService implements OnModuleDestroy {
     const workerConfig: WorkerConfig =
       typeof config === 'string' ? { queueName: config } : config;
 
-    if (this.workers.has(workerConfig.queueName)) {
+    const existing = this.workers.get(workerConfig.queueName);
+    if (existing) {
       this.logger.warn(
-        `Worker for queue "${workerConfig.queueName}" already exists. Returning existing worker.`,
+        `Worker for queue "${workerConfig.queueName}" already exists, returning existing instance`,
       );
-      return this.workers.get(workerConfig.queueName) as Worker<TData, TResult>;
+      return existing as Worker<TData, TResult>;
     }
 
     const worker = new Worker<TData, TResult>(
@@ -101,23 +115,23 @@ export class QueueService implements OnModuleDestroy {
 
     worker.on('error', (error: Error) => {
       this.logger.error(
-        `Worker for queue "${workerConfig.queueName}" encountered an error: ${error.message}`,
+        `Worker error on "${workerConfig.queueName}": ${error.message}`,
         error.stack,
       );
     });
 
     this.workers.set(workerConfig.queueName, worker);
     this.logger.log(`Worker for queue "${workerConfig.queueName}" created`);
-
     return worker;
   }
 
   /**
-   * Gets QueueEvents for a queue to listen to job lifecycle events.
+   * Gets or creates a QueueEvents instance to listen to job lifecycle events.
    */
   getQueueEvents(queueName: string): QueueEvents {
-    if (this.queueEvents.has(queueName)) {
-      return this.queueEvents.get(queueName)!;
+    const existing = this.queueEvents.get(queueName);
+    if (existing) {
+      return existing;
     }
 
     const events = new QueueEvents(queueName, {
@@ -127,6 +141,10 @@ export class QueueService implements OnModuleDestroy {
     this.queueEvents.set(queueName, events);
     return events;
   }
+
+  // ---------------------------------------------------------------------------
+  // Job helpers
+  // ---------------------------------------------------------------------------
 
   /**
    * Adds a job to a queue. Creates the queue if it doesn't exist.
@@ -157,30 +175,58 @@ export class QueueService implements OnModuleDestroy {
   }
 
   /**
-   * Gracefully closes all queues and workers.
+   * Retrieves a job by its ID from a given queue.
    */
-  async onModuleDestroy(): Promise<void> {
-    this.logger.log('Shutting down queue service...');
+  async getJob<TData = unknown>(
+    queueName: string,
+    jobId: string,
+  ): Promise<Job<TData> | undefined> {
+    const queue = this.getQueue(queueName);
+    return queue.getJob(jobId) as Promise<Job<TData> | undefined>;
+  }
 
-    const closePromises: Promise<void>[] = [];
-
-    for (const [name, worker] of this.workers) {
-      this.logger.debug(`Closing worker for queue "${name}"...`);
-      closePromises.push(worker.close());
+  /**
+   * Removes a job by ID from a queue.
+   * Returns `true` if the job was removed, `false` if it was not found.
+   */
+  async removeJob(queueName: string, jobId: string): Promise<boolean> {
+    const job = await this.getJob(queueName, jobId);
+    if (!job) {
+      return false;
     }
+    await job.remove();
+    return true;
+  }
 
-    for (const [name, events] of this.queueEvents) {
-      this.logger.debug(`Closing events for queue "${name}"...`);
-      closePromises.push(events.close());
-    }
+  // ---------------------------------------------------------------------------
+  // Queue operations
+  // ---------------------------------------------------------------------------
 
-    for (const [name, queue] of this.queues) {
-      this.logger.debug(`Closing queue "${name}"...`);
-      closePromises.push(queue.close());
-    }
+  /**
+   * Pauses a queue so no new jobs are processed.
+   */
+  async pauseQueue(queueName: string): Promise<void> {
+    const queue = this.getQueue(queueName);
+    await queue.pause();
+    this.logger.log(`Queue "${queueName}" paused`);
+  }
 
-    await Promise.all(closePromises);
-    this.logger.log('Queue service shut down complete');
+  /**
+   * Resumes a previously paused queue.
+   */
+  async resumeQueue(queueName: string): Promise<void> {
+    const queue = this.getQueue(queueName);
+    await queue.resume();
+    this.logger.log(`Queue "${queueName}" resumed`);
+  }
+
+  /**
+   * Drains a queue, removing all waiting and delayed jobs.
+   */
+  async drainQueue(queueName: string): Promise<void> {
+    const queue = this.getQueue(queueName);
+    await queue.drain();
+    this.logger.log(`Queue "${queueName}" drained`);
   }
 
   /**
@@ -201,7 +247,41 @@ export class QueueService implements OnModuleDestroy {
       queue.getFailedCount(),
       queue.getDelayedCount(),
     ]);
-
     return { waiting, active, completed, failed, delayed };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Shutdown
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Gracefully shuts down all workers, event listeners, and queues (in that order).
+   */
+  async onModuleDestroy(): Promise<void> {
+    this.logger.log('Shutting down queue service...');
+
+    // 1. Close workers first so no new jobs are picked up.
+    for (const [name, worker] of this.workers) {
+      this.logger.debug(`Closing worker for queue "${name}"...`);
+      await worker.close();
+    }
+
+    // 2. Close event listeners.
+    for (const [name, events] of this.queueEvents) {
+      this.logger.debug(`Closing events for queue "${name}"...`);
+      await events.close();
+    }
+
+    // 3. Close queues last.
+    for (const [name, queue] of this.queues) {
+      this.logger.debug(`Closing queue "${name}"...`);
+      await queue.close();
+    }
+
+    this.workers.clear();
+    this.queueEvents.clear();
+    this.queues.clear();
+
+    this.logger.log('Queue service shut down complete');
   }
 }
