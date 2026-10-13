@@ -167,7 +167,7 @@ jobs:
             wait_for_http() {
               container="$1"
               url="$2"
-              for attempt in $(seq 1 60); do
+              for attempt in $(seq 1 150); do
                 if docker exec "$container" wget --no-verbose --tries=1 --spider "$url"; then
                   return 0
                 fi
