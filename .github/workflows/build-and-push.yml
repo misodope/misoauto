@@ -110,6 +110,10 @@ jobs:
             backend_image="ghcr.io/misodope/misoauto/backend:${DEPLOY_TAG}"
             frontend_image="ghcr.io/misodope/misoauto/frontend:${DEPLOY_TAG}"
 
+            # Remove only unused images built from this repository before pulling
+            # the next release. This does not remove containers, volumes, or data.
+            docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/misodope/misoauto"
+
             # Pull the exact images built for this commit and make them available
             # under the tags referenced by the existing Compose file.
             docker pull "${backend_image}"
@@ -156,6 +160,6 @@ jobs:
 
             wait_for_healthy misoauto-backend
             wait_for_healthy misoauto-frontend
-            # Clean up dangling images
-            docker image prune -f
+            # Keep only images referenced by running/stopped containers for this app.
+            docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/misodope/misoauto"
             echo "Deployment complete!"
