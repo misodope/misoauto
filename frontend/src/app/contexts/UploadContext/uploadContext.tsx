@@ -153,7 +153,11 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
             },
           );
 
-          const { video, upload: uploadInfo } = initResponse.data;
+          const {
+            video,
+            upload: uploadInfo,
+            thumbnailUpload,
+          } = initResponse.data;
 
           const currentUpload = uploadsRef.current.get(id);
           if (!currentUpload) return; // Was cancelled
@@ -186,11 +190,11 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({
           });
 
           if (thumbnail) {
-            if (!uploadInfo.thumbnailUpload) {
+            if (!thumbnailUpload) {
               throw new Error('Thumbnail upload was not initialized');
             }
 
-            await axios.put(uploadInfo.thumbnailUpload.url, thumbnail, {
+            await axios.put(thumbnailUpload.url, thumbnail, {
               headers: { 'Content-Type': thumbnail.type },
               signal: abortController.signal,
               onUploadProgress: (progressEvent) => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { Box, Button, Flex, Text } from '@radix-ui/themes';
+import { Box, Button, Flex, Heading, Text } from '@radix-ui/themes';
 import styles from './FormStepWizard.module.scss';
 
 export interface FormStep {
@@ -136,9 +136,9 @@ export default function FormStepWizard({
               flex: 1,
             }}
           >
-            <Text id={`${step.id}-heading`} as="h2" size="4" weight="bold">
+            <Heading id={`${step.id}-heading`} size="4">
               {step.title}
-            </Text>
+            </Heading>
             {step.description && (
               <Text as="p" size="2" color="gray" mt="1" mb="4">
                 {step.description}
