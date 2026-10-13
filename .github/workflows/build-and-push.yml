@@ -110,8 +110,14 @@ jobs:
             backend_image="ghcr.io/misodope/misoauto/backend:${DEPLOY_TAG}"
             frontend_image="ghcr.io/misodope/misoauto/frontend:${DEPLOY_TAG}"
 
-            # Remove only unused images built from this repository before pulling
-            # the next release. This does not remove containers, volumes, or data.
+            # The droplet is too small to keep the current app image while pulling
+            # the next one. Stop and remove only the stateless app containers;
+            # without -v, this preserves all volumes, including PostgreSQL data.
+            docker-compose -f docker-compose.prod.yml stop backend frontend
+            docker-compose -f docker-compose.prod.yml rm -f backend frontend
+
+            # Remove only unused images built from this repository. This does not
+            # remove containers, volumes, or database data.
             docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/misodope/misoauto"
 
             # Pull the exact images built for this commit and make them available
