@@ -181,7 +181,7 @@ jobs:
             wait_for_healthy misoauto-backend
             # Probe the frontend directly so deploys remain compatible with an
             # older remote Compose file whose healthcheck may still use curl.
-            wait_for_http misoauto-frontend http://localhost:3000
+            wait_for_http misoauto-frontend http://127.0.0.1:3000
             # Keep only images referenced by running/stopped containers for this app.
             docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/misodope/misoauto"
             echo "Deployment complete!"
