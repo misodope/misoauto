@@ -45,11 +45,17 @@ COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 
 # Install only production dependencies
-# The compiled Prisma client is already in dist/ from the build stage
+# The compiled Prisma client is already in dist/ from the build stage.
+# Prisma CLI is a production dependency because deployments run migrations.
 RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built application from backend (output is at /app/dist/backend per tsconfig)
 COPY --from=build /app/dist/backend ./dist
+
+# Keep the Prisma config and migration history available to the deploy step.
+COPY --from=build /app/backend/prisma.config.ts ./backend/prisma.config.ts
+COPY --from=build /app/backend/src/database/schema.prisma ./backend/src/database/schema.prisma
+COPY --from=build /app/backend/src/database/migrations ./backend/src/database/migrations
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

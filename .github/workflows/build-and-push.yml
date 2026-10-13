@@ -10,6 +10,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME_BACKEND: ${{ github.repository }}/backend
   IMAGE_NAME_FRONTEND: ${{ github.repository }}/frontend
+  DEPLOY_TAG: main-${{ github.sha }}
 
 jobs:
   build-and-push:
@@ -102,20 +103,59 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          envs: DEPLOY_TAG
           script: |
+            set -eu
             cd /root/misoauto
-            # Stop and remove containers
-            docker-compose -f docker-compose.prod.yml down
-            # Remove old images
-            docker rmi ghcr.io/misodope/misoauto/backend:latest || true
-            docker rmi ghcr.io/misodope/misoauto/frontend:latest || true
-            # Pull fresh images and start
-            docker-compose -f docker-compose.prod.yml pull
-            docker-compose -f docker-compose.prod.yml up -d
+            backend_image="ghcr.io/misodope/misoauto/backend:${DEPLOY_TAG}"
+            frontend_image="ghcr.io/misodope/misoauto/frontend:${DEPLOY_TAG}"
+
+            # Pull the exact images built for this commit and make them available
+            # under the tags referenced by the existing Compose file.
+            docker pull "${backend_image}"
+            docker pull "${frontend_image}"
+            docker tag "${backend_image}" ghcr.io/misodope/misoauto/backend:latest
+            docker tag "${frontend_image}" ghcr.io/misodope/misoauto/frontend:latest
+
+            # Keep the current application running while the database is prepared.
+            docker-compose -f docker-compose.prod.yml up -d postgres
+            for attempt in $(seq 1 30); do
+              if docker-compose -f docker-compose.prod.yml exec -T postgres pg_isready -U misodope -d misoauto; then
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo "Postgres did not become ready in time"
+                exit 1
+              fi
+              sleep 2
+            done
+            # Run migrations from the files packaged in the backend image.
+            docker-compose -f docker-compose.prod.yml run --rm --no-deps backend sh -c 'cd /app/backend && npx prisma migrate deploy --config=prisma.config.ts'
+            # Start the application only after migrations succeed.
+            docker-compose -f docker-compose.prod.yml up -d backend frontend
+
+            wait_for_healthy() {
+              container="$1"
+              for attempt in $(seq 1 60); do
+                status=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)
+                case "$status" in
+                  healthy)
+                    return 0
+                    ;;
+                  unhealthy)
+                    docker logs --tail=100 "$container"
+                    return 1
+                    ;;
+                esac
+                sleep 2
+              done
+              docker logs --tail=100 "$container"
+              echo "$container did not become healthy in time"
+              return 1
+            }
+
+            wait_for_healthy misoauto-backend
+            wait_for_healthy misoauto-frontend
             # Clean up dangling images
             docker image prune -f
-            # Wait for backend to be healthy
-            sleep 10
-            # Run database migrations
-            docker-compose -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy --schema=./prisma/schema.prisma || true
             echo "Deployment complete!"
