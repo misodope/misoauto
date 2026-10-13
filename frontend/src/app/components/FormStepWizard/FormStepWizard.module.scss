@@ -1,0 +1,120 @@
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  width: 100%;
+}
+
+.step {
+  min-width: 0;
+  position: relative;
+}
+
+.horizontal .step {
+  flex: 1;
+}
+
+.stepButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: default;
+  display: flex;
+  gap: 10px;
+  padding: 0;
+  position: relative;
+  text-align: left;
+  width: 100%;
+  z-index: 1;
+}
+
+.horizontal .stepButton {
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+.completed .stepButton {
+  cursor: pointer;
+}
+
+.indicator {
+  align-items: center;
+  background: var(--gray-4);
+  border-radius: 50%;
+  color: var(--gray-12);
+  display: inline-flex;
+  flex: 0 0 28px;
+  font-size: 12px;
+  font-weight: 600;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.current .indicator {
+  background: var(--accent-9);
+  color: white;
+}
+
+.completed .indicator {
+  background: var(--accent-4);
+}
+
+.connector {
+  background: var(--gray-5);
+  position: absolute;
+  z-index: 0;
+}
+
+.vertical .connector {
+  bottom: -12px;
+  left: 13px;
+  top: 28px;
+  width: 2px;
+}
+
+.horizontal .connector {
+  height: 2px;
+  left: calc(50% + 14px);
+  top: 13px;
+  width: calc(100% - 28px);
+}
+
+.connectorComplete {
+  background: var(--accent-8);
+}
+
+.stepTitle {
+  opacity: 0.68;
+}
+
+.current .stepTitle,
+.completed .stepTitle {
+  opacity: 1;
+}
+
+@media (max-width: 420px) {
+  .horizontal .stepButton {
+    gap: 4px;
+  }
+
+  .horizontal .stepTitle {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+}

@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsNumber,
+  IsIn,
   Min,
 } from 'class-validator';
 
@@ -14,6 +15,10 @@ export class InitializeUploadDto {
   @IsString()
   @IsNotEmpty()
   contentType!: string;
+
+  @IsOptional()
+  @IsIn(['image/jpeg'])
+  thumbnailContentType?: string;
 
   @IsString()
   @IsNotEmpty()
