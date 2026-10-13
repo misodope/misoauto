@@ -164,8 +164,24 @@ jobs:
               return 1
             }
 
+            wait_for_http() {
+              container="$1"
+              url="$2"
+              for attempt in $(seq 1 60); do
+                if docker exec "$container" wget --no-verbose --tries=1 --spider "$url"; then
+                  return 0
+                fi
+                sleep 2
+              done
+              docker logs --tail=100 "$container"
+              echo "$container did not respond successfully in time"
+              return 1
+            }
+
             wait_for_healthy misoauto-backend
-            wait_for_healthy misoauto-frontend
+            # Probe the frontend directly so deploys remain compatible with an
+            # older remote Compose file whose healthcheck may still use curl.
+            wait_for_http misoauto-frontend http://localhost:3000
             # Keep only images referenced by running/stopped containers for this app.
             docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/misodope/misoauto"
             echo "Deployment complete!"
