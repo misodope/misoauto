@@ -68,6 +68,7 @@ model Platform {
   updatedAt   DateTime        @updatedAt @map("updated_at")
   accounts    SocialAccount[]
   posts       VideoPost[]
+  drafts      VideoPostDraft[]
 
   @@map("platforms")
 }
@@ -113,11 +114,13 @@ model VideoPost {
 model VideoPostDraft {
   id                Int       @id @default(autoincrement())
   videoId           Int       @map("video_id")
+  platformId        Int?      @map("platform_id")
   platformVideoId   String    @map("platform_video_id")
   uploadCompletedAt DateTime? @map("upload_completed_at")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
   video             Video     @relation(fields: [videoId], references: [id])
+  platform          Platform? @relation(fields: [platformId], references: [id])
 
   @@map("video_post_drafts")
 }

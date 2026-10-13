@@ -3,11 +3,12 @@ import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '@backend/generated/prisma/client';
 
 export type VideoPostDraftWithRelations = Prisma.VideoPostDraftGetPayload<{
-  include: { video: true };
+  include: { video: true; platform: true };
 }>;
 
 const VIDEO_POST_DRAFT_INCLUDE = {
   video: true,
+  platform: true,
 } as const;
 
 @Injectable()

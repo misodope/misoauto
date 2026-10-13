@@ -3,12 +3,13 @@ import { PrismaService } from '../../database/prisma.service';
 import { Prisma, PlatformType } from '@backend/generated/prisma/client';
 
 export type PlatformWithRelations = Prisma.PlatformGetPayload<{
-  include: { accounts: true; posts: true };
+  include: { accounts: true; posts: true; drafts: true };
 }>;
 
 const PLATFORM_INCLUDE = {
   accounts: true,
   posts: true,
+  drafts: true,
 } as const;
 
 @Injectable()

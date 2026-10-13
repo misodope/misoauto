@@ -107,7 +107,9 @@ export class VideosService {
     }
 
     if (video.s3ThumbnailKey) {
-      const thumbnailExists = await this.blobStorage.exists(video.s3ThumbnailKey);
+      const thumbnailExists = await this.blobStorage.exists(
+        video.s3ThumbnailKey,
+      );
       if (!thumbnailExists) {
         throw new NotFoundException('Thumbnail upload not found in storage');
       }
@@ -147,6 +149,13 @@ export class VideosService {
   async getVideoPublicUrl(userId: number, videoId: number) {
     const video = await this.getVideo(userId, videoId);
     return this.blobStorage.getPublicUrl(video.s3Key);
+  }
+
+  async getThumbnailPublicUrl(userId: number, videoId: number) {
+    const video = await this.getVideo(userId, videoId);
+    return video.s3ThumbnailKey
+      ? this.blobStorage.getPublicUrl(video.s3ThumbnailKey)
+      : undefined;
   }
 
   async deleteVideo(userId: number, videoId: number) {

@@ -352,6 +352,13 @@ export class PlatformConnectTikTokService {
   ): Promise<TikTokPublishResponse> {
     try {
       this.logger.log('Initializing TikTok video upload via PULL_FROM_URL');
+      const platform = await this.platformReader.findByName(
+        PlatformType.TIKTOK,
+      );
+      if (!platform) {
+        throw new BadRequestException('TikTok platform not found in database');
+      }
+
       // TikTok will fetch the video from the provided URL, so we provide a signed R2 URL for the draft video
       this.logger.debug(`Video URL for TikTok to pull: ${videoUrl}`);
 
@@ -381,6 +388,11 @@ export class PlatformConnectTikTokService {
         video: {
           connect: {
             id: videoId,
+          },
+        },
+        platform: {
+          connect: {
+            id: platform.id,
           },
         },
         platformVideoId: response.data.data.publish_id,

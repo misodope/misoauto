@@ -56,10 +56,7 @@ export interface YouTubeUploadResponse {
 }
 
 export type YouTubeProcessingStatus =
-  | 'processing'
-  | 'succeeded'
-  | 'failed'
-  | 'terminated';
+  'processing' | 'succeeded' | 'failed' | 'terminated';
 
 export interface YouTubeVideoStatusResponse {
   videoId: string;
@@ -489,6 +486,12 @@ export class PlatformConnectYouTubeService {
 
     try {
       this.logger.log(`Initializing YouTube upload for video ${videoId}`);
+      const platform = await this.platformReader.findByName(
+        PlatformType.YOUTUBE,
+      );
+      if (!platform) {
+        throw new BadRequestException('YouTube platform not found in database');
+      }
 
       // Step 1: Get stream + metadata from R2
       const { stream, contentLength, contentType } =
@@ -541,6 +544,11 @@ export class PlatformConnectYouTubeService {
       // Step 4: Save draft record (mirrors TikTok's initializeVideoUploadDraft)
       await this.videoPostDraftWriter.create({
         video: { connect: { id: videoId } },
+        platform: {
+          connect: {
+            id: platform.id,
+          },
+        },
         platformVideoId: youtubeVideoId,
       });
 

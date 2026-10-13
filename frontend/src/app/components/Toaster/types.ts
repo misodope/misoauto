@@ -1,11 +1,17 @@
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
+export interface ToastAction {
+  label: string;
+  href: string;
+}
+
 export interface Toast {
   id: string;
   title: string;
   description?: string;
   variant?: ToastVariant;
   duration?: number;
+  action?: ToastAction;
 }
 
 export interface ToastOptions {
@@ -13,6 +19,7 @@ export interface ToastOptions {
   description?: string;
   variant?: ToastVariant;
   duration?: number;
+  action?: ToastAction;
 }
 
 export interface ToastContextType {

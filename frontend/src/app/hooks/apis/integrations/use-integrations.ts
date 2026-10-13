@@ -108,6 +108,68 @@ export interface TikTokApiError {
 }
 
 // ============================================================================
+// Instagram Types
+// ============================================================================
+
+export interface InstagramUserInfo {
+  user_id: string;
+  username: string;
+  account_type: string;
+}
+
+export interface InstagramUserInfoResponse {
+  user: InstagramUserInfo;
+  platform: 'instagram';
+}
+
+export interface InstagramUploadDraftRequest {
+  videoId: number;
+  caption?: string;
+  shareToFeed?: boolean;
+}
+
+export interface InstagramUploadDraftResponse {
+  containerId: string;
+  platform: 'instagram';
+}
+
+export type InstagramContainerStatusCode =
+  'IN_PROGRESS' | 'FINISHED' | 'ERROR' | 'EXPIRED' | 'PUBLISHED';
+
+export interface InstagramPublishStatusRequest {
+  containerId: string;
+}
+
+export interface InstagramPublishStatusResponse {
+  containerId: string;
+  statusCode: InstagramContainerStatusCode;
+  status?: string;
+  platform: 'instagram';
+}
+
+export interface InstagramPublishRequest {
+  containerId: string;
+}
+
+export interface InstagramPublishResponse {
+  mediaId: string;
+  permalink: string;
+  platform: 'instagram';
+}
+
+export interface InstagramPublishingLimitResponse {
+  config?: number;
+  quota_usage?: number;
+  platform: 'instagram';
+}
+
+export interface InstagramApiError {
+  message: string;
+  statusCode?: number;
+  error?: string;
+}
+
+// ============================================================================
 // YouTube Types
 // ============================================================================
 
@@ -143,10 +205,7 @@ export interface YouTubeUploadDraftRequest {
 }
 
 export type YouTubeProcessingStatus =
-  | 'processing'
-  | 'succeeded'
-  | 'failed'
-  | 'terminated';
+  'processing' | 'succeeded' | 'failed' | 'terminated';
 
 export interface YouTubeUploadDraftResponse {
   videoId: string;
@@ -216,6 +275,47 @@ const getTikTokPublishStatus = async (
 };
 
 // ============================================================================
+// Instagram API Functions
+// ============================================================================
+
+const connectInstagram = async () => {
+  const response = await api.get('/platform/instagram/oauth');
+  return response.data;
+};
+
+const getInstagramUserInfo = async (): Promise<InstagramUserInfoResponse> => {
+  const response = await api.get('/platform/instagram/user');
+  return response.data;
+};
+
+const uploadDraftToInstagram = async (
+  data: InstagramUploadDraftRequest,
+): Promise<InstagramUploadDraftResponse> => {
+  const response = await api.post('/platform/instagram/upload-draft', data);
+  return response.data;
+};
+
+const getInstagramPublishStatus = async (
+  params: InstagramPublishStatusRequest,
+): Promise<InstagramPublishStatusResponse> => {
+  const response = await api.post('/platform/instagram/publish-status', params);
+  return response.data;
+};
+
+const publishToInstagram = async (
+  params: InstagramPublishRequest,
+): Promise<InstagramPublishResponse> => {
+  const response = await api.post('/platform/instagram/publish', params);
+  return response.data;
+};
+
+const getInstagramPublishingLimit =
+  async (): Promise<InstagramPublishingLimitResponse> => {
+    const response = await api.get('/platform/instagram/publishing-limit');
+    return response.data;
+  };
+
+// ============================================================================
 // YouTube API Functions
 // ============================================================================
 
@@ -257,6 +357,14 @@ export const tiktokKeys = {
     [...tiktokKeys.videos(), 'query', ...videoIds] as const,
   publishStatus: (publishId: string) =>
     [...tiktokKeys.all, 'publish-status', publishId] as const,
+};
+
+export const instagramKeys = {
+  all: ['instagram'] as const,
+  userInfo: () => [...instagramKeys.all, 'user-info'] as const,
+  publishStatus: (containerId: string) =>
+    [...instagramKeys.all, 'publish-status', containerId] as const,
+  publishingLimit: () => [...instagramKeys.all, 'publishing-limit'] as const,
 };
 
 // ============================================================================
@@ -348,6 +456,92 @@ export const useTikTokPublishStatus = (): UseMutationResult<
         error.response?.data?.message || error.message,
       );
     },
+  });
+};
+
+// ============================================================================
+// Instagram Hooks
+// ============================================================================
+
+export const useInstagramIntegration = () => {
+  return useMutation({
+    mutationFn: connectInstagram,
+    onSuccess: (data) => {
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: (error) => {
+      console.error(`Error connecting Instagram account: ${error.message}`);
+    },
+  });
+};
+
+export const useInstagramUserInfo = (
+  enabled = true,
+): UseQueryResult<InstagramUserInfoResponse, AxiosError<InstagramApiError>> => {
+  return useQuery({
+    queryKey: instagramKeys.userInfo(),
+    queryFn: getInstagramUserInfo,
+    enabled,
+  });
+};
+
+export const useInstagramUploadDraft = (): UseMutationResult<
+  InstagramUploadDraftResponse,
+  AxiosError<InstagramApiError>,
+  InstagramUploadDraftRequest
+> => {
+  return useMutation({
+    mutationFn: uploadDraftToInstagram,
+    onError: (error) => {
+      console.error(
+        'Failed to prepare Instagram Reel:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
+export const useInstagramPublishStatus = (): UseMutationResult<
+  InstagramPublishStatusResponse,
+  AxiosError<InstagramApiError>,
+  InstagramPublishStatusRequest
+> => {
+  return useMutation({
+    mutationFn: getInstagramPublishStatus,
+    onError: (error) => {
+      console.error(
+        'Failed to fetch Instagram publish status:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
+export const useInstagramPublish = (): UseMutationResult<
+  InstagramPublishResponse,
+  AxiosError<InstagramApiError>,
+  InstagramPublishRequest
+> => {
+  return useMutation({
+    mutationFn: publishToInstagram,
+    onError: (error) => {
+      console.error(
+        'Failed to publish Instagram Reel:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
+export const useInstagramPublishingLimit = (): UseQueryResult<
+  InstagramPublishingLimitResponse,
+  AxiosError<InstagramApiError>
+> => {
+  return useQuery({
+    queryKey: instagramKeys.publishingLimit(),
+    queryFn: getInstagramPublishingLimit,
   });
 };
 
