@@ -20,7 +20,7 @@ import {
 import { useUploads } from '@frontend/app/contexts/UploadContext/uploadContext';
 import DeleteModal from '../DeleteModal';
 import ScheduleModal from '../ScheduleModal';
-import UploadDrawer from '../UploadDrawer';
+import PublishVideoDrawer from '../PublishVideoDrawer';
 
 const PLATFORMS: { type: PlatformType; label: string }[] = [
   { type: 'TIKTOK', label: 'TikTok' },
@@ -79,7 +79,7 @@ export const VideoTable: React.FC = () => {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [uploadDrawerOpen, setUploadDrawerOpen] = useState(false);
+  const [publishDrawerOpen, setPublishDrawerOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   useEffect(() => {
@@ -96,9 +96,9 @@ export const VideoTable: React.FC = () => {
     return () => clearInterval(interval);
   }, [hasActiveUploads, refetch]);
 
-  const handleUploadClick = (video: Video) => {
+  const handlePublishClick = (video: Video) => {
     setSelectedVideo(video);
-    setUploadDrawerOpen(true);
+    setPublishDrawerOpen(true);
   };
 
   const handleScheduleClick = (video: Video) => {
@@ -231,7 +231,7 @@ export const VideoTable: React.FC = () => {
                     id: 'upload',
                     label: 'Platform Upload',
                     icon: <UploadIcon />,
-                    onClick: () => handleUploadClick(row),
+                    onClick: () => handlePublishClick(row),
                   },
                   {
                     id: 'schedule',
@@ -281,10 +281,10 @@ export const VideoTable: React.FC = () => {
         video={selectedVideo}
       />
 
-      <UploadDrawer
-        open={uploadDrawerOpen}
+      <PublishVideoDrawer
+        open={publishDrawerOpen}
         onOpenChange={(open) => {
-          setUploadDrawerOpen(open);
+          setPublishDrawerOpen(open);
           if (!open) setSelectedVideo(null);
         }}
         video={selectedVideo}
