@@ -39,7 +39,7 @@ type WorkflowState =
 const POLL_INTERVAL_MS = 5_000;
 const POLL_TIMEOUT_MS = 10 * 60 * 1_000;
 
-interface UploadDrawerProps {
+interface PublishVideoDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   video: Video | null;
@@ -64,11 +64,11 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return error instanceof Error ? error.message : fallback;
 };
 
-export default function UploadDrawer({
+export default function PublishVideoDrawer({
   open,
   onOpenChange,
   video,
-}: UploadDrawerProps) {
+}: PublishVideoDrawerProps) {
   const { user } = useAuth();
   const {
     toast: showToast,
