@@ -83,6 +83,14 @@
   line-height: 1.4;
 }
 
+.link {
+  grid-area: description;
+  margin-top: 4px;
+  color: var(--accent-11);
+  font-size: 13px;
+  text-decoration: underline;
+}
+
 .action {
   grid-area: action;
 }

@@ -29,9 +29,10 @@ RUN npm ci
 COPY tsconfig.base.json ./
 COPY backend ./backend
 WORKDIR /app/backend
-# Generate Prisma client and build the application
-# In v7, the generated client is TypeScript compiled into dist/ by nest build
-RUN npx prisma generate && npx nest build
+# Generate the Prisma client and build the application through the canonical
+# backend build script. In v7, the generated client is TypeScript compiled
+# into dist/ by nest build.
+RUN npm run build
 
 # Production stage
 FROM node:22-alpine AS production

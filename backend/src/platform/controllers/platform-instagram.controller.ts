@@ -1,36 +1,39 @@
 import {
+  Body,
   Controller,
   Get,
+  Logger,
+  NotFoundException,
   Post,
   Query,
-  Body,
-  Param,
-  Logger,
-  Res,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { PlatformConnectInstagramService } from '../services/platform-connect-instagram.service';
+import { PlatformType } from '@backend/generated/prisma/client';
 import {
-  JwtAuthGuard,
   CurrentUser,
-  JwtPayload,
   getOAuthCookieOptions,
+  JwtAuthGuard,
+  JwtPayload,
 } from '@backend/common';
+import { VideosService } from '@backend/videos/services/videos.service';
+import { VideoPostDraftReader } from '@backend/video-posts/repository/video-post-draft-reader';
+import { PlatformReader } from '../repository/platform-reader';
+import { PlatformConnectInstagramService } from '../services/platform-connect-instagram.service';
 
-export interface TokenExchangeRequest {
-  code: string;
+export interface UploadDraftRequest {
+  videoId: number;
+  caption?: string;
+  shareToFeed?: boolean;
 }
 
-export interface TokenRequest {
-  accessToken: string;
+export interface PublishStatusRequest {
+  containerId: string;
 }
 
-export interface UserMediaRequest {
-  accessToken: string;
-  limit?: number;
-}
+const isDev = () => process.env.NODE_ENV !== 'production';
 
 @Controller('platform/instagram')
 export class InstagramController {
@@ -38,6 +41,9 @@ export class InstagramController {
 
   constructor(
     private readonly instagramService: PlatformConnectInstagramService,
+    private readonly videosService: VideosService,
+    private readonly platformReader: PlatformReader,
+    private readonly videoPostDraftReader: VideoPostDraftReader,
   ) {}
 
   @Get('oauth')
@@ -47,22 +53,22 @@ export class InstagramController {
       `Initiating Instagram OAuth flow for user ${user.sub} (${user.email})`,
     );
 
-    // Generate CSRF state token
     const csrfState = Math.random().toString(36).substring(2);
+    const state = isDev() ? `${csrfState}:${user.sub}` : csrfState;
 
-    // Store CSRF state and userId in cookies for redirect validation
-    res.cookie('csrfState', csrfState, {
-      ...getOAuthCookieOptions(),
-      maxAge: 5 * 60 * 1000, // 5 minutes
-    });
-    res.cookie('oauthUserId', user.sub.toString(), {
-      ...getOAuthCookieOptions(),
-      maxAge: 5 * 60 * 1000, // 5 minutes
-    });
+    if (!isDev()) {
+      res.cookie('csrfState', csrfState, {
+        ...getOAuthCookieOptions(),
+        maxAge: 5 * 60 * 1000,
+      });
+      res.cookie('oauthUserId', user.sub.toString(), {
+        ...getOAuthCookieOptions(),
+        maxAge: 5 * 60 * 1000,
+      });
+    }
 
-    // Generate auth URL and redirect
-    const authUrl = this.instagramService.generateAuthUrl(csrfState);
-    res.redirect(authUrl);
+    const authUrl = this.instagramService.generateAuthUrl(state);
+    res.status(200).json({ url: authUrl });
   }
 
   @Get('redirect')
@@ -77,27 +83,33 @@ export class InstagramController {
     this.logger.log('Handling Instagram OAuth redirect');
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4000';
+    let userId: string | undefined;
 
-    // Extract CSRF state and userId from cookies
-    const csrfState = req.cookies?.csrfState;
-    const userId = req.cookies?.oauthUserId;
+    if (isDev()) {
+      const stateParts = state?.split(':');
+      if (stateParts?.length === 2) {
+        userId = stateParts[1];
+        this.logger.log(`Dev mode: extracted userId ${userId} from state`);
+      }
+    } else {
+      const csrfState = req.cookies?.csrfState;
+      userId = req.cookies?.oauthUserId;
 
-    // Verify CSRF state
-    if (!csrfState || csrfState !== state) {
-      this.logger.error('CSRF state mismatch');
-      res.clearCookie('csrfState');
-      res.clearCookie('oauthUserId');
-      return res.redirect(`${frontendUrl}/integrations?error=csrf_mismatch`);
+      if (!csrfState || csrfState !== state) {
+        this.logger.error('CSRF state mismatch');
+        res.clearCookie('csrfState');
+        res.clearCookie('oauthUserId');
+        return res.redirect(`${frontendUrl}/integrations?error=csrf_mismatch`);
+      }
     }
 
     if (!userId) {
-      this.logger.error('Missing user ID from cookies');
+      this.logger.error('Missing user ID');
       res.clearCookie('csrfState');
       res.clearCookie('oauthUserId');
       return res.redirect(`${frontendUrl}/integrations?error=missing_user_id`);
     }
 
-    // Handle OAuth error
     if (error) {
       this.logger.error(
         `Instagram OAuth error: ${error} - ${errorDescription}`,
@@ -110,22 +122,19 @@ export class InstagramController {
     }
 
     try {
-      // Exchange code for short-lived token
-      const shortLivedToken =
+      const tokenResponse =
         await this.instagramService.exchangeCodeForToken(code);
 
-      // Save account to database (exchanges for long-lived token internally)
       await this.instagramService.saveOAuthAccount({
-        userId: parseInt(userId),
-        shortLivedToken: shortLivedToken.access_token,
-        instagramUserId: shortLivedToken.user_id.toString(),
+        userId: parseInt(userId, 10),
+        shortLivedToken: tokenResponse.access_token,
       });
 
-      // Clear OAuth cookies
-      res.clearCookie('csrfState');
-      res.clearCookie('oauthUserId');
+      if (!isDev()) {
+        res.clearCookie('csrfState');
+        res.clearCookie('oauthUserId');
+      }
 
-      // Redirect to homepage on success
       this.logger.log('Instagram account connected successfully');
       res.redirect(`${frontendUrl}/?success=instagram_connected`);
     } catch (err) {
@@ -136,41 +145,14 @@ export class InstagramController {
     }
   }
 
-  @Post('exchange-token')
-  async exchangeToken(@Body() body: TokenExchangeRequest) {
-    this.logger.log('Exchanging Instagram authorization code for tokens');
-    const shortLivedToken = await this.instagramService.exchangeCodeForToken(
-      body.code,
+  @Get('user')
+  @UseGuards(JwtAuthGuard)
+  async getUserInfo(@CurrentUser() user: JwtPayload) {
+    this.logger.log(`Fetching Instagram user info for user ${user.sub}`);
+    const accessToken = await this.instagramService.getAccessTokenForUser(
+      user.sub,
     );
-    const longLivedToken =
-      await this.instagramService.exchangeForLongLivedToken(
-        shortLivedToken.access_token,
-      );
-
-    return {
-      shortLivedToken,
-      longLivedToken,
-      platform: 'instagram',
-    };
-  }
-
-  @Post('refresh-token')
-  async refreshToken(@Body() body: TokenRequest) {
-    this.logger.log('Refreshing Instagram long-lived token');
-    const refreshedToken = await this.instagramService.refreshLongLivedToken(
-      body.accessToken,
-    );
-
-    return {
-      ...refreshedToken,
-      platform: 'instagram',
-    };
-  }
-
-  @Post('user-info')
-  async getUserInfo(@Body() body: TokenRequest) {
-    this.logger.log('Fetching Instagram user information');
-    const userInfo = await this.instagramService.getUserInfo(body.accessToken);
+    const userInfo = await this.instagramService.getUserInfo(accessToken);
 
     return {
       user: userInfo,
@@ -178,46 +160,113 @@ export class InstagramController {
     };
   }
 
-  @Post('user-media')
-  async getUserMedia(@Body() body: UserMediaRequest) {
-    this.logger.log('Fetching Instagram user media');
-    const media = await this.instagramService.getUserMedia(
-      body.accessToken,
-      body.limit,
-    );
-
-    return {
-      media,
-      platform: 'instagram',
-      count: media.length,
-    };
-  }
-
-  @Post('media/:mediaId')
-  async getMediaById(
-    @Param('mediaId') mediaId: string,
-    @Body() body: TokenRequest,
+  @Post('upload-draft')
+  @UseGuards(JwtAuthGuard)
+  async uploadDraft(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: UploadDraftRequest,
   ) {
-    this.logger.log(`Fetching Instagram media by ID: ${mediaId}`);
-    const media = await this.instagramService.getMediaById(
-      mediaId,
-      body.accessToken,
-    );
+    const account = await this.getInstagramAccount(user.sub);
+    const video = await this.videosService.getVideo(user.sub, body.videoId);
+    const caption = body.caption ?? video.description ?? '';
 
-    return {
-      media,
-      platform: 'instagram',
-    };
+    this.instagramService.validateReelVideo(video, caption);
+
+    const [videoUrl, coverUrl] = await Promise.all([
+      this.videosService.getVideoPublicUrl(user.sub, body.videoId),
+      this.videosService.getThumbnailPublicUrl(user.sub, body.videoId),
+    ]);
+
+    const result = await this.instagramService.createReelContainer({
+      accessToken: account.accessToken,
+      igUserId: account.accountId,
+      videoUrl,
+      caption,
+      coverUrl,
+      shareToFeed: body.shareToFeed ?? true,
+      videoId: body.videoId,
+      platformId: account.platformId,
+    });
+
+    return { ...result, platform: 'instagram' };
   }
 
-  @Post('validate-token')
-  async validateToken(@Body() body: TokenRequest) {
-    this.logger.log('Validating Instagram access token');
-    const isValid = await this.instagramService.validateToken(body.accessToken);
+  @Post('publish-status')
+  @UseGuards(JwtAuthGuard)
+  async getPublishStatus(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: PublishStatusRequest,
+  ) {
+    const draft = await this.getOwnedDraft(user.sub, body.containerId);
+    const account = await this.getInstagramAccount(user.sub);
+    const result = await this.instagramService.getContainerStatus(
+      account.accessToken,
+      draft.platformVideoId,
+    );
 
-    return {
-      valid: isValid,
-      platform: 'instagram',
-    };
+    return { ...result, platform: 'instagram' };
+  }
+
+  @Post('publish')
+  @UseGuards(JwtAuthGuard)
+  async publish(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: PublishStatusRequest,
+  ) {
+    const draft = await this.getOwnedDraft(user.sub, body.containerId);
+    const account = await this.getInstagramAccount(user.sub);
+    const result = await this.instagramService.publishContainer({
+      accessToken: account.accessToken,
+      igUserId: account.accountId,
+      containerId: draft.platformVideoId,
+      videoId: draft.videoId,
+      platformId: account.platformId,
+      socialAccountId: account.id,
+    });
+
+    return { ...result, platform: 'instagram' };
+  }
+
+  @Get('publishing-limit')
+  @UseGuards(JwtAuthGuard)
+  async getPublishingLimit(@CurrentUser() user: JwtPayload) {
+    const account = await this.getInstagramAccount(user.sub);
+    const limit = await this.instagramService.getPublishingLimit(
+      account.accessToken,
+      account.accountId,
+    );
+
+    return { ...limit, platform: 'instagram' };
+  }
+
+  private async getInstagramAccount(userId: number) {
+    const platform = await this.platformReader.findByName(
+      PlatformType.INSTAGRAM,
+    );
+    if (!platform) {
+      throw new NotFoundException('Instagram platform not found');
+    }
+
+    const account = await this.instagramService.getAccountForUser(userId);
+    if (account.platformId !== platform.id) {
+      throw new NotFoundException('Instagram account not found');
+    }
+
+    return account;
+  }
+
+  private async getOwnedDraft(userId: number, containerId: string) {
+    const draft =
+      await this.videoPostDraftReader.findByPlatformVideoId(containerId);
+
+    if (
+      !draft ||
+      draft.video.userId !== userId ||
+      draft.platform?.name !== PlatformType.INSTAGRAM
+    ) {
+      throw new NotFoundException('Instagram draft not found');
+    }
+
+    return draft;
   }
 }

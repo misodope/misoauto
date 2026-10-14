@@ -42,6 +42,16 @@ export const Toaster: React.FC = () => {
               {toast.description}
             </Toast.Description>
           )}
+          {toast.action && (
+            <a
+              className={styles.link}
+              href={toast.action.href}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {toast.action.label}
+            </a>
+          )}
           <Toast.Action className={styles.action} asChild altText="Close">
             <button
               className={styles.closeButton}

@@ -31,20 +31,29 @@ export class TokenRefreshCron {
     this.logger.log('Running token refresh job');
 
     try {
-      // Find tokens that will expire in the next 6 hours
+      const now = Date.now();
       const soonToExpireAccounts = await this.socialAccountReader.findAll({
         where: {
-          tokenExpiry: {
-            lte: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours from now
-          },
-          refreshToken: {
-            not: null,
-          },
+          OR: [
+            {
+              refreshToken: { not: null },
+              tokenExpiry: {
+                lte: new Date(now + 18 * 60 * 60 * 1000),
+              },
+            },
+            {
+              platform: { name: PlatformType.INSTAGRAM },
+              tokenExpiry: {
+                lte: new Date(now + 7 * 24 * 60 * 60 * 1000),
+                gt: new Date(now),
+              },
+            },
+          ],
         },
       });
 
       this.logger.log(
-        `Found ${soonToExpireAccounts.length} tokens to refresh (expiring within 6 hours)`,
+        `Found ${soonToExpireAccounts.length} tokens to refresh (refreshable tokens within 18 hours or Instagram tokens within 7 days)`,
       );
 
       for (const account of soonToExpireAccounts) {
@@ -70,12 +79,14 @@ export class TokenRefreshCron {
       `Refreshing token for account ${account.id} (Platform: ${account.platform.name})`,
     );
 
-    if (!account.refreshToken) {
-      this.logger.warn(`Account ${account.id} has no refresh token, skipping`);
+    const platformName = account.platform.name as PlatformType;
+
+    if (!account.refreshToken && platformName !== PlatformType.INSTAGRAM) {
+      this.logger.warn(
+        `Account ${account.id} has no refresh token and is not Instagram, skipping`,
+      );
       return;
     }
-
-    const platformName = account.platform.name as PlatformType;
 
     switch (platformName) {
       case PlatformType.TIKTOK:

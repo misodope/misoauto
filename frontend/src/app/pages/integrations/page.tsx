@@ -15,6 +15,7 @@ import {
 import ProtectedRoute from '../../components/ProtectedRoute/ProtectedRoute';
 import { useToast } from '../../components/Toaster';
 import {
+  useInstagramIntegration,
   useTikTokIntegration,
   useYouTubeIntegration,
 } from '@frontend/app/hooks/apis/integrations/use-integrations';
@@ -50,6 +51,7 @@ function IntegrationsContent() {
 
   const { mutate: connectTikTok } = useTikTokIntegration();
   const { mutate: connectYouTube } = useYouTubeIntegration();
+  const { mutate: connectInstagram } = useInstagramIntegration();
 
   // Handle OAuth callback results from URL params
   useEffect(() => {
@@ -74,6 +76,14 @@ function IntegrationsContent() {
       setIntegrations((prev) =>
         prev.map((i) =>
           i.platform === Platform.YOUTUBE ? { ...i, connected: true } : i,
+        ),
+      );
+      toastShownRef.current = true;
+    } else if (successParam === 'instagram_connected') {
+      success('Instagram connected', 'Your account was linked successfully.');
+      setIntegrations((prev) =>
+        prev.map((i) =>
+          i.platform === Platform.INSTAGRAM ? { ...i, connected: true } : i,
         ),
       );
       toastShownRef.current = true;
@@ -108,7 +118,11 @@ function IntegrationsContent() {
   }, [user]);
 
   const isSupported = (platform: Platform): boolean => {
-    return platform === Platform.TIKTOK || platform === Platform.YOUTUBE;
+    return (
+      platform === Platform.TIKTOK ||
+      platform === Platform.YOUTUBE ||
+      platform === Platform.INSTAGRAM
+    );
   };
 
   const isConnected = (platform: Platform): boolean => {
@@ -122,6 +136,9 @@ function IntegrationsContent() {
         break;
       case Platform.YOUTUBE:
         connectYouTube();
+        break;
+      case Platform.INSTAGRAM:
+        connectInstagram();
         break;
       default:
         console.log('Unsupported Integration');

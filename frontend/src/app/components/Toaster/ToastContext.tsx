@@ -31,6 +31,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
       description: options.description,
       variant: options.variant ?? 'info',
       duration: options.duration ?? 5000,
+      action: options.action,
     };
 
     setToasts((prev) => [...prev, newToast]);

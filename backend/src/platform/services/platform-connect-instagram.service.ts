@@ -3,7 +3,14 @@ import axios, { AxiosInstance } from 'axios';
 import { SocialAccountWriter } from '../../social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '../../social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
-import { PlatformType } from '@backend/generated/prisma/client';
+import { VideoPostDraftReader } from '../../video-posts/repository/video-post-draft-reader';
+import { VideoPostDraftWriter } from '../../video-posts/repository/video-post-draft-writer';
+import { VideoPostWriter } from '../../video-posts/repository/video-post-writer';
+import { PlatformType, PostStatus } from '@backend/generated/prisma/client';
+import { SocialAccountWithRelations } from '../../social-accounts/repository/social-account-reader';
+
+const GRAPH_URL = 'https://graph.instagram.com/v25.0';
+const TOKEN_URL = 'https://graph.instagram.com';
 
 export interface InstagramOAuthConfig {
   clientId: string;
@@ -14,7 +21,6 @@ export interface InstagramOAuthConfig {
 
 export interface InstagramTokenResponse {
   access_token: string;
-  user_id: number;
 }
 
 export interface InstagramLongLivedTokenResponse {
@@ -24,21 +30,33 @@ export interface InstagramLongLivedTokenResponse {
 }
 
 export interface InstagramUserInfo {
-  id: string;
+  user_id: string;
   username: string;
-  account_type: 'BUSINESS' | 'MEDIA_CREATOR' | 'PERSONAL';
-  media_count: number;
+  account_type: string;
 }
 
-export interface InstagramMedia {
-  id: string;
-  caption: string;
-  media_type: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
-  media_url: string;
-  permalink: string;
-  thumbnail_url?: string;
-  timestamp: string;
-  username: string;
+export type InstagramContainerStatusCode =
+  'IN_PROGRESS' | 'FINISHED' | 'ERROR' | 'EXPIRED' | 'PUBLISHED';
+
+export interface InstagramContainerStatus {
+  containerId: string;
+  statusCode: InstagramContainerStatusCode;
+  status?: string;
+}
+
+export interface InstagramPublishingLimit {
+  config?: number;
+  quota_usage?: number;
+  [key: string]: unknown;
+}
+
+interface InstagramApiErrorResponse {
+  error?: {
+    error_user_msg?: string;
+    message?: string;
+  };
+  error_user_msg?: string;
+  message?: string;
 }
 
 @Injectable()
@@ -51,13 +69,28 @@ export class PlatformConnectInstagramService {
     private readonly socialAccountWriter: SocialAccountWriter,
     private readonly socialAccountReader: SocialAccountReader,
     private readonly platformReader: PlatformReader,
+    private readonly videoPostDraftWriter: VideoPostDraftWriter,
+    private readonly videoPostDraftReader: VideoPostDraftReader,
+    private readonly videoPostWriter: VideoPostWriter,
   ) {
+    const isDev = process.env.NODE_ENV !== 'production';
+
     this.config = {
       clientId: process.env.INSTAGRAM_CLIENT_ID || '',
       clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '',
-      redirectUri: process.env.INSTAGRAM_REDIRECT_URI || '',
-      scope: 'user_profile,user_media',
+      redirectUri:
+        (isDev && process.env.INSTAGRAM_REDIRECT_URI_DEV) ||
+        process.env.INSTAGRAM_REDIRECT_URI ||
+        '',
+      scope: 'instagram_business_basic,instagram_business_content_publish',
     };
+
+    if (!this.config.clientId) {
+      this.logger.warn('Instagram client ID is not configured');
+    }
+    if (!this.config.redirectUri) {
+      this.logger.warn('Instagram redirect URI is not configured');
+    }
 
     this.httpClient = axios.create({
       timeout: 30000,
@@ -99,7 +132,7 @@ export class PlatformConnectInstagramService {
       state: state || Math.random().toString(36).substring(7),
     };
 
-    const authUrl = `https://api.instagram.com/oauth/authorize?${new URLSearchParams(params).toString()}`;
+    const authUrl = `https://www.instagram.com/oauth/authorize?${new URLSearchParams(params).toString()}`;
     this.logger.log(`Generated Instagram auth URL: ${authUrl}`);
 
     return authUrl;
@@ -114,7 +147,7 @@ export class PlatformConnectInstagramService {
         client_secret: this.config.clientSecret,
         grant_type: 'authorization_code',
         redirect_uri: this.config.redirectUri,
-        code,
+        code: code.replace(/#_$/, ''),
       };
 
       const response = await this.httpClient.post(
@@ -124,15 +157,30 @@ export class PlatformConnectInstagramService {
 
       if (response.data.error) {
         throw new BadRequestException(
-          `Instagram OAuth error: ${response.data.error_description}`,
+          `Instagram OAuth error: ${response.data.error_description || response.data.error.message}`,
+        );
+      }
+
+      const payload = Array.isArray(response.data?.data)
+        ? response.data.data[0]
+        : response.data;
+
+      if (!payload?.access_token) {
+        throw new BadRequestException(
+          'Instagram OAuth response did not include an access token',
         );
       }
 
       this.logger.log('Successfully exchanged code for short-lived token');
-      return response.data;
+      return { access_token: payload.access_token };
     } catch (error) {
       this.logger.error('Failed to exchange code for token:', error);
-      throw new BadRequestException('Failed to authenticate with Instagram');
+      throw new BadRequestException(
+        this.getMetaErrorMessage(
+          error,
+          'Failed to authenticate with Instagram',
+        ),
+      );
     }
   }
 
@@ -149,20 +197,23 @@ export class PlatformConnectInstagramService {
       };
 
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/access_token?${new URLSearchParams(params).toString()}`,
+        `${TOKEN_URL}/access_token?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {
-        throw new BadRequestException(
-          `Instagram token exchange error: ${response.data.error.message}`,
-        );
+        throw new BadRequestException(this.getMetaErrorMessage(response.data));
       }
 
       this.logger.log('Successfully exchanged for long-lived token');
       return response.data;
     } catch (error) {
       this.logger.error('Failed to exchange for long-lived token:', error);
-      throw new BadRequestException('Failed to get long-lived Instagram token');
+      throw new BadRequestException(
+        this.getMetaErrorMessage(
+          error,
+          'Failed to get long-lived Instagram token',
+        ),
+      );
     }
   }
 
@@ -178,199 +229,386 @@ export class PlatformConnectInstagramService {
       };
 
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/refresh_access_token?${new URLSearchParams(params).toString()}`,
+        `${TOKEN_URL}/refresh_access_token?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {
-        throw new BadRequestException(
-          `Instagram token refresh error: ${response.data.error.message}`,
-        );
+        throw new BadRequestException(this.getMetaErrorMessage(response.data));
       }
 
       this.logger.log('Successfully refreshed long-lived token');
       return response.data;
     } catch (error) {
       this.logger.error('Failed to refresh long-lived token:', error);
-      throw new BadRequestException('Failed to refresh Instagram token');
+      throw new BadRequestException(
+        this.getMetaErrorMessage(error, 'Failed to refresh Instagram token'),
+      );
     }
   }
 
-  async saveOAuthAccount(params: {
-    userId: number;
-    shortLivedToken: string;
-    instagramUserId: string;
-  }) {
+  async saveOAuthAccount(params: { userId: number; shortLivedToken: string }) {
     try {
       this.logger.log('Saving Instagram OAuth account');
 
-      // Exchange short-lived token for long-lived token
       const longLivedTokenResponse = await this.exchangeForLongLivedToken(
         params.shortLivedToken,
       );
-
-      // Get Instagram platform
+      const userInfo = await this.getUserInfo(
+        longLivedTokenResponse.access_token,
+      );
       const platform = await this.platformReader.findByName(
         PlatformType.INSTAGRAM,
       );
+
       if (!platform) {
         throw new BadRequestException(
           'Instagram platform not found in database',
         );
       }
 
-      // Calculate token expiry
       const tokenExpiry = new Date(
         Date.now() + longLivedTokenResponse.expires_in * 1000,
       );
-
-      // Fetch user info to get username
-      const userInfo = await this.getUserInfo(
-        longLivedTokenResponse.access_token,
-      );
-
-      // Check if account already exists
       const existingAccount =
         await this.socialAccountReader.findByPlatformAndAccountId(
           platform.id,
-          params.instagramUserId,
+          userInfo.user_id,
         );
 
-      let savedAccount;
       if (existingAccount) {
-        // Update existing account with new tokens
         this.logger.log(
           `Updating existing Instagram account ${existingAccount.id}`,
         );
-        savedAccount = await this.socialAccountWriter.updateTokens({
+        return await this.socialAccountWriter.updateTokens({
           id: existingAccount.id,
-          accessToken: longLivedTokenResponse.access_token,
-          refreshToken: existingAccount.refreshToken || undefined,
-          tokenExpiry,
-        });
-      } else {
-        // Create new account
-        this.logger.log('Creating new Instagram account');
-        savedAccount = await this.socialAccountWriter.create({
-          user: { connect: { id: params.userId } },
-          platform: { connect: { id: platform.id } },
           accessToken: longLivedTokenResponse.access_token,
           refreshToken: undefined,
           tokenExpiry,
-          accountId: params.instagramUserId,
-          username: userInfo.username,
         });
       }
 
-      this.logger.log('Successfully saved Instagram account');
-      return savedAccount;
+      this.logger.log('Creating new Instagram account');
+      return await this.socialAccountWriter.create({
+        user: { connect: { id: params.userId } },
+        platform: { connect: { id: platform.id } },
+        accessToken: longLivedTokenResponse.access_token,
+        refreshToken: undefined,
+        tokenExpiry,
+        accountId: userInfo.user_id,
+        username: userInfo.username,
+      });
     } catch (error) {
       this.logger.error('Failed to save Instagram account:', error);
-      throw error;
+      throw new BadRequestException('Failed to save Instagram account');
     }
   }
 
   async getUserInfo(accessToken: string): Promise<InstagramUserInfo> {
     try {
-      this.logger.log('Fetching Instagram user information');
-
       const params = {
-        fields: 'id,username,account_type,media_count',
+        fields: 'user_id,username,account_type',
         access_token: accessToken,
       };
 
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/me?${new URLSearchParams(params).toString()}`,
+        `${GRAPH_URL}/me?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {
-        throw new BadRequestException(
-          `Instagram API error: ${response.data.error.message}`,
-        );
+        throw new BadRequestException(this.getMetaErrorMessage(response.data));
       }
 
-      this.logger.log('Successfully fetched user information');
       return response.data;
     } catch (error) {
       this.logger.error('Failed to fetch user information:', error);
       throw new BadRequestException(
-        'Failed to fetch Instagram user information',
+        this.getMetaErrorMessage(
+          error,
+          'Failed to fetch Instagram user information',
+        ),
       );
     }
   }
 
-  async getUserMedia(
-    accessToken: string,
-    limit: number = 25,
-  ): Promise<InstagramMedia[]> {
-    try {
-      this.logger.log('Fetching Instagram user media');
+  async getAccessTokenForUser(userId: number): Promise<string> {
+    const account = await this.getAccountForUser(userId);
+    return account.accessToken;
+  }
 
-      const params = {
-        fields:
-          'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username',
-        limit: limit.toString(),
-        access_token: accessToken,
+  async getAccountForUser(userId: number): Promise<SocialAccountWithRelations> {
+    const platform = await this.platformReader.findByName(
+      PlatformType.INSTAGRAM,
+    );
+    if (!platform) {
+      throw new BadRequestException('Instagram platform not found');
+    }
+
+    const accounts = await this.socialAccountReader.findByUserAndPlatform(
+      userId,
+      platform.id,
+    );
+
+    if (!accounts.length) {
+      throw new BadRequestException('No Instagram account connected');
+    }
+
+    return accounts[0];
+  }
+
+  async createReelContainer(params: {
+    accessToken: string;
+    igUserId: string;
+    videoUrl: string;
+    caption: string;
+    coverUrl?: string;
+    shareToFeed: boolean;
+    videoId: number;
+    platformId: number;
+  }): Promise<{ containerId: string }> {
+    try {
+      const body: Record<string, string | boolean> = {
+        media_type: 'REELS',
+        video_url: params.videoUrl,
+        caption: params.caption,
+        share_to_feed: params.shareToFeed,
+        access_token: params.accessToken,
       };
 
-      const response = await this.httpClient.get(
-        `https://graph.instagram.com/me/media?${new URLSearchParams(params).toString()}`,
+      if (params.coverUrl) {
+        body.cover_url = params.coverUrl;
+      }
+
+      const response = await this.httpClient.post(
+        `${GRAPH_URL}/${params.igUserId}/media`,
+        body,
       );
 
       if (response.data.error) {
+        throw new BadRequestException(this.getMetaErrorMessage(response.data));
+      }
+
+      const containerId = response.data.id;
+      if (!containerId) {
         throw new BadRequestException(
-          `Instagram API error: ${response.data.error.message}`,
+          'Instagram did not return a Reel container ID',
         );
       }
 
-      this.logger.log('Successfully fetched user media');
-      return response.data.data || [];
+      await this.videoPostDraftWriter.create({
+        video: { connect: { id: params.videoId } },
+        platform: { connect: { id: params.platformId } },
+        platformVideoId: containerId,
+      });
+
+      return { containerId };
     } catch (error) {
-      this.logger.error('Failed to fetch user media:', error);
-      throw new BadRequestException('Failed to fetch Instagram user media');
+      this.logger.error('Failed to create Instagram Reel container:', error);
+      throw new BadRequestException(
+        this.getMetaErrorMessage(
+          error,
+          'Failed to prepare Instagram Reel upload',
+        ),
+      );
     }
   }
 
-  async getMediaById(
-    mediaId: string,
+  async getContainerStatus(
     accessToken: string,
-  ): Promise<InstagramMedia> {
+    containerId: string,
+  ): Promise<InstagramContainerStatus> {
     try {
-      this.logger.log(`Fetching Instagram media details for ID: ${mediaId}`);
-
       const params = {
-        fields:
-          'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,username',
+        fields: 'status_code,status',
         access_token: accessToken,
       };
-
       const response = await this.httpClient.get(
-        `https://graph.instagram.com/${mediaId}?${new URLSearchParams(params).toString()}`,
+        `${GRAPH_URL}/${containerId}?${new URLSearchParams(params).toString()}`,
       );
 
       if (response.data.error) {
+        throw new BadRequestException(this.getMetaErrorMessage(response.data));
+      }
+
+      const statusCode = response.data
+        .status_code as InstagramContainerStatusCode;
+      const result: InstagramContainerStatus = {
+        containerId,
+        statusCode,
+        status: response.data.status,
+      };
+
+      if (statusCode === 'FINISHED') {
+        const draft =
+          await this.videoPostDraftReader.findByPlatformVideoId(containerId);
+        if (draft && !draft.uploadCompletedAt) {
+          await this.videoPostDraftWriter.markUploadCompleted(draft.id);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to fetch Instagram container status:', error);
+      throw new BadRequestException(
+        this.getMetaErrorMessage(
+          error,
+          'Failed to fetch Instagram upload status',
+        ),
+      );
+    }
+  }
+
+  async publishContainer(params: {
+    accessToken: string;
+    igUserId: string;
+    containerId: string;
+    videoId: number;
+    platformId: number;
+    socialAccountId: number;
+  }): Promise<{ mediaId: string; permalink: string }> {
+    try {
+      const response = await this.httpClient.post(
+        `${GRAPH_URL}/${params.igUserId}/media_publish`,
+        {
+          creation_id: params.containerId,
+          access_token: params.accessToken,
+        },
+      );
+
+      if (response.data.error) {
+        throw new BadRequestException(this.getMetaErrorMessage(response.data));
+      }
+
+      const mediaId = response.data.id;
+      if (!mediaId) {
         throw new BadRequestException(
-          `Instagram API error: ${response.data.error.message}`,
+          'Instagram did not return a published media ID',
         );
       }
 
-      this.logger.log('Successfully fetched media details');
+      const mediaResponse = await this.httpClient.get(
+        `${GRAPH_URL}/${mediaId}?${new URLSearchParams({
+          fields: 'permalink',
+          access_token: params.accessToken,
+        }).toString()}`,
+      );
+
+      if (mediaResponse.data.error) {
+        throw new BadRequestException(
+          this.getMetaErrorMessage(mediaResponse.data),
+        );
+      }
+
+      const permalink = mediaResponse.data.permalink;
+      if (!permalink) {
+        throw new BadRequestException(
+          'Instagram did not return a permalink for the published Reel',
+        );
+      }
+
+      await this.videoPostWriter.create({
+        video: { connect: { id: params.videoId } },
+        platform: { connect: { id: params.platformId } },
+        socialAccount: { connect: { id: params.socialAccountId } },
+        platformPostId: mediaId,
+        postUrl: permalink,
+        status: PostStatus.PUBLISHED,
+        postedAt: new Date(),
+      });
+
+      return { mediaId, permalink };
+    } catch (error) {
+      this.logger.error('Failed to publish Instagram Reel:', error);
+      throw new BadRequestException(
+        this.getMetaErrorMessage(error, 'Failed to publish Instagram Reel'),
+      );
+    }
+  }
+
+  async getPublishingLimit(
+    accessToken: string,
+    igUserId: string,
+  ): Promise<InstagramPublishingLimit> {
+    try {
+      const params = {
+        fields: 'config,quota_usage',
+        access_token: accessToken,
+      };
+      const response = await this.httpClient.get(
+        `${GRAPH_URL}/${igUserId}/content_publishing_limit?${new URLSearchParams(params).toString()}`,
+      );
+
+      if (response.data.error) {
+        throw new BadRequestException(this.getMetaErrorMessage(response.data));
+      }
+
       return response.data;
     } catch (error) {
-      this.logger.error('Failed to fetch media details:', error);
-      throw new BadRequestException('Failed to fetch Instagram media details');
+      this.logger.error('Failed to fetch Instagram publishing limit:', error);
+      throw new BadRequestException(
+        this.getMetaErrorMessage(
+          error,
+          'Failed to fetch Instagram publishing limit',
+        ),
+      );
     }
   }
 
-  async validateToken(accessToken: string): Promise<boolean> {
-    try {
-      await this.getUserInfo(accessToken);
-      return true;
-    } catch (error) {
-      this.logger.warn(
-        'Instagram token validation failed:',
-        (error as Error).message,
+  validateReelVideo(
+    video: {
+      mimeType?: string | null;
+      duration?: number | null;
+      fileSize?: number | null;
+    },
+    caption?: string | null,
+  ): void {
+    if (
+      video.mimeType != null &&
+      !['video/mp4', 'video/quicktime'].includes(video.mimeType)
+    ) {
+      throw new BadRequestException(
+        'Instagram Reels require an MP4 or QuickTime video',
       );
-      return false;
     }
+
+    if (
+      video.duration != null &&
+      (video.duration < 3 || video.duration > 900)
+    ) {
+      throw new BadRequestException(
+        'Instagram Reels must be between 3 and 900 seconds long',
+      );
+    }
+
+    if (video.fileSize != null && video.fileSize > 300 * 1024 * 1024) {
+      throw new BadRequestException(
+        'Instagram Reels must be smaller than 300 MB',
+      );
+    }
+
+    if (caption != null && caption.length > 2200) {
+      throw new BadRequestException(
+        'Instagram Reel captions must be 2200 characters or fewer',
+      );
+    }
+  }
+
+  private getMetaErrorMessage(
+    error: unknown,
+    fallback = 'Instagram API request failed',
+  ) {
+    const responseData = (
+      error as { response?: { data?: InstagramApiErrorResponse } }
+    )?.response?.data;
+    const errorWithMessage = error as { message?: string };
+
+    return (
+      responseData?.error?.error_user_msg ||
+      responseData?.error?.message ||
+      responseData?.error_user_msg ||
+      responseData?.message ||
+      (error instanceof BadRequestException ? error.message : undefined) ||
+      errorWithMessage?.message ||
+      fallback
+    );
   }
 }

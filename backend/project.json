@@ -4,13 +4,19 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "ts-node -r tsconfig-paths/register -P backend/tsconfig.json backend/src/main.ts"
+        "command": "cd backend && ./node_modules/.bin/prisma generate && ./node_modules/.bin/ts-node -r tsconfig-paths/register -P tsconfig.json src/main.ts"
       }
     },
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nest build --output-path dist/backend"
+        "command": "cd backend && ./node_modules/.bin/prisma generate && ./node_modules/.bin/nest build"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd backend && ./node_modules/.bin/prisma generate && ./node_modules/.bin/jest"
       }
     }
   }
