@@ -9,6 +9,9 @@ out
 dist
 node_modules
 
+# Prisma generated client
+/backend/src/generated/prisma/
+
 .env
 .env.*
 .env.local

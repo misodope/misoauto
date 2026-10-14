@@ -14,3 +14,4 @@ pnpm-lock.yaml
 # Generated files
 *.generated.*
 backend/src/prisma/migrations
+backend/src/generated/prisma/

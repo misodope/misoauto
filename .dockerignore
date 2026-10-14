@@ -9,6 +9,8 @@ dist
 **/dist
 coverage
 **/coverage
+backend/src/generated/prisma
+**/generated/prisma
 
 # Do not send repository metadata, local secrets, or editor files to the builder.
 .git
