@@ -24,7 +24,18 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The backend is the NestJS API for MisoAuto. For local development of the full
+application, start the stack from the repository root with Docker Compose:
+
+```bash
+make dev
+```
+
+This builds and starts PostgreSQL, the backend, and the frontend together. The
+frontend is available at [http://localhost:4000](http://localhost:4000), and the
+backend API is available at [http://localhost:3001/api/v1](http://localhost:3001/api/v1).
+See the [root development setup](../README.md#development-with-docker) for
+environment configuration, database initialization, logs, and shutdown.
 
 ## Installation
 
@@ -32,7 +43,10 @@
 $ npm install
 ```
 
-## Running the app
+## Running the backend by itself
+
+The commands below are only for backend-only development from the `backend/`
+directory. Use the Docker Compose command above when running the complete app.
 
 ```bash
 # development

@@ -79,13 +79,11 @@ The application uses a relational database structure with the following key enti
 
 ## Getting Started
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL database
-- AWS S3 bucket for video storage
-- Social media platform API credentials
+### Development with Docker
 
-### Installation
+The development Compose file starts the PostgreSQL database, NestJS backend, and
+Next.js frontend together. Docker Desktop (or Docker Engine) with Docker Compose
+v2 and `make` are required.
 
 1. **Clone the repository**
    ```bash
@@ -93,38 +91,112 @@ The application uses a relational database structure with the following key enti
    cd misoauto
    ```
 
-2. **Install dependencies**
+2. **Configure environment files**
+
+   The backend Compose service requires `backend/.env`, and the frontend service
+   requires `frontend/.env`. Create them from the examples where available:
+
    ```bash
-   npm install
+   cp backend/.env.example backend/.env
    ```
 
-3. **Environment setup**
-   - Copy `.env.example` to `.env`
-   - Configure database connection string
-   - Add AWS S3 credentials
-   - Set up social media API keys
+   Add the required backend credentials, such as `JWT_SECRET`, storage settings,
+   and social-media API credentials, to `backend/.env`. Create `frontend/.env`
+   with the local API URL if it does not already exist:
 
-4. **Database setup**
-   ```bash
-   cd backend
-   npx prisma generate
-   npx prisma db push
+   ```dotenv
+   NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
    ```
 
-5. **Start development servers**
+   The Compose file supplies the backend's database URL automatically. From
+   inside the backend container, the database hostname is `db`, not `localhost`.
+
+3. **Build and start the development services**
+
+   From the repository root, use the Makefile shortcut:
+
    ```bash
-   npm run start
+   make dev
    ```
-   This will start both backend and frontend servers concurrently.
+
+   This is equivalent to `docker compose -f docker-compose.dev.yml up --build`.
+   To run in the background, use:
+
+   ```bash
+   make dev-detached
+   ```
+
+   Source files under `backend/src`, `frontend/src`, and `frontend/public` are
+   mounted into the containers, so code changes are picked up automatically.
+
+4. **Initialize the database**
+
+   After the services are running, apply the Prisma schema:
+
+   ```bash
+   docker compose -f docker-compose.dev.yml exec backend \
+     npx prisma db push --schema=src/database/schema.prisma
+   ```
+
+   Seed the supported social-media platforms when needed:
+
+   ```bash
+   docker compose -f docker-compose.dev.yml exec backend npx prisma db seed
+   ```
+
+The development services are available at:
+
+- Frontend: [http://localhost:4000](http://localhost:4000)
+- Backend API: [http://localhost:3001/api/v1](http://localhost:3001/api/v1)
+- PostgreSQL: `localhost:5432`
+
+### Docker Development Commands
+
+```bash
+# Start the full development stack (recommended)
+make dev
+
+# Start the full development stack in the background
+make dev-detached
+
+# Follow logs from all development services
+make dev-logs
+
+# Stop development services and keep the database volume
+make dev-down
+
+# Stop development services and delete the database volume (destroys local DB data)
+docker compose -f docker-compose.dev.yml down -v
+```
+
+### Running without Docker
+
+For a local Node.js setup, install Node.js 18+, PostgreSQL, and the required
+storage and social-media credentials. Then install dependencies, configure the
+environment files, initialize Prisma, and start both applications:
+
+```bash
+npm install
+cd backend
+npx prisma generate
+npx prisma db push
+cd ..
+npm run start
+```
+
+This starts the backend and frontend development servers concurrently.
 
 ### Development Commands
 
 ```bash
-# Start both frontend and backend
-npm run start
+# Start the full development stack (recommended)
+make dev
 
-# Start development with watch mode
-npm run serve
+# Start the full development stack in the background
+make dev-detached
+
+# Follow logs
+make dev-logs
 
 # Run tests
 npm test

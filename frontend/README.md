@@ -2,7 +2,22 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+For local development of the full application, start Docker Compose from the
+repository root:
+
+```bash
+make dev
+```
+
+This builds and starts PostgreSQL, the backend, and the frontend together. Open
+[http://localhost:4000](http://localhost:4000) to view the app. See the
+[root development setup](../README.md#development-with-docker) for environment
+configuration, database initialization, logs, and shutdown.
+
+### Running the frontend by itself
+
+The commands below are only for frontend-only development from the `frontend/`
+directory. Use the Docker Compose command above when running the complete app.
 
 ```bash
 npm run dev
@@ -14,7 +29,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The standalone frontend is available at [http://localhost:3000](http://localhost:3000).
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
