@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { QueueModule } from './system/queue';
 import { BlobStorageModule } from './system/blob-storage';
+import { JobsModule } from './jobs/jobs.module';
 import { NotificationsModule } from './system/notifications';
 
 @Module({
@@ -23,6 +24,7 @@ import { NotificationsModule } from './system/notifications';
     VideoPostsModule,
     AuthModule,
     SchedulerModule.forRoot(),
+    JobsModule,
     QueueModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST || 'localhost',

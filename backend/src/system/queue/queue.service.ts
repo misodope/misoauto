@@ -20,10 +20,6 @@ export class QueueService implements OnModuleDestroy {
     this.redisConfig = options.redis;
   }
 
-  /**
-   * Creates or retrieves a queue by name.
-   * If the queue already exists, returns the existing instance.
-   */
   getQueue<TData = unknown, TResult = unknown>(
     config: QueueConfig | string,
   ): Queue<TData, TResult> {
@@ -55,10 +51,6 @@ export class QueueService implements OnModuleDestroy {
     return queue;
   }
 
-  /**
-   * Creates a worker for processing jobs in a queue.
-   * Returns the worker instance for additional configuration if needed.
-   */
   createWorker<TData = unknown, TResult = unknown>(
     config: WorkerConfig | string,
     processor: Processor<TData, TResult>,
@@ -112,9 +104,6 @@ export class QueueService implements OnModuleDestroy {
     return worker;
   }
 
-  /**
-   * Gets QueueEvents for a queue to listen to job lifecycle events.
-   */
   getQueueEvents(queueName: string): QueueEvents {
     if (this.queueEvents.has(queueName)) {
       return this.queueEvents.get(queueName)!;
@@ -128,9 +117,6 @@ export class QueueService implements OnModuleDestroy {
     return events;
   }
 
-  /**
-   * Adds a job to a queue. Creates the queue if it doesn't exist.
-   */
   async addJob<TData = unknown>(
     queueName: string,
     jobName: string,
@@ -141,9 +127,6 @@ export class QueueService implements OnModuleDestroy {
     return queue.add(jobName, data, options) as Promise<Job<TData>>;
   }
 
-  /**
-   * Adds multiple jobs to a queue in bulk.
-   */
   async addBulkJobs<TData = unknown>(
     queueName: string,
     jobs: Array<{
@@ -156,9 +139,6 @@ export class QueueService implements OnModuleDestroy {
     return queue.addBulk(jobs) as Promise<Job<TData>[]>;
   }
 
-  /**
-   * Gracefully closes all queues and workers.
-   */
   async onModuleDestroy(): Promise<void> {
     this.logger.log('Shutting down queue service...');
 
@@ -183,9 +163,6 @@ export class QueueService implements OnModuleDestroy {
     this.logger.log('Queue service shut down complete');
   }
 
-  /**
-   * Gets stats for a specific queue.
-   */
   async getQueueStats(queueName: string): Promise<{
     waiting: number;
     active: number;
