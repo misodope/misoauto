@@ -89,7 +89,7 @@ const NavItemComponent = ({
   };
 
   const renderItem = () => {
-    if (item.href && !hasChildren) {
+    if (item.href && (!hasChildren || collapsed)) {
       return (
         <Link href={item.href} className={itemClasses} style={itemStyle}>
           {content}
