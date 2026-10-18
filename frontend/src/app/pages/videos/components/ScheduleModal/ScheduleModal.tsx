@@ -14,8 +14,13 @@ import { InfoCircledIcon } from '@radix-ui/react-icons';
 import Modal from '@frontend/app/components/Modal';
 import { useToast } from '@frontend/app/components/Toaster';
 import { Video } from '@frontend/app/hooks/apis/videos/use-videos';
-import { useCreateVideoPost } from '@frontend/app/hooks/apis/video-posts';
+import { useCreateVideoPostBatch } from '@frontend/app/hooks/apis/video-posts';
 import { useAuth, SocialAccount } from '@frontend/app/contexts/AuthContext';
+import {
+  getDefaultScheduleDateTime,
+  getMinScheduleDateTime,
+} from '@frontend/app/lib/dates';
+import { getErrorMessages } from '@frontend/app/lib/errors';
 
 interface AccountScheduleConfig {
   enabled: boolean;
@@ -35,27 +40,6 @@ interface ScheduleModalProps {
   video: Video | null;
 }
 
-// Get minimum datetime (now + 10 minutes, rounded to nearest 5 min)
-const getMinDateTime = (): string => {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + 10);
-  // Round to nearest 5 minutes
-  now.setMinutes(Math.ceil(now.getMinutes() / 5) * 5);
-  now.setSeconds(0);
-  now.setMilliseconds(0);
-  return now.toISOString().slice(0, 16);
-};
-
-// Get default datetime (1 hour from now)
-const getDefaultDateTime = (): string => {
-  const date = new Date();
-  date.setHours(date.getHours() + 1);
-  date.setMinutes(Math.ceil(date.getMinutes() / 5) * 5);
-  date.setSeconds(0);
-  date.setMilliseconds(0);
-  return date.toISOString().slice(0, 16);
-};
-
 const buildInitialState = (
   socialAccounts: SocialAccount[] = [],
 ): ScheduleFormState => {
@@ -71,7 +55,7 @@ const buildInitialState = (
   });
 
   return {
-    scheduledFor: getDefaultDateTime(),
+    scheduledFor: getDefaultScheduleDateTime(),
     accounts,
   };
 };
@@ -83,7 +67,7 @@ export default function ScheduleModal({
 }: ScheduleModalProps) {
   const { user } = useAuth();
   const { success: showSuccess } = useToast();
-  const createVideoPost = useCreateVideoPost();
+  const createVideoPostBatch = useCreateVideoPostBatch();
 
   const connectedAccounts = useMemo(
     () => user?.socialAccounts || [],
@@ -94,7 +78,7 @@ export default function ScheduleModal({
     buildInitialState(connectedAccounts),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
 
   const handleToggle = (accountId: number) => {
     setFormState((prev) => ({
@@ -126,21 +110,17 @@ export default function ScheduleModal({
     if (enabledAccounts.length === 0) return;
 
     setIsSubmitting(true);
-    setError(null);
+    setErrors([]);
 
     try {
-      // Create video posts for each enabled account
-      const scheduledFor = new Date(formState.scheduledFor).toISOString();
-
-      await Promise.all(
-        enabledAccounts.map((account) =>
-          createVideoPost.mutateAsync({
-            videoId: video.id,
-            socialAccountId: account.socialAccountId,
-            scheduledFor,
-          }),
-        ),
-      );
+      // One all-or-nothing request; the server fills in per-platform defaults
+      await createVideoPostBatch.mutateAsync({
+        videoId: video.id,
+        scheduledFor: new Date(formState.scheduledFor).toISOString(),
+        targets: enabledAccounts.map((account) => ({
+          socialAccountId: account.socialAccountId,
+        })),
+      });
 
       // Reset and close on success
       setFormState(buildInitialState(connectedAccounts));
@@ -150,7 +130,7 @@ export default function ScheduleModal({
         'Your video has been scheduled for posting.',
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to schedule video');
+      setErrors(getErrorMessages(err, 'Failed to schedule video'));
     } finally {
       setIsSubmitting(false);
     }
@@ -159,7 +139,7 @@ export default function ScheduleModal({
   const handleOpenChange = (open: boolean) => {
     if (!open && !isSubmitting) {
       setFormState(buildInitialState(connectedAccounts));
-      setError(null);
+      setErrors([]);
     }
     onOpenChange(open);
   };
@@ -184,12 +164,16 @@ export default function ScheduleModal({
       maxWidth={500}
     >
       <Box>
-        {error && (
+        {errors.length > 0 && (
           <Callout.Root color="red" mb="4">
             <Callout.Icon>
               <InfoCircledIcon />
             </Callout.Icon>
-            <Callout.Text>{error}</Callout.Text>
+            <Flex direction="column" gap="1">
+              {errors.map((message) => (
+                <Callout.Text key={message}>{message}</Callout.Text>
+              ))}
+            </Flex>
           </Callout.Root>
         )}
 
@@ -214,7 +198,7 @@ export default function ScheduleModal({
                 type="datetime-local"
                 value={formState.scheduledFor}
                 onChange={(e) => handleDateChange(e.target.value)}
-                min={getMinDateTime()}
+                min={getMinScheduleDateTime()}
                 mt="1"
               />
               <Text size="1" color="gray" mt="1">
@@ -274,21 +258,6 @@ export default function ScheduleModal({
       </Box>
     </Modal>
   );
-}
-
-// Legacy exports for backward compatibility
-export interface PlatformScheduleConfig {
-  enabled: boolean;
-  caption: string;
-  hashtags: string;
-  scheduledTime?: string;
-}
-
-export interface LegacyScheduleFormState {
-  tiktok: PlatformScheduleConfig;
-  youtube: PlatformScheduleConfig;
-  instagram: PlatformScheduleConfig;
-  facebook: PlatformScheduleConfig;
 }
 
 export type { ScheduleFormState };

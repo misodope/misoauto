@@ -7,6 +7,7 @@ import Drawer from '@frontend/app/components/Drawer';
 import { useToast } from '@frontend/app/components/Toaster';
 import { useAuth } from '@frontend/app/contexts/AuthContext';
 import { Video } from '@frontend/app/hooks/apis/videos/use-videos';
+import { getErrorMessage } from '@frontend/app/lib/errors';
 import {
   YouTubePublishPrivacyStatus,
   useInstagramPublish,
@@ -51,25 +52,6 @@ interface PublishVideoDrawerProps {
   onOpenChange: (open: boolean) => void;
   video: Video | null;
 }
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error &&
-    typeof error.response === 'object' &&
-    error.response !== null &&
-    'data' in error.response &&
-    typeof error.response.data === 'object' &&
-    error.response.data !== null &&
-    'message' in error.response.data &&
-    typeof error.response.data.message === 'string'
-  ) {
-    return error.response.data.message;
-  }
-
-  return error instanceof Error ? error.message : fallback;
-};
 
 export default function PublishVideoDrawer({
   open,

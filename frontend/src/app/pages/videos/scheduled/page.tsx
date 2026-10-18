@@ -24,7 +24,7 @@ const mapStatusToCalendarStatus = (
 };
 
 const mapVideoPostToCalendarEvent = (post: VideoPost): CalendarEvent => {
-  const startDate = post.scheduledFor || post.createdAt;
+  const startDate = post.scheduledFor ?? post.postedAt ?? post.createdAt;
 
   return {
     id: post.id.toString(),
@@ -36,6 +36,8 @@ const mapVideoPostToCalendarEvent = (post: VideoPost): CalendarEvent => {
       videoPostId: post.id,
       platform: post.platform.name.toLowerCase(),
       status: mapStatusToCalendarStatus(post.status),
+      postStatus: post.status,
+      scheduledFor: post.scheduledFor,
       thumbnailUrl: undefined,
       username: post.socialAccount.username,
       postUrl: post.postUrl,
@@ -48,16 +50,11 @@ export default function ScheduledPage() {
 
   const events = useMemo(() => {
     if (!videoPosts) return [];
-    return videoPosts.map(mapVideoPostToCalendarEvent);
+    // Unscheduled (PENDING) posts have no date to show on the calendar
+    return videoPosts
+      .filter((post) => post.status !== 'PENDING')
+      .map(mapVideoPostToCalendarEvent);
   }, [videoPosts]);
-
-  const handleEventClick = (event: CalendarEvent) => {
-    console.log('Event clicked:', event);
-  };
-
-  const handleDateClick = (date: Date) => {
-    console.log('Date clicked:', date);
-  };
 
   return (
     <Box>
@@ -85,13 +82,7 @@ export default function ScheduledPage() {
         </Callout.Root>
       )}
 
-      {!isLoading && !error && (
-        <Calendar
-          events={events}
-          onEventClick={handleEventClick}
-          onDateClick={handleDateClick}
-        />
-      )}
+      {!isLoading && !error && <Calendar events={events} />}
     </Box>
   );
 }

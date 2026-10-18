@@ -10,14 +10,17 @@ import {
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '@backend/common/guards/jwt-auth.guard';
 import {
   CurrentUser,
+  JwtAuthGuard,
   JwtPayload,
-} from '@backend/common/decorators/current-user.decorator';
+  validateBody,
+} from '@backend/common';
 import { VideoPostsService } from '../services/video-posts.service';
 import { CreateVideoPostDto } from '../dto/create-video-post.dto';
 import { ScheduleVideoPostDto } from '../dto/schedule-video-post.dto';
+import { CreateVideoPostBatchDto } from '../dto/create-video-post-batch.dto';
+import { UpdateVideoPostDetailsDto } from '../dto/update-video-post-details.dto';
 
 @Controller('video-posts')
 @UseGuards(JwtAuthGuard)
@@ -27,9 +30,17 @@ export class VideoPostsController {
   @Post()
   async create(
     @CurrentUser() user: JwtPayload,
-    @Body() dto: CreateVideoPostDto,
+    @Body(validateBody) dto: CreateVideoPostDto,
   ) {
     return this.videoPostsService.create(user.sub, dto);
+  }
+
+  @Post('batch')
+  async createBatch(
+    @CurrentUser() user: JwtPayload,
+    @Body(validateBody) dto: CreateVideoPostBatchDto,
+  ) {
+    return this.videoPostsService.createBatch(user.sub, dto);
   }
 
   @Get()
@@ -58,7 +69,7 @@ export class VideoPostsController {
   async schedule(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: ScheduleVideoPostDto,
+    @Body(validateBody) dto: ScheduleVideoPostDto,
   ) {
     return this.videoPostsService.schedule(user.sub, id, dto);
   }
@@ -69,6 +80,15 @@ export class VideoPostsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.videoPostsService.cancelSchedule(user.sub, id);
+  }
+
+  @Patch(':id')
+  async updateDetails(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseIntPipe) id: number,
+    @Body(validateBody) dto: UpdateVideoPostDetailsDto,
+  ) {
+    return this.videoPostsService.updateDetails(user.sub, id, dto);
   }
 
   @Delete(':id')

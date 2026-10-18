@@ -14,11 +14,9 @@ import { Video, videoKeys } from '../videos/use-videos';
 // ============================================================================
 
 export type PostStatus =
-  | 'PENDING'
-  | 'SCHEDULED'
-  | 'PUBLISHING'
-  | 'PUBLISHED'
-  | 'FAILED';
+  'PENDING' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED';
+
+export type UploadMode = 'DRAFT' | 'DIRECT';
 
 export interface Platform {
   id: number;
@@ -45,6 +43,11 @@ export interface VideoPost {
   status: PostStatus;
   scheduledFor?: string;
   postedAt?: string;
+  uploadMode: UploadMode;
+  title?: string | null;
+  caption?: string | null;
+  options?: Record<string, unknown> | null;
+  batchId?: string | null;
   createdAt: string;
   updatedAt: string;
   video: Video;
@@ -57,6 +60,30 @@ export interface CreateVideoPostRequest {
   socialAccountId: number;
   scheduledFor?: string;
 }
+
+export interface VideoPostDetails {
+  uploadMode?: UploadMode;
+  title?: string;
+  caption?: string;
+  options?: Record<string, unknown>;
+}
+
+export interface VideoPostTarget extends VideoPostDetails {
+  socialAccountId: number;
+}
+
+export interface CreateVideoPostBatchRequest {
+  videoId: number;
+  scheduledFor: string;
+  targets: VideoPostTarget[];
+}
+
+export interface CreateVideoPostBatchResponse {
+  batchId: string;
+  posts: VideoPost[];
+}
+
+export type UpdateVideoPostDetailsRequest = { id: number } & VideoPostDetails;
 
 export interface ScheduleVideoPostRequest {
   scheduledFor: string;
@@ -76,6 +103,21 @@ const createVideoPost = async (
   data: CreateVideoPostRequest,
 ): Promise<VideoPost> => {
   const response = await api.post('/video-posts', data);
+  return response.data;
+};
+
+const createVideoPostBatch = async (
+  data: CreateVideoPostBatchRequest,
+): Promise<CreateVideoPostBatchResponse> => {
+  const response = await api.post('/video-posts/batch', data);
+  return response.data;
+};
+
+const updateVideoPostDetails = async ({
+  id,
+  ...details
+}: UpdateVideoPostDetailsRequest): Promise<VideoPost> => {
+  const response = await api.patch(`/video-posts/${id}`, details);
   return response.data;
 };
 
@@ -165,6 +207,57 @@ export const useCreateVideoPost = (): UseMutationResult<
 };
 
 /**
+ * Schedule a video on several accounts in one all-or-nothing request
+ */
+export const useCreateVideoPostBatch = (): UseMutationResult<
+  CreateVideoPostBatchResponse,
+  AxiosError<VideoPostError>,
+  CreateVideoPostBatchRequest
+> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createVideoPostBatch,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
+    },
+    onError: (error) => {
+      console.error(
+        'Failed to schedule video posts:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
+/**
+ * Update the per-platform details (caption, title, options) of a post
+ */
+export const useUpdateVideoPostDetails = (): UseMutationResult<
+  VideoPost,
+  AxiosError<VideoPostError>,
+  UpdateVideoPostDetailsRequest
+> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateVideoPostDetails,
+    onSuccess: (videoPost) => {
+      queryClient.setQueryData(videoPostKeys.detail(videoPost.id), videoPost);
+      queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
+    },
+    onError: (error) => {
+      console.error(
+        'Failed to update video post details:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
+/**
  * Get all video posts, optionally filtered by videoId
  */
 export const useVideoPosts = (
@@ -207,6 +300,8 @@ export const useScheduleVideoPost = (): UseMutationResult<
       queryClient.setQueryData(videoPostKeys.detail(videoPost.id), videoPost);
       // Invalidate lists to refetch
       queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
+      // Refresh the videos table, which renders each video's posts
+      queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
     },
     onError: (error) => {
       console.error(
@@ -234,6 +329,8 @@ export const useCancelSchedule = (): UseMutationResult<
       queryClient.setQueryData(videoPostKeys.detail(videoPost.id), videoPost);
       // Invalidate lists to refetch
       queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
+      // Refresh the videos table, which renders each video's posts
+      queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
     },
     onError: (error) => {
       console.error(
@@ -263,6 +360,8 @@ export const useDeleteVideoPost = (): UseMutationResult<
       });
       // Invalidate lists to refetch
       queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
+      // Refresh the videos table, which renders each video's posts
+      queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
     },
     onError: (error) => {
       console.error(

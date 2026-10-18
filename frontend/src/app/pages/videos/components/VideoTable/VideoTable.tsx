@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Badge, Text } from '@radix-ui/themes';
+import { Badge, Flex, Text } from '@radix-ui/themes';
 import {
   CalendarIcon,
+  ClockIcon,
   Pencil1Icon,
   TrashIcon,
   UploadIcon,
@@ -15,11 +16,13 @@ import {
   Video,
   VideoPostSummary,
   PlatformType,
-  PostStatus,
 } from '@frontend/app/hooks/apis/videos/use-videos';
+import { formatScheduledDate } from '@frontend/app/lib/dates';
 import { useUploads } from '@frontend/app/contexts/UploadContext/uploadContext';
 import DeleteModal from '../DeleteModal';
 import ScheduleModal from '../ScheduleModal';
+import ManageScheduleModal from '../ManageScheduleModal';
+import PostStatusBadge from '../PostStatusBadge';
 import PublishVideoDrawer from '../PublishVideoDrawer';
 
 const PLATFORMS: { type: PlatformType; label: string }[] = [
@@ -37,40 +40,43 @@ const PLATFORM_NAME_TO_TYPE: Record<string, PlatformType> = {
   facebook: 'FACEBOOK',
 };
 
+const matchesPlatform = (
+  post: VideoPostSummary,
+  platformType: PlatformType,
+): boolean => {
+  // Match by platform.type if available
+  if (post.platform?.type === platformType) return true;
+  // Match by platform.name if available
+  if (post.platform?.name) {
+    const normalizedName = post.platform.name.toLowerCase();
+    return PLATFORM_NAME_TO_TYPE[normalizedName] === platformType;
+  }
+  return false;
+};
+
+/** Latest post for the platform, so an older unscheduled post can't mask a newer one. */
 const getPostForPlatform = (
   posts: VideoPostSummary[] | undefined,
   platformType: PlatformType,
 ): VideoPostSummary | undefined => {
   if (!posts) return undefined;
-  return posts.find((post) => {
-    // Match by platform.type if available
-    if (post.platform?.type === platformType) return true;
-    // Match by platform.name if available
-    if (post.platform?.name) {
-      const normalizedName = post.platform.name.toLowerCase();
-      return PLATFORM_NAME_TO_TYPE[normalizedName] === platformType;
-    }
-    return false;
-  });
+  return posts
+    .filter((post) => matchesPlatform(post, platformType))
+    .reduce<VideoPostSummary | undefined>(
+      (latest, post) =>
+        !latest || new Date(post.createdAt) > new Date(latest.createdAt)
+          ? post
+          : latest,
+      undefined,
+    );
 };
 
-const getPostStatusBadge = (status: PostStatus) => {
-  const config: Record<
-    PostStatus,
-    { color: 'green' | 'yellow' | 'red' | 'blue' | 'gray'; label: string }
-  > = {
-    PENDING: { color: 'gray', label: 'Pending' },
-    SCHEDULED: { color: 'blue', label: 'Scheduled' },
-    PUBLISHING: { color: 'yellow', label: 'Publishing' },
-    PUBLISHED: { color: 'green', label: 'Published' },
-    FAILED: { color: 'red', label: 'Failed' },
-  };
-  return (
-    <Badge color={config[status].color} size="1">
-      {config[status].label}
-    </Badge>
+const hasManageableSchedule = (video: Video): boolean =>
+  Boolean(
+    video.posts?.some(
+      (post) => post.status === 'SCHEDULED' || post.status === 'PENDING',
+    ),
   );
-};
 
 export const VideoTable: React.FC = () => {
   const { hasActiveUploads } = useUploads();
@@ -80,6 +86,7 @@ export const VideoTable: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [publishDrawerOpen, setPublishDrawerOpen] = useState(false);
+  const [manageScheduleOpen, setManageScheduleOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   useEffect(() => {
@@ -104,6 +111,11 @@ export const VideoTable: React.FC = () => {
   const handleScheduleClick = (video: Video) => {
     setSelectedVideo(video);
     setScheduleModalOpen(true);
+  };
+
+  const handleManageScheduleClick = (video: Video) => {
+    setSelectedVideo(video);
+    setManageScheduleOpen(true);
   };
 
   const handleEdit = (video: Video) => {
@@ -152,16 +164,6 @@ export const VideoTable: React.FC = () => {
     });
   };
 
-  const formatScheduledDate = (dateString: string | undefined) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
-
   const renderPlatformSchedule = (post: VideoPostSummary | undefined) => {
     if (!post) {
       return (
@@ -176,14 +178,14 @@ export const VideoTable: React.FC = () => {
     );
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        {getPostStatusBadge(post.status)}
+      <Flex direction="column" gap="1">
+        <PostStatusBadge status={post.status} />
         {scheduledDate && (
           <Text size="1" color="gray">
             {scheduledDate}
           </Text>
         )}
-      </div>
+      </Flex>
     );
   };
 
@@ -239,6 +241,13 @@ export const VideoTable: React.FC = () => {
                     icon: <CalendarIcon />,
                     onClick: () => handleScheduleClick(row),
                   },
+                  {
+                    id: 'manage-schedule',
+                    label: 'Manage schedule',
+                    icon: <ClockIcon />,
+                    onClick: () => handleManageScheduleClick(row),
+                    disabled: !hasManageableSchedule(row),
+                  },
                   // {
                   //   id: 'edit',
                   //   label: 'Edit',
@@ -276,6 +285,15 @@ export const VideoTable: React.FC = () => {
         isOpen={scheduleModalOpen}
         onOpenChange={(open) => {
           setScheduleModalOpen(open);
+          if (!open) setSelectedVideo(null);
+        }}
+        video={selectedVideo}
+      />
+
+      <ManageScheduleModal
+        isOpen={manageScheduleOpen}
+        onOpenChange={(open) => {
+          setManageScheduleOpen(open);
           if (!open) setSelectedVideo(null);
         }}
         video={selectedVideo}

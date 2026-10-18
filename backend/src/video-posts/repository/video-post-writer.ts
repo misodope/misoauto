@@ -1,6 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { VideoPost, Prisma, PostStatus } from '@backend/generated/prisma/client';
+import {
+  VideoPost,
+  Prisma,
+  PostStatus,
+} from '@backend/generated/prisma/client';
+import {
+  VIDEO_POST_INCLUDE,
+  VideoPostWithRelations,
+} from './video-post-reader';
 
 @Injectable()
 export class VideoPostWriter {
@@ -9,11 +17,7 @@ export class VideoPostWriter {
   async create(data: Prisma.VideoPostCreateInput): Promise<VideoPost> {
     return this.prisma.videoPost.create({
       data,
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+      include: VIDEO_POST_INCLUDE,
     });
   }
 
@@ -25,11 +29,7 @@ export class VideoPostWriter {
     return this.prisma.videoPost.update({
       data,
       where,
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+      include: VIDEO_POST_INCLUDE,
     });
   }
 
@@ -40,11 +40,7 @@ export class VideoPostWriter {
         status,
         ...(status === PostStatus.PUBLISHED && { postedAt: new Date() }),
       },
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+      include: VIDEO_POST_INCLUDE,
     });
   }
 
@@ -63,27 +59,43 @@ export class VideoPostWriter {
         status,
         ...(status === PostStatus.PUBLISHED && { postedAt: new Date() }),
       },
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+      include: VIDEO_POST_INCLUDE,
     });
   }
 
-  async schedulePost(id: number, scheduledFor: Date): Promise<VideoPost> {
-    return this.prisma.videoPost.update({
-      where: { id },
-      data: {
-        status: PostStatus.SCHEDULED,
-        scheduledFor,
-      },
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+  /**
+   * Updates the post only while it is in one of `allowedStatuses`.
+   * Returns the number of rows changed (0 or 1) so callers can detect races.
+   */
+  async updateIfStatus(params: {
+    id: number;
+    allowedStatuses: PostStatus[];
+    data: Prisma.VideoPostUpdateManyMutationInput;
+  }): Promise<number> {
+    const result = await this.prisma.videoPost.updateMany({
+      where: { id: params.id, status: { in: params.allowedStatuses } },
+      data: params.data,
     });
+    return result.count;
+  }
+
+  /** Applies all updates and creates in one transaction. */
+  async saveBatch(params: {
+    creates: Prisma.VideoPostCreateInput[];
+    updates: { id: number; data: Prisma.VideoPostUpdateInput }[];
+  }): Promise<VideoPostWithRelations[]> {
+    return this.prisma.$transaction([
+      ...params.updates.map(({ id, data }) =>
+        this.prisma.videoPost.update({
+          where: { id },
+          data,
+          include: VIDEO_POST_INCLUDE,
+        }),
+      ),
+      ...params.creates.map((data) =>
+        this.prisma.videoPost.create({ data, include: VIDEO_POST_INCLUDE }),
+      ),
+    ]);
   }
 
   async delete(where: Prisma.VideoPostWhereUniqueInput): Promise<VideoPost> {

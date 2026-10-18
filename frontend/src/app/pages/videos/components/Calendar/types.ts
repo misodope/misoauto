@@ -1,4 +1,5 @@
 import type { EventInput } from '@fullcalendar/core';
+import type { PostStatus } from '@frontend/app/hooks';
 
 export interface CalendarEvent extends EventInput {
   id: string;
@@ -8,6 +9,9 @@ export interface CalendarEvent extends EventInput {
   allDay?: boolean;
   extendedProps?: {
     videoId?: string;
+    videoPostId?: number;
+    postStatus?: PostStatus;
+    scheduledFor?: string;
     platform?: string;
     status?: 'scheduled' | 'published' | 'failed';
     thumbnailUrl?: string;
