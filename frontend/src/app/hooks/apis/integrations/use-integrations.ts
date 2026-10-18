@@ -116,6 +116,7 @@ export interface InstagramUserInfo {
   username: string;
   account_type: string;
   profile_picture_url?: string;
+  followers_count?: number;
 }
 
 export interface InstagramUserInfoResponse {

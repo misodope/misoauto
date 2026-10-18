@@ -3,6 +3,7 @@
 import { Box, Card, Flex, Grid, Heading, Text } from '@radix-ui/themes';
 import { useAuth } from '../../../../contexts/AuthContext';
 import {
+  useInstagramUserInfo,
   useTikTokUserInfo,
   useYouTubeUserInfo,
 } from '../../../../hooks/apis/integrations/use-integrations';
@@ -27,14 +28,23 @@ export default function HomeDashboard() {
   const hasYouTubeAccount = socialAccounts.some(
     (account) => account.platform.name.toUpperCase() === 'YOUTUBE',
   );
+  const hasInstagramAccount = socialAccounts.some(
+    (account) => account.platform.name.toUpperCase() === 'INSTAGRAM',
+  );
 
   const { data: tiktokUserInfo } = useTikTokUserInfo(hasTikTokAccount);
   const { data: youtubeUserInfo } = useYouTubeUserInfo(hasYouTubeAccount);
+  const { data: instagramUserInfo } = useInstagramUserInfo(hasInstagramAccount);
 
   const tiktokFollowers = tiktokUserInfo?.user.follower_count;
+  const instagramFollowers = instagramUserInfo?.user.followers_count;
   const youtubeSubscribers =
     youtubeUserInfo?.channel.statistics.subscriberCount;
-  const audienceValues = [tiktokFollowers, youtubeSubscribers]
+  const audienceValues = [
+    tiktokFollowers,
+    instagramFollowers,
+    youtubeSubscribers,
+  ]
     .filter((value) => value !== undefined)
     .map(Number);
   const totalAudience = audienceValues.length
@@ -50,11 +60,16 @@ export default function HomeDashboard() {
     {
       label: 'Total Audience',
       value: formatMetric(totalAudience),
-      description: 'TikTok + YouTube',
+      description: 'Across connected platforms',
     },
     {
       label: 'TikTok Followers',
       value: formatMetric(tiktokFollowers),
+      description: 'Current followers',
+    },
+    {
+      label: 'Instagram Followers',
+      value: formatMetric(instagramFollowers),
       description: 'Current followers',
     },
     {
@@ -75,7 +90,7 @@ export default function HomeDashboard() {
         </Text>
       </Box>
 
-      <Grid columns={{ initial: '2', sm: '4' }} gap="3">
+      <Grid columns={{ initial: '2', sm: '3', lg: '5' }} gap="3">
         {metrics.map((metric) => (
           <Card key={metric.label} size="2">
             <Flex direction="column" gap="1">

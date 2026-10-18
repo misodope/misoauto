@@ -142,6 +142,7 @@ describe('PlatformConnectInstagramService', () => {
         username: 'tester',
         account_type: 'CREATOR',
         profile_picture_url: 'https://cdn.example/profile.jpg',
+        followers_count: 12345,
       },
     });
 
@@ -150,11 +151,12 @@ describe('PlatformConnectInstagramService', () => {
       username: 'tester',
       account_type: 'CREATOR',
       profile_picture_url: 'https://cdn.example/profile.jpg',
+      followers_count: 12345,
     });
 
     expect(httpClient.get).toHaveBeenCalledWith(
       expect.stringContaining(
-        '/me?fields=user_id%2Cusername%2Caccount_type%2Cprofile_picture_url',
+        '/me?fields=user_id%2Cusername%2Caccount_type%2Cprofile_picture_url%2Cfollowers_count',
       ),
     );
   });
