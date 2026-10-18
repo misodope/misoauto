@@ -115,6 +115,7 @@ export interface InstagramUserInfo {
   user_id: string;
   username: string;
   account_type: string;
+  profile_picture_url?: string;
 }
 
 export interface InstagramUserInfoResponse {

@@ -51,7 +51,10 @@ export const Dashboard = () => {
           description={`Connected as @${instagramUserInfo?.user.username || 'Unknown User'}`}
           actionLabel="View Instagram Profile"
         >
-          <Avatar fallback={instagramUserInfo?.user.username || 'U'} />
+          <Avatar
+            src={instagramUserInfo?.user.profile_picture_url}
+            fallback={instagramUserInfo?.user.username || 'U'}
+          />
         </DashboardCard>
       )}
     </Grid>
