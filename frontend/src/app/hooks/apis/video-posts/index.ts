@@ -8,6 +8,7 @@ export {
   videoPostKeys,
   type VideoPost,
   type PostStatus,
+  type UploadMode,
   type Platform,
   type SocialAccount,
   type CreateVideoPostRequest,

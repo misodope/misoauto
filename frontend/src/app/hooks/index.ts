@@ -55,6 +55,7 @@ export {
   videoPostKeys,
   type VideoPost,
   type PostStatus,
+  type UploadMode,
   type CreateVideoPostRequest,
   type ScheduleVideoPostRequest,
   type VideoPostError,

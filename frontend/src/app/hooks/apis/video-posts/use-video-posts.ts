@@ -16,6 +16,8 @@ import { Video, videoKeys } from '../videos/use-videos';
 export type PostStatus =
   'PENDING' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED';
 
+export type UploadMode = 'DRAFT' | 'DIRECT';
+
 export interface Platform {
   id: number;
   name: string;
@@ -41,6 +43,11 @@ export interface VideoPost {
   status: PostStatus;
   scheduledFor?: string;
   postedAt?: string;
+  uploadMode: UploadMode;
+  title?: string | null;
+  caption?: string | null;
+  options?: Record<string, unknown> | null;
+  batchId?: string | null;
   createdAt: string;
   updatedAt: string;
   video: Video;
