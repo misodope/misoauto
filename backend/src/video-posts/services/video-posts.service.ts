@@ -66,51 +66,45 @@ export class VideoPostsService {
     postId: number,
     dto: ScheduleVideoPostDto,
   ): Promise<VideoPostWithRelations> {
-    const post = await this.findOneForUser(userId, postId);
-
-    if (post.status === PostStatus.PUBLISHED) {
-      throw new BadRequestException(
-        'Cannot schedule an already published post',
-      );
-    }
-
-    if (post.status === PostStatus.PUBLISHING) {
-      throw new BadRequestException(
-        'Cannot schedule a post that is being published',
-      );
-    }
+    await this.findOneForUser(userId, postId);
 
     const scheduledFor = new Date(dto.scheduledFor);
     if (scheduledFor <= new Date()) {
       throw new BadRequestException('Scheduled time must be in the future');
     }
 
-    const updated = await this.videoPostWriter.schedulePost(
-      postId,
-      scheduledFor,
-    );
-    return updated as VideoPostWithRelations;
+    const updated = await this.videoPostWriter.updateIfStatus({
+      id: postId,
+      allowedStatuses: [
+        PostStatus.PENDING,
+        PostStatus.SCHEDULED,
+        PostStatus.FAILED,
+      ],
+      data: { status: PostStatus.SCHEDULED, scheduledFor },
+    });
+    if (updated === 0) {
+      throw new BadRequestException('Post can no longer be scheduled');
+    }
+
+    return this.findOneForUser(userId, postId);
   }
 
   async cancelSchedule(
     userId: number,
     postId: number,
   ): Promise<VideoPostWithRelations> {
-    const post = await this.findOneForUser(userId, postId);
+    await this.findOneForUser(userId, postId);
 
-    if (post.status !== PostStatus.SCHEDULED) {
+    const updated = await this.videoPostWriter.updateIfStatus({
+      id: postId,
+      allowedStatuses: [PostStatus.SCHEDULED],
+      data: { status: PostStatus.PENDING, scheduledFor: null },
+    });
+    if (updated === 0) {
       throw new BadRequestException('Post is not scheduled');
     }
 
-    const updated = await this.videoPostWriter.update({
-      where: { id: postId },
-      data: {
-        status: PostStatus.PENDING,
-        scheduledFor: null,
-      },
-    });
-
-    return updated as VideoPostWithRelations;
+    return this.findOneForUser(userId, postId);
   }
 
   async findAllForUser(userId: number): Promise<VideoPostWithRelations[]> {

@@ -10,7 +10,7 @@ export {
   type PlatformConfig,
   type PlatformSelectionState,
 } from './PlatformSelection';
-export type {
-  ScheduleFormState,
-  PlatformScheduleConfig,
-} from './ScheduleModal';
+export type { ScheduleFormState } from './ScheduleModal';
+export { default as ScheduledPostActions } from './ScheduledPostActions';
+export { default as ManageScheduleModal } from './ManageScheduleModal';
+export { default as PostStatusBadge } from './PostStatusBadge';

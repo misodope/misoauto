@@ -16,6 +16,10 @@ import { useToast } from '@frontend/app/components/Toaster';
 import { Video } from '@frontend/app/hooks/apis/videos/use-videos';
 import { useCreateVideoPost } from '@frontend/app/hooks/apis/video-posts';
 import { useAuth, SocialAccount } from '@frontend/app/contexts/AuthContext';
+import {
+  getDefaultScheduleDateTime,
+  getMinScheduleDateTime,
+} from '@frontend/app/lib/dates';
 
 interface AccountScheduleConfig {
   enabled: boolean;
@@ -35,27 +39,6 @@ interface ScheduleModalProps {
   video: Video | null;
 }
 
-// Get minimum datetime (now + 10 minutes, rounded to nearest 5 min)
-const getMinDateTime = (): string => {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + 10);
-  // Round to nearest 5 minutes
-  now.setMinutes(Math.ceil(now.getMinutes() / 5) * 5);
-  now.setSeconds(0);
-  now.setMilliseconds(0);
-  return now.toISOString().slice(0, 16);
-};
-
-// Get default datetime (1 hour from now)
-const getDefaultDateTime = (): string => {
-  const date = new Date();
-  date.setHours(date.getHours() + 1);
-  date.setMinutes(Math.ceil(date.getMinutes() / 5) * 5);
-  date.setSeconds(0);
-  date.setMilliseconds(0);
-  return date.toISOString().slice(0, 16);
-};
-
 const buildInitialState = (
   socialAccounts: SocialAccount[] = [],
 ): ScheduleFormState => {
@@ -71,7 +54,7 @@ const buildInitialState = (
   });
 
   return {
-    scheduledFor: getDefaultDateTime(),
+    scheduledFor: getDefaultScheduleDateTime(),
     accounts,
   };
 };
@@ -214,7 +197,7 @@ export default function ScheduleModal({
                 type="datetime-local"
                 value={formState.scheduledFor}
                 onChange={(e) => handleDateChange(e.target.value)}
-                min={getMinDateTime()}
+                min={getMinScheduleDateTime()}
                 mt="1"
               />
               <Text size="1" color="gray" mt="1">
@@ -274,21 +257,6 @@ export default function ScheduleModal({
       </Box>
     </Modal>
   );
-}
-
-// Legacy exports for backward compatibility
-export interface PlatformScheduleConfig {
-  enabled: boolean;
-  caption: string;
-  hashtags: string;
-  scheduledTime?: string;
-}
-
-export interface LegacyScheduleFormState {
-  tiktok: PlatformScheduleConfig;
-  youtube: PlatformScheduleConfig;
-  instagram: PlatformScheduleConfig;
-  facebook: PlatformScheduleConfig;
 }
 
 export type { ScheduleFormState };

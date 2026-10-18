@@ -14,11 +14,7 @@ import { Video, videoKeys } from '../videos/use-videos';
 // ============================================================================
 
 export type PostStatus =
-  | 'PENDING'
-  | 'SCHEDULED'
-  | 'PUBLISHING'
-  | 'PUBLISHED'
-  | 'FAILED';
+  'PENDING' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED';
 
 export interface Platform {
   id: number;
@@ -207,6 +203,8 @@ export const useScheduleVideoPost = (): UseMutationResult<
       queryClient.setQueryData(videoPostKeys.detail(videoPost.id), videoPost);
       // Invalidate lists to refetch
       queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
+      // Refresh the videos table, which renders each video's posts
+      queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
     },
     onError: (error) => {
       console.error(
@@ -234,6 +232,8 @@ export const useCancelSchedule = (): UseMutationResult<
       queryClient.setQueryData(videoPostKeys.detail(videoPost.id), videoPost);
       // Invalidate lists to refetch
       queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
+      // Refresh the videos table, which renders each video's posts
+      queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
     },
     onError: (error) => {
       console.error(
@@ -263,6 +263,8 @@ export const useDeleteVideoPost = (): UseMutationResult<
       });
       // Invalidate lists to refetch
       queryClient.invalidateQueries({ queryKey: videoPostKeys.lists() });
+      // Refresh the videos table, which renders each video's posts
+      queryClient.invalidateQueries({ queryKey: videoKeys.lists() });
     },
     onError: (error) => {
       console.error(

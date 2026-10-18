@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { VideoPost, Prisma, PostStatus } from '@backend/generated/prisma/client';
+import {
+  VideoPost,
+  Prisma,
+  PostStatus,
+} from '@backend/generated/prisma/client';
 
 @Injectable()
 export class VideoPostWriter {
@@ -71,19 +75,20 @@ export class VideoPostWriter {
     });
   }
 
-  async schedulePost(id: number, scheduledFor: Date): Promise<VideoPost> {
-    return this.prisma.videoPost.update({
-      where: { id },
-      data: {
-        status: PostStatus.SCHEDULED,
-        scheduledFor,
-      },
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+  /**
+   * Updates the post only while it is in one of `allowedStatuses`.
+   * Returns the number of rows changed (0 or 1) so callers can detect races.
+   */
+  async updateIfStatus(params: {
+    id: number;
+    allowedStatuses: PostStatus[];
+    data: Prisma.VideoPostUpdateManyMutationInput;
+  }): Promise<number> {
+    const result = await this.prisma.videoPost.updateMany({
+      where: { id: params.id, status: { in: params.allowedStatuses } },
+      data: params.data,
     });
+    return result.count;
   }
 
   async delete(where: Prisma.VideoPostWhereUniqueInput): Promise<VideoPost> {

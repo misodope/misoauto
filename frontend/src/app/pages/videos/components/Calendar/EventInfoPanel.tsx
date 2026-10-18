@@ -1,10 +1,19 @@
 'use client';
 
-import { Dialog, Flex, Text, Badge, Box, IconButton } from '@radix-ui/themes';
+import {
+  Dialog,
+  Flex,
+  Text,
+  Badge,
+  Box,
+  IconButton,
+  Separator,
+} from '@radix-ui/themes';
 import { Cross2Icon, CalendarIcon, VideoIcon } from '@radix-ui/react-icons';
 import type { CalendarEvent } from './types';
 import styles from './EventInfoPanel.module.scss';
 import Drawer from '@frontend/app/components/Drawer/Drawer';
+import ScheduledPostActions from '../ScheduledPostActions';
 
 interface EventInfoPanelProps {
   event: CalendarEvent | null;
@@ -45,6 +54,9 @@ export const EventInfoPanel = ({
 
   const status = event.extendedProps?.status;
   const platform = event.extendedProps?.platform;
+  const videoPostId = event.extendedProps?.videoPostId;
+  const canManageSchedule =
+    event.extendedProps?.postStatus === 'SCHEDULED' && videoPostId != null;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} title={event.title}>
@@ -111,6 +123,19 @@ export const EventInfoPanel = ({
               className={styles.thumbnail}
             />
           </Box>
+        )}
+
+        {canManageSchedule && (
+          <>
+            <Separator size="4" />
+            <ScheduledPostActions
+              key={videoPostId}
+              videoPostId={videoPostId}
+              status="SCHEDULED"
+              scheduledFor={event.extendedProps?.scheduledFor}
+              onDone={() => onOpenChange(false)}
+            />
+          </>
         )}
       </Flex>
     </Drawer>

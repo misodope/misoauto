@@ -45,3 +45,17 @@ export {
   type YouTubePublishResponse,
   type YouTubeApiError,
 } from './apis/integrations/use-integrations';
+export {
+  useCreateVideoPost,
+  useVideoPosts,
+  useVideoPost,
+  useScheduleVideoPost,
+  useCancelSchedule,
+  useDeleteVideoPost,
+  videoPostKeys,
+  type VideoPost,
+  type PostStatus,
+  type CreateVideoPostRequest,
+  type ScheduleVideoPostRequest,
+  type VideoPostError,
+} from './apis/video-posts';

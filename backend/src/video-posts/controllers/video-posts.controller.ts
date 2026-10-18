@@ -10,11 +10,12 @@ import {
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '@backend/common/guards/jwt-auth.guard';
 import {
   CurrentUser,
+  JwtAuthGuard,
   JwtPayload,
-} from '@backend/common/decorators/current-user.decorator';
+  validateBody,
+} from '@backend/common';
 import { VideoPostsService } from '../services/video-posts.service';
 import { CreateVideoPostDto } from '../dto/create-video-post.dto';
 import { ScheduleVideoPostDto } from '../dto/schedule-video-post.dto';
@@ -27,7 +28,7 @@ export class VideoPostsController {
   @Post()
   async create(
     @CurrentUser() user: JwtPayload,
-    @Body() dto: CreateVideoPostDto,
+    @Body(validateBody) dto: CreateVideoPostDto,
   ) {
     return this.videoPostsService.create(user.sub, dto);
   }
@@ -58,7 +59,7 @@ export class VideoPostsController {
   async schedule(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: ScheduleVideoPostDto,
+    @Body(validateBody) dto: ScheduleVideoPostDto,
   ) {
     return this.videoPostsService.schedule(user.sub, id, dto);
   }
