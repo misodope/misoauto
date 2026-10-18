@@ -99,12 +99,15 @@ export class PlatformConnectTikTokService {
     private readonly platformReader: PlatformReader,
     private readonly videoPostDraftWriter: VideoPostDraftWriter,
   ) {
+    const isDev = process.env.NODE_ENV !== 'production';
+
     this.config = {
       clientId: process.env.TIKTOK_CLIENT_ID || '',
       clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
       redirectUri:
+        (isDev && process.env.TIKTOK_REDIRECT_URI_DEV) ||
         process.env.TIKTOK_REDIRECT_URI ||
-        'https://darrel-unexcruciating-trent.ngrok-free.dev/api/v1/platform/tiktok/redirect',
+        '',
       scope:
         'user.info.basic,video.list,video.upload,video.publish,user.info.profile,user.info.stats',
     };
