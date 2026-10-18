@@ -1,43 +1,50 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Box,
-  Callout,
-  Flex,
-  RadioCards,
-  Select,
-  Separator,
-  Switch,
-  Text,
-  TextArea,
-  Button,
-} from '@radix-ui/themes';
+import { Box, Button, Callout, Flex, Select, Text } from '@radix-ui/themes';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import Drawer from '@frontend/app/components/Drawer';
 import { useToast } from '@frontend/app/components/Toaster';
 import { useAuth } from '@frontend/app/contexts/AuthContext';
 import { Video } from '@frontend/app/hooks/apis/videos/use-videos';
 import {
+  YouTubePublishPrivacyStatus,
   useInstagramPublish,
   useInstagramPublishStatus,
   useInstagramUploadDraft,
   useTikTokUploadDraft,
+  useYouTubePublish,
+  useYouTubePublishStatus,
   useYouTubeUploadDraft,
 } from '@frontend/app/hooks/apis/integrations/use-integrations';
+import UploadModeSelector, {
+  UploadMode,
+} from './components/UploadModeSelector';
+import InstagramReelFields from './components/InstagramReelFields';
+import YouTubeVideoFields, {
+  YOUTUBE_TITLE_MAX,
+  isYouTubeMetadataValid,
+} from './components/YouTubeVideoFields';
+import WorkflowStatusCallout, {
+  WorkflowState,
+} from './components/WorkflowStatusCallout';
 
-type UploadMode = 'draft' | 'direct';
-type WorkflowState =
-  | 'idle'
-  | 'preparing'
-  | 'processing'
-  | 'ready'
-  | 'publishing'
-  | 'published'
-  | 'error';
+type WorkflowPlatform = 'instagram' | 'youtube';
+type PollResult =
+  | { state: 'finished' }
+  | { state: 'failed'; message: string }
+  | { state: 'pending'; message: string };
 
 const POLL_INTERVAL_MS = 5_000;
-const POLL_TIMEOUT_MS = 10 * 60 * 1_000;
+const POLL_TIMEOUT_MS: Record<WorkflowPlatform, number> = {
+  instagram: 10 * 60 * 1_000,
+  youtube: 30 * 60 * 1_000,
+};
+
+const PLATFORM_LABEL: Record<WorkflowPlatform, string> = {
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+};
 
 interface PublishVideoDrawerProps {
   open: boolean;
@@ -77,6 +84,8 @@ export default function PublishVideoDrawer({
   } = useToast();
   const tiktokUploadDraft = useTikTokUploadDraft();
   const youtubeUploadDraft = useYouTubeUploadDraft();
+  const youtubePublishStatus = useYouTubePublishStatus();
+  const youtubePublish = useYouTubePublish();
   const instagramUploadDraft = useInstagramUploadDraft();
   const instagramPublishStatus = useInstagramPublishStatus();
   const instagramPublish = useInstagramPublish();
@@ -90,8 +99,13 @@ export default function PublishVideoDrawer({
   const [uploadMode, setUploadMode] = useState<UploadMode>('draft');
   const [caption, setCaption] = useState('');
   const [shareToFeed, setShareToFeed] = useState(true);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [madeForKids, setMadeForKids] = useState(false);
+  const [privacyStatus, setPrivacyStatus] =
+    useState<YouTubePublishPrivacyStatus>('public');
   const [workflowState, setWorkflowState] = useState<WorkflowState>('idle');
-  const [containerId, setContainerId] = useState<string | null>(null);
+  const [platformMediaId, setPlatformMediaId] = useState<string | null>(null);
   const [workflowMessage, setWorkflowMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,13 +114,23 @@ export default function PublishVideoDrawer({
   const selectedAccount = connectedAccounts.find(
     (account) => account.id === Number(selectedAccountId),
   );
-  const isInstagram =
-    selectedAccount?.platform.name.toUpperCase() === 'INSTAGRAM';
+  const selectedPlatformName = selectedAccount?.platform.name.toUpperCase();
+  const isInstagram = selectedPlatformName === 'INSTAGRAM';
+  const isYouTube = selectedPlatformName === 'YOUTUBE';
+  const workflowPlatform: WorkflowPlatform | null = isInstagram
+    ? 'instagram'
+    : isYouTube
+      ? 'youtube'
+      : null;
 
   useEffect(() => {
     if (open) {
       setCaption(video?.description ?? '');
       setShareToFeed(true);
+      setTitle((video?.title ?? '').slice(0, YOUTUBE_TITLE_MAX));
+      setDescription(video?.description ?? '');
+      setMadeForKids(false);
+      setPrivacyStatus('public');
     }
   }, [open, video]);
 
@@ -129,7 +153,7 @@ export default function PublishVideoDrawer({
     operationRef.current += 1;
     clearPolling();
     setWorkflowState('idle');
-    setContainerId(null);
+    setPlatformMediaId(null);
     setWorkflowMessage(null);
     setIsSubmitting(false);
   };
@@ -142,7 +166,9 @@ export default function PublishVideoDrawer({
 
     if (!force && isInProgress) {
       const confirmed = window.confirm(
-        'This Instagram upload is still processing. Closing will discard it. Continue?',
+        workflowPlatform === 'youtube'
+          ? 'This YouTube upload is still in progress. Closing stops tracking it here; any uploaded video stays private on YouTube. Continue?'
+          : 'This Instagram upload is still processing. Closing will discard it. Continue?',
       );
       if (!confirmed) return;
     }
@@ -152,11 +178,16 @@ export default function PublishVideoDrawer({
     setUploadMode('draft');
     setCaption('');
     setShareToFeed(true);
+    setTitle('');
+    setDescription('');
+    setMadeForKids(false);
+    setPrivacyStatus('public');
     onOpenChange(false);
   };
 
-  const publishInstagramContainer = async (
-    nextContainerId: string,
+  const publishMedia = async (
+    platform: WorkflowPlatform,
+    mediaId: string,
     operationId: number,
   ) => {
     if (operationId !== operationRef.current) return;
@@ -166,25 +197,43 @@ export default function PublishVideoDrawer({
     setIsSubmitting(true);
 
     try {
-      const result = await instagramPublish.mutateAsync({
-        containerId: nextContainerId,
-      });
+      if (platform === 'instagram') {
+        const result = await instagramPublish.mutateAsync({
+          containerId: mediaId,
+        });
+        if (operationId !== operationRef.current) return;
 
-      if (operationId !== operationRef.current) return;
+        setWorkflowState('published');
+        showToast({
+          title: 'Instagram Reel published',
+          description: 'Your Reel is live on Instagram.',
+          variant: 'success',
+          action: { label: 'Open on Instagram', href: result.permalink },
+        });
+      } else {
+        const result = await youtubePublish.mutateAsync({
+          videoId: mediaId,
+          privacyStatus,
+        });
+        if (operationId !== operationRef.current) return;
 
-      setWorkflowState('published');
-      showToast({
-        title: 'Instagram Reel published',
-        description: 'Your Reel is live on Instagram.',
-        variant: 'success',
-        action: { label: 'Open on Instagram', href: result.permalink },
-      });
+        setWorkflowState('published');
+        showToast({
+          title: 'YouTube video published',
+          description:
+            result.privacyStatus === 'unlisted'
+              ? 'Your video is live on YouTube as unlisted.'
+              : 'Your video is live on YouTube.',
+          variant: 'success',
+          action: { label: 'Open on YouTube', href: result.url },
+        });
+      }
       handleClose(true);
     } catch (error) {
       if (operationId !== operationRef.current) return;
       const message = getErrorMessage(
         error,
-        'Failed to publish Instagram Reel',
+        `Failed to publish to ${PLATFORM_LABEL[platform]}`,
       );
       setWorkflowState('error');
       setWorkflowMessage(message);
@@ -194,104 +243,175 @@ export default function PublishVideoDrawer({
     }
   };
 
-  const pollInstagramStatus = async (
-    nextContainerId: string,
+  const fetchProcessingStatus = async (
+    platform: WorkflowPlatform,
+    mediaId: string,
+  ): Promise<PollResult> => {
+    if (platform === 'instagram') {
+      const result = await instagramPublishStatus.mutateAsync({
+        containerId: mediaId,
+      });
+      if (result.statusCode === 'FINISHED') return { state: 'finished' };
+      if (result.statusCode === 'ERROR' || result.statusCode === 'EXPIRED') {
+        return {
+          state: 'failed',
+          message:
+            result.status || `Instagram upload status: ${result.statusCode}`,
+        };
+      }
+      return {
+        state: 'pending',
+        message: result.status || 'Instagram is processing the Reel.',
+      };
+    }
+
+    const result = await youtubePublishStatus.mutateAsync({ videoId: mediaId });
+    if (result.processingStatus === 'succeeded') return { state: 'finished' };
+    if (
+      result.processingStatus === 'failed' ||
+      result.processingStatus === 'terminated'
+    ) {
+      return {
+        state: 'failed',
+        message: result.failureReason
+          ? `YouTube processing failed: ${result.failureReason}`
+          : `YouTube processing ${result.processingStatus}.`,
+      };
+    }
+    return { state: 'pending', message: 'YouTube is processing the video.' };
+  };
+
+  const pollProcessingStatus = async (
+    platform: WorkflowPlatform,
+    mediaId: string,
     mode: UploadMode,
     operationId: number,
     startedAt: number,
   ): Promise<void> => {
     if (operationId !== operationRef.current) return;
 
-    if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
+    if (Date.now() - startedAt >= POLL_TIMEOUT_MS[platform]) {
+      const minutes = POLL_TIMEOUT_MS[platform] / 60_000;
       setWorkflowState('error');
-      setWorkflowMessage('Instagram processing timed out after 10 minutes.');
+      setWorkflowMessage(
+        `${PLATFORM_LABEL[platform]} processing timed out after ${minutes} minutes.`,
+      );
       return;
     }
 
     try {
-      const result = await instagramPublishStatus.mutateAsync({
-        containerId: nextContainerId,
-      });
-
+      const result = await fetchProcessingStatus(platform, mediaId);
       if (operationId !== operationRef.current) return;
 
-      if (result.statusCode === 'FINISHED') {
+      if (result.state === 'finished') {
         if (mode === 'direct') {
-          await publishInstagramContainer(nextContainerId, operationId);
+          await publishMedia(platform, mediaId, operationId);
         } else {
           setWorkflowState('ready');
-          setWorkflowMessage('Ready to publish. Closing discards this Reel.');
+          setWorkflowMessage(
+            platform === 'youtube'
+              ? 'Ready to publish. Closing keeps it as a private video on YouTube.'
+              : 'Ready to publish. Closing discards this Reel.',
+          );
         }
         return;
       }
 
-      if (result.statusCode === 'ERROR' || result.statusCode === 'EXPIRED') {
-        const message =
-          result.status || `Instagram upload status: ${result.statusCode}`;
+      if (result.state === 'failed') {
         setWorkflowState('error');
-        setWorkflowMessage(message);
+        setWorkflowMessage(result.message);
         return;
       }
 
-      setWorkflowMessage(result.status || 'Instagram is processing the Reel.');
+      setWorkflowMessage(result.message);
       pollTimeoutRef.current = setTimeout(() => {
-        void pollInstagramStatus(nextContainerId, mode, operationId, startedAt);
+        void pollProcessingStatus(
+          platform,
+          mediaId,
+          mode,
+          operationId,
+          startedAt,
+        );
       }, POLL_INTERVAL_MS);
     } catch (error) {
       if (operationId !== operationRef.current) return;
       const message = getErrorMessage(
         error,
-        'Failed to fetch Instagram upload status',
+        `Failed to fetch ${PLATFORM_LABEL[platform]} upload status`,
       );
       setWorkflowState('error');
       setWorkflowMessage(message);
     }
   };
 
+  const startPlatformUpload = async (platform: WorkflowPlatform) => {
+    if (!video) return;
+
+    if (workflowState === 'ready' && platformMediaId) {
+      await publishMedia(platform, platformMediaId, operationRef.current);
+      return;
+    }
+
+    const operationId = operationRef.current + 1;
+    operationRef.current = operationId;
+    setWorkflowState('preparing');
+    setWorkflowMessage(
+      platform === 'youtube'
+        ? 'Uploading to YouTube. This can take a few minutes for large videos.'
+        : null,
+    );
+
+    let mediaId: string;
+    if (platform === 'instagram') {
+      const result = await instagramUploadDraft.mutateAsync({
+        videoId: video.id,
+        caption,
+        shareToFeed,
+      });
+      mediaId = result.containerId;
+    } else {
+      const result = await youtubeUploadDraft.mutateAsync({
+        videoId: video.id,
+        title: title.trim(),
+        description,
+        madeForKids,
+      });
+      mediaId = result.videoId;
+    }
+
+    if (operationId !== operationRef.current) return;
+
+    setPlatformMediaId(mediaId);
+    setWorkflowState('processing');
+    setWorkflowMessage(
+      platform === 'youtube'
+        ? 'YouTube is processing the video.'
+        : 'Instagram is processing the Reel.',
+    );
+    void pollProcessingStatus(
+      platform,
+      mediaId,
+      uploadMode,
+      operationId,
+      Date.now(),
+    );
+  };
+
   const handleSubmit = async () => {
     if (!video || !selectedAccount) return;
 
-    const platformName = selectedAccount.platform.name.toUpperCase();
     setIsSubmitting(true);
 
     try {
-      if (platformName === 'INSTAGRAM') {
-        if (workflowState === 'ready' && containerId) {
-          await publishInstagramContainer(containerId, operationRef.current);
-          return;
-        }
-
-        const operationId = operationRef.current + 1;
-        operationRef.current = operationId;
-        setWorkflowState('preparing');
-        setWorkflowMessage(null);
-
-        const result = await instagramUploadDraft.mutateAsync({
-          videoId: video.id,
-          caption,
-          shareToFeed,
-        });
-
-        if (operationId !== operationRef.current) return;
-
-        setContainerId(result.containerId);
-        setWorkflowState('processing');
-        setWorkflowMessage('Instagram is processing the Reel.');
-        void pollInstagramStatus(
-          result.containerId,
-          uploadMode,
-          operationId,
-          Date.now(),
-        );
+      if (workflowPlatform) {
+        await startPlatformUpload(workflowPlatform);
         return;
       }
 
       if (uploadMode !== 'draft') return;
 
-      if (platformName === 'TIKTOK') {
+      if (selectedPlatformName === 'TIKTOK') {
         await tiktokUploadDraft.mutateAsync({ videoId: video.id });
-      } else if (platformName === 'YOUTUBE') {
-        await youtubeUploadDraft.mutateAsync({ videoId: video.id });
       } else {
         throw new Error('This platform is not supported for uploads.');
       }
@@ -302,10 +422,10 @@ export default function PublishVideoDrawer({
       );
       handleClose(true);
     } catch (error) {
-      if (platformName === 'INSTAGRAM') {
+      if (workflowPlatform) {
         const message = getErrorMessage(
           error,
-          'Failed to prepare Instagram Reel',
+          `Failed to upload to ${PLATFORM_LABEL[workflowPlatform]}`,
         );
         setWorkflowState('error');
         setWorkflowMessage(message);
@@ -325,22 +445,47 @@ export default function PublishVideoDrawer({
     setUploadMode('draft');
   };
 
+  const youtubeTitleInvalid =
+    isYouTube && !isYouTubeMetadataValid(title, description);
+
   const hasConnectedAccounts = connectedAccounts.length > 0;
   const canSubmit =
     !!selectedAccount &&
     !isSubmitting &&
-    (isInstagram
+    !youtubeTitleInvalid &&
+    (workflowPlatform
       ? workflowState === 'idle' ||
         (workflowState === 'ready' && uploadMode === 'draft')
       : uploadMode === 'draft' && workflowState === 'idle');
 
-  const submitLabel = isInstagram
-    ? workflowState === 'ready'
-      ? 'Publish now'
-      : uploadMode === 'direct'
+  const submitLabel = (() => {
+    if (workflowState === 'ready') return 'Publish now';
+    if (isInstagram) {
+      return uploadMode === 'direct'
         ? 'Upload and post as a Reel'
-        : 'Prepare Reel'
-    : 'Upload Draft';
+        : 'Prepare Reel';
+    }
+    if (isYouTube) {
+      return uploadMode === 'direct'
+        ? 'Upload and publish'
+        : 'Upload as private draft';
+    }
+    return 'Upload Draft';
+  })();
+
+  const draftDescription = isInstagram
+    ? 'Upload and process on Instagram without posting. Publish within 24h.'
+    : isYouTube
+      ? 'Upload as a private video. Publish now or later from YouTube Studio.'
+      : 'Send to drafts for review';
+  const directDescription = isInstagram
+    ? 'Upload and post as a Reel'
+    : isYouTube
+      ? 'Upload and publish once YouTube finishes processing'
+      : 'Coming soon';
+
+  const isWorkflowLocked =
+    workflowState !== 'idle' && workflowState !== 'error';
 
   return (
     <Drawer
@@ -389,84 +534,43 @@ export default function PublishVideoDrawer({
             </Select.Root>
           </Box>
 
-          <Box>
-            <Text as="label" size="2" weight="medium" mb="1">
-              Upload Type
-            </Text>
-            <RadioCards.Root
-              value={uploadMode}
-              onValueChange={(value) => setUploadMode(value as UploadMode)}
-              columns="2"
-              mt="1"
-            >
-              <RadioCards.Item value="draft">
-                <Flex direction="column" gap="1">
-                  <Text size="2" weight="medium">
-                    {isInstagram ? 'Prepare' : 'Draft'}
-                  </Text>
-                  <Text size="1" color="gray">
-                    {isInstagram
-                      ? 'Upload and process on Instagram without posting. Publish within 24h.'
-                      : 'Send to drafts for review'}
-                  </Text>
-                </Flex>
-              </RadioCards.Item>
-              <RadioCards.Item value="direct" disabled={!isInstagram}>
-                <Flex direction="column" gap="1">
-                  <Text size="2" weight="medium">
-                    Direct
-                  </Text>
-                  <Text size="1" color="gray">
-                    {isInstagram ? 'Upload and post as a Reel' : 'Coming soon'}
-                  </Text>
-                </Flex>
-              </RadioCards.Item>
-            </RadioCards.Root>
-          </Box>
+          <UploadModeSelector
+            value={uploadMode}
+            onChange={setUploadMode}
+            draftLabel={isInstagram ? 'Prepare' : 'Draft'}
+            draftDescription={draftDescription}
+            directDescription={directDescription}
+            directDisabled={!workflowPlatform}
+          />
 
           {isInstagram && (
-            <Box>
-              <Flex justify="between" align="center">
-                <Text as="label" size="2" weight="medium">
-                  Caption
-                </Text>
-                <Text size="1" color="gray">
-                  {caption.length}/2200
-                </Text>
-              </Flex>
-              <TextArea
-                value={caption}
-                onChange={(event) => setCaption(event.target.value)}
-                maxLength={2200}
-                rows={4}
-                mt="1"
-                placeholder="Write a caption for your Reel..."
-              />
-              <Separator size="4" my="3" />
-              <Flex justify="between" align="center">
-                <Text size="2">Also share to feed</Text>
-                <Switch
-                  checked={shareToFeed}
-                  onCheckedChange={setShareToFeed}
-                />
-              </Flex>
-            </Box>
+            <InstagramReelFields
+              caption={caption}
+              shareToFeed={shareToFeed}
+              onCaptionChange={setCaption}
+              onShareToFeedChange={setShareToFeed}
+            />
           )}
 
-          {workflowMessage && workflowState !== 'error' && (
-            <Callout.Root color={workflowState === 'ready' ? 'green' : 'blue'}>
-              <Callout.Text>{workflowMessage}</Callout.Text>
-            </Callout.Root>
+          {isYouTube && (
+            <YouTubeVideoFields
+              title={title}
+              description={description}
+              privacyStatus={privacyStatus}
+              madeForKids={madeForKids}
+              metadataLocked={isWorkflowLocked}
+              privacyLocked={workflowState === 'publishing'}
+              onTitleChange={setTitle}
+              onDescriptionChange={setDescription}
+              onPrivacyStatusChange={setPrivacyStatus}
+              onMadeForKidsChange={setMadeForKids}
+            />
           )}
 
-          {workflowState === 'error' && workflowMessage && (
-            <Callout.Root color="red">
-              <Callout.Icon>
-                <InfoCircledIcon />
-              </Callout.Icon>
-              <Callout.Text>{workflowMessage}</Callout.Text>
-            </Callout.Root>
-          )}
+          <WorkflowStatusCallout
+            state={workflowState}
+            message={workflowMessage}
+          />
 
           <Button
             size="3"

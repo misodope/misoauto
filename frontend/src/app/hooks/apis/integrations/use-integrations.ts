@@ -2,10 +2,13 @@ import api from '@frontend/app/lib/axios';
 import {
   useMutation,
   useQuery,
+  useQueryClient,
   UseMutationResult,
   UseQueryResult,
 } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+import { videoPostKeys } from '../video-posts/use-video-posts';
+import { videoKeys } from '../videos/use-videos';
 
 // ============================================================================
 // Types
@@ -115,6 +118,8 @@ export interface InstagramUserInfo {
   user_id: string;
   username: string;
   account_type: string;
+  profile_picture_url?: string;
+  followers_count?: number;
 }
 
 export interface InstagramUserInfoResponse {
@@ -202,6 +207,9 @@ export interface YouTubeUserInfoResponse {
 
 export interface YouTubeUploadDraftRequest {
   videoId: number;
+  title?: string;
+  description?: string;
+  madeForKids?: boolean;
 }
 
 export type YouTubeProcessingStatus =
@@ -223,6 +231,21 @@ export interface YouTubePublishStatusResponse {
   processingStatus: YouTubeProcessingStatus;
   uploadStatus: string;
   privacyStatus: string;
+  failureReason?: string;
+  platform: 'youtube';
+}
+
+export type YouTubePublishPrivacyStatus = 'public' | 'unlisted';
+
+export interface YouTubePublishRequest {
+  videoId: string;
+  privacyStatus?: YouTubePublishPrivacyStatus;
+}
+
+export interface YouTubePublishResponse {
+  videoId: string;
+  url: string;
+  privacyStatus: YouTubePublishPrivacyStatus;
   platform: 'youtube';
 }
 
@@ -340,6 +363,13 @@ const getYouTubePublishStatus = async (
   params: YouTubePublishStatusRequest,
 ): Promise<YouTubePublishStatusResponse> => {
   const response = await api.post('/platform/youtube/publish-status', params);
+  return response.data;
+};
+
+const publishToYouTube = async (
+  params: YouTubePublishRequest,
+): Promise<YouTubePublishResponse> => {
+  const response = await api.post('/platform/youtube/publish', params);
   return response.data;
 };
 
@@ -606,6 +636,29 @@ export const useYouTubePublishStatus = (): UseMutationResult<
     onError: (error) => {
       console.error(
         'Failed to fetch YouTube publish status:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
+export const useYouTubePublish = (): UseMutationResult<
+  YouTubePublishResponse,
+  AxiosError<YouTubeApiError>,
+  YouTubePublishRequest
+> => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: publishToYouTube,
+    onSuccess: () => {
+      // Publishing records a VideoPost, which shows up in post and video lists.
+      queryClient.invalidateQueries({ queryKey: videoPostKeys.all });
+      queryClient.invalidateQueries({ queryKey: videoKeys.all });
+    },
+    onError: (error) => {
+      console.error(
+        'Failed to publish YouTube video:',
         error.response?.data?.message || error.message,
       );
     },

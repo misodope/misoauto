@@ -99,12 +99,15 @@ export class PlatformConnectTikTokService {
     private readonly platformReader: PlatformReader,
     private readonly videoPostDraftWriter: VideoPostDraftWriter,
   ) {
+    const isDev = process.env.NODE_ENV !== 'production';
+
     this.config = {
       clientId: process.env.TIKTOK_CLIENT_ID || '',
       clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
       redirectUri:
+        (isDev && process.env.TIKTOK_REDIRECT_URI_DEV) ||
         process.env.TIKTOK_REDIRECT_URI ||
-        'https://darrel-unexcruciating-trent.ngrok-free.dev/api/v1/platform/tiktok/redirect',
+        '',
       scope:
         'user.info.basic,video.list,video.upload,video.publish,user.info.profile,user.info.stats',
     };
@@ -223,7 +226,7 @@ export class PlatformConnectTikTokService {
       // Fields available with user.info.basic scope
       // Additional fields require: user.info.profile (bio, profile_deep_link) or user.info.stats (follower/following counts)
       const fields =
-        'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name';
+        'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,follower_count,following_count,likes_count,video_count';
 
       const response = await this.httpClient.get(
         `https://open.tiktokapis.com/v2/user/info/?fields=${fields}`,
