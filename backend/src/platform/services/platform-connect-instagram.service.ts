@@ -12,6 +12,12 @@ import { SocialAccountWithRelations } from '../../social-accounts/repository/soc
 const GRAPH_URL = 'https://graph.instagram.com/v25.0';
 const TOKEN_URL = 'https://graph.instagram.com';
 
+const redactSensitiveUrl = (url?: string): string | undefined =>
+  url?.replace(
+    /([?&](?:access_token|client_secret|refresh_token|code)=)[^&]*/gi,
+    '$1[REDACTED]',
+  );
+
 export interface InstagramOAuthConfig {
   clientId: string;
   clientSecret: string;
@@ -103,7 +109,9 @@ export class PlatformConnectInstagramService {
 
     this.httpClient.interceptors.request.use(
       (config) => {
-        this.logger.debug(`Making request to: ${config.url}`);
+        this.logger.debug(
+          `Making request to: ${redactSensitiveUrl(config.url)}`,
+        );
         return config;
       },
       (error) => {
@@ -118,7 +126,7 @@ export class PlatformConnectInstagramService {
         this.logger.error('Instagram API Error:', {
           status: error.response?.status,
           data: error.response?.data,
-          url: error.config?.url,
+          url: redactSensitiveUrl(error.config?.url),
         });
         return Promise.reject(error);
       },

@@ -127,7 +127,7 @@ export class TikTokController {
     }
 
     if (!userId) {
-      this.logger.error('Missing user ID');
+      this.logger.warn('Missing user ID in TikTok OAuth callback');
       res.clearCookie('csrfState');
       res.clearCookie('oauthUserId');
       return res.redirect(`${frontendUrl}/integrations?error=missing_user_id`);
