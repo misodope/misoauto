@@ -17,21 +17,13 @@ import {
   getOAuthCookieOptions,
   JwtAuthGuard,
   JwtPayload,
+  validateBody,
 } from '@backend/common';
 import { VideosService } from '@backend/videos/services/videos.service';
 import { VideoPostDraftReader } from '@backend/video-posts/repository/video-post-draft-reader';
 import { PlatformReader } from '../repository/platform-reader';
 import { PlatformConnectInstagramService } from '../services/platform-connect-instagram.service';
-
-export interface UploadDraftRequest {
-  videoId: number;
-  caption?: string;
-  shareToFeed?: boolean;
-}
-
-export interface PublishStatusRequest {
-  containerId: string;
-}
+import { InstagramContainerDto, InstagramUploadDraftDto } from '../dto';
 
 const isDev = () => process.env.NODE_ENV !== 'production';
 
@@ -104,7 +96,7 @@ export class InstagramController {
     }
 
     if (!userId) {
-      this.logger.error('Missing user ID');
+      this.logger.warn('Missing user ID in Instagram OAuth callback');
       res.clearCookie('csrfState');
       res.clearCookie('oauthUserId');
       return res.redirect(`${frontendUrl}/integrations?error=missing_user_id`);
@@ -164,7 +156,7 @@ export class InstagramController {
   @UseGuards(JwtAuthGuard)
   async uploadDraft(
     @CurrentUser() user: JwtPayload,
-    @Body() body: UploadDraftRequest,
+    @Body(validateBody) body: InstagramUploadDraftDto,
   ) {
     const account = await this.getInstagramAccount(user.sub);
     const video = await this.videosService.getVideo(user.sub, body.videoId);
@@ -195,7 +187,7 @@ export class InstagramController {
   @UseGuards(JwtAuthGuard)
   async getPublishStatus(
     @CurrentUser() user: JwtPayload,
-    @Body() body: PublishStatusRequest,
+    @Body(validateBody) body: InstagramContainerDto,
   ) {
     const draft = await this.getOwnedDraft(user.sub, body.containerId);
     const account = await this.getInstagramAccount(user.sub);
@@ -211,7 +203,7 @@ export class InstagramController {
   @UseGuards(JwtAuthGuard)
   async publish(
     @CurrentUser() user: JwtPayload,
-    @Body() body: PublishStatusRequest,
+    @Body(validateBody) body: InstagramContainerDto,
   ) {
     const draft = await this.getOwnedDraft(user.sub, body.containerId);
     const account = await this.getInstagramAccount(user.sub);

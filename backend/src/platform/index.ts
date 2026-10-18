@@ -7,3 +7,4 @@ export { InstagramController } from './controllers/platform-instagram.controller
 export * from './services/platform-connect-tiktok.service';
 export * from './services/platform-connect-youtube.service';
 export * from './services/platform-connect-instagram.service';
+export * from './dto';

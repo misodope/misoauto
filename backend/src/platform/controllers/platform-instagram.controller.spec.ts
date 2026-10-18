@@ -1,6 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { PlatformType } from '@backend/generated/prisma/client';
 import { InstagramController } from './platform-instagram.controller';
+import { validateBody } from '@backend/common';
+import { InstagramContainerDto, InstagramUploadDraftDto } from '../dto';
 
 describe('InstagramController', () => {
   const instagramService = {
@@ -68,5 +70,61 @@ describe('InstagramController', () => {
       controller.publish({ sub: 1 } as never, { containerId: 'container-1' }),
     ).rejects.toThrow(NotFoundException);
     expect(instagramService.publishContainer).not.toHaveBeenCalled();
+  });
+
+  describe('request validation', () => {
+    const validate = (
+      metatype: typeof InstagramContainerDto | typeof InstagramUploadDraftDto,
+      value: unknown,
+    ) => validateBody.transform(value, { type: 'body', metatype });
+
+    it('rejects a missing container ID before any draft lookup', async () => {
+      await expect(validate(InstagramContainerDto, {})).rejects.toThrow();
+      await expect(
+        validate(InstagramContainerDto, { containerId: '' }),
+      ).rejects.toThrow();
+      await expect(
+        validate(InstagramContainerDto, { containerId: { $ne: null } }),
+      ).rejects.toThrow();
+    });
+
+    it('rejects malformed upload bodies', async () => {
+      await expect(
+        validate(InstagramUploadDraftDto, { videoId: '10' }),
+      ).rejects.toThrow();
+      await expect(validate(InstagramUploadDraftDto, {})).rejects.toThrow();
+      await expect(
+        validate(InstagramUploadDraftDto, { videoId: 10, caption: 42 }),
+      ).rejects.toThrow();
+      await expect(
+        validate(InstagramUploadDraftDto, {
+          videoId: 10,
+          caption: 'x'.repeat(2201),
+        }),
+      ).rejects.toThrow();
+      await expect(
+        validate(InstagramUploadDraftDto, {
+          videoId: 10,
+          shareToFeed: 'false',
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('accepts a valid upload body and strips unknown fields', async () => {
+      await expect(
+        validate(InstagramUploadDraftDto, {
+          videoId: 10,
+          caption: 'Hello',
+          shareToFeed: false,
+          extra: 'ignored',
+        }),
+      ).resolves.toEqual(
+        Object.assign(new InstagramUploadDraftDto(), {
+          videoId: 10,
+          caption: 'Hello',
+          shareToFeed: false,
+        }),
+      );
+    });
   });
 });
