@@ -29,7 +29,7 @@ export const Dashboard = () => {
   return (
     <Flex direction="column" gap="4">
       <Grid columns={{ initial: '1', md: '2' }} gap="6" align="start">
-        <Flex direction="column" gap="4">
+        <Flex direction="column" gap="4" style={{ order: 2 }}>
           <Heading size="5">Platform Connections</Heading>
           <Grid
             columns="1"
@@ -118,7 +118,7 @@ export const Dashboard = () => {
           </Grid>
         </Flex>
 
-        <Flex direction="column" gap="4">
+        <Flex direction="column" gap="4" style={{ order: 1 }}>
           <Heading size="5">Quick Actions</Heading>
           <Grid columns="1" gap="3">
             <DashboardCard
