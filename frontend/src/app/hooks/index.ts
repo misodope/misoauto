@@ -47,6 +47,8 @@ export {
 } from './apis/integrations/use-integrations';
 export {
   useCreateVideoPost,
+  useCreateVideoPostBatch,
+  useUpdateVideoPostDetails,
   useVideoPosts,
   useVideoPost,
   useScheduleVideoPost,
@@ -57,6 +59,11 @@ export {
   type PostStatus,
   type UploadMode,
   type CreateVideoPostRequest,
+  type CreateVideoPostBatchRequest,
+  type CreateVideoPostBatchResponse,
+  type UpdateVideoPostDetailsRequest,
+  type VideoPostDetails,
+  type VideoPostTarget,
   type ScheduleVideoPostRequest,
   type VideoPostError,
 } from './apis/video-posts';

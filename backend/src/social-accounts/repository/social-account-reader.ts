@@ -6,6 +6,10 @@ export type SocialAccountWithRelations = Prisma.SocialAccountGetPayload<{
   include: { platform: true; user: true; posts: true };
 }>;
 
+export type SocialAccountWithPlatform = Prisma.SocialAccountGetPayload<{
+  include: { platform: true };
+}>;
+
 const SOCIAL_ACCOUNT_INCLUDE = {
   platform: true,
   user: true,
@@ -40,6 +44,16 @@ export class SocialAccountReader {
     return this.prisma.socialAccount.findUnique({
       where,
       include: SOCIAL_ACCOUNT_INCLUDE,
+    });
+  }
+
+  async findManyByIdsForUser(
+    userId: number,
+    ids: number[],
+  ): Promise<SocialAccountWithPlatform[]> {
+    return this.prisma.socialAccount.findMany({
+      where: { userId, id: { in: ids } },
+      include: { platform: true },
     });
   }
 

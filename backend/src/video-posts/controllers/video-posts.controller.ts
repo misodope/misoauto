@@ -19,6 +19,8 @@ import {
 import { VideoPostsService } from '../services/video-posts.service';
 import { CreateVideoPostDto } from '../dto/create-video-post.dto';
 import { ScheduleVideoPostDto } from '../dto/schedule-video-post.dto';
+import { CreateVideoPostBatchDto } from '../dto/create-video-post-batch.dto';
+import { UpdateVideoPostDetailsDto } from '../dto/update-video-post-details.dto';
 
 @Controller('video-posts')
 @UseGuards(JwtAuthGuard)
@@ -31,6 +33,14 @@ export class VideoPostsController {
     @Body(validateBody) dto: CreateVideoPostDto,
   ) {
     return this.videoPostsService.create(user.sub, dto);
+  }
+
+  @Post('batch')
+  async createBatch(
+    @CurrentUser() user: JwtPayload,
+    @Body(validateBody) dto: CreateVideoPostBatchDto,
+  ) {
+    return this.videoPostsService.createBatch(user.sub, dto);
   }
 
   @Get()
@@ -70,6 +80,15 @@ export class VideoPostsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.videoPostsService.cancelSchedule(user.sub, id);
+  }
+
+  @Patch(':id')
+  async updateDetails(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseIntPipe) id: number,
+    @Body(validateBody) dto: UpdateVideoPostDetailsDto,
+  ) {
+    return this.videoPostsService.updateDetails(user.sub, id, dto);
   }
 
   @Delete(':id')
