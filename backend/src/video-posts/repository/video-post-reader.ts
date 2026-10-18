@@ -6,7 +6,7 @@ export type VideoPostWithRelations = Prisma.VideoPostGetPayload<{
   include: { video: true; platform: true; socialAccount: true };
 }>;
 
-const VIDEO_POST_INCLUDE = {
+export const VIDEO_POST_INCLUDE = {
   video: true,
   platform: true,
   socialAccount: true,
@@ -46,6 +46,17 @@ export class VideoPostReader {
   async findByVideoId(videoId: number): Promise<VideoPostWithRelations[]> {
     return this.prisma.videoPost.findMany({
       where: { videoId },
+      include: VIDEO_POST_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findByVideoAndAccounts(
+    videoId: number,
+    socialAccountIds: number[],
+  ): Promise<VideoPostWithRelations[]> {
+    return this.prisma.videoPost.findMany({
+      where: { videoId, socialAccountId: { in: socialAccountIds } },
       include: VIDEO_POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });

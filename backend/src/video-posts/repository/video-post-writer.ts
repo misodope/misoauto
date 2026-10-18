@@ -5,6 +5,10 @@ import {
   Prisma,
   PostStatus,
 } from '@backend/generated/prisma/client';
+import {
+  VIDEO_POST_INCLUDE,
+  VideoPostWithRelations,
+} from './video-post-reader';
 
 @Injectable()
 export class VideoPostWriter {
@@ -13,11 +17,7 @@ export class VideoPostWriter {
   async create(data: Prisma.VideoPostCreateInput): Promise<VideoPost> {
     return this.prisma.videoPost.create({
       data,
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+      include: VIDEO_POST_INCLUDE,
     });
   }
 
@@ -29,11 +29,7 @@ export class VideoPostWriter {
     return this.prisma.videoPost.update({
       data,
       where,
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+      include: VIDEO_POST_INCLUDE,
     });
   }
 
@@ -44,11 +40,7 @@ export class VideoPostWriter {
         status,
         ...(status === PostStatus.PUBLISHED && { postedAt: new Date() }),
       },
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+      include: VIDEO_POST_INCLUDE,
     });
   }
 
@@ -67,11 +59,7 @@ export class VideoPostWriter {
         status,
         ...(status === PostStatus.PUBLISHED && { postedAt: new Date() }),
       },
-      include: {
-        video: true,
-        platform: true,
-        socialAccount: true,
-      },
+      include: VIDEO_POST_INCLUDE,
     });
   }
 
@@ -89,6 +77,25 @@ export class VideoPostWriter {
       data: params.data,
     });
     return result.count;
+  }
+
+  /** Applies all updates and creates in one transaction. */
+  async saveBatch(params: {
+    creates: Prisma.VideoPostCreateInput[];
+    updates: { id: number; data: Prisma.VideoPostUpdateInput }[];
+  }): Promise<VideoPostWithRelations[]> {
+    return this.prisma.$transaction([
+      ...params.updates.map(({ id, data }) =>
+        this.prisma.videoPost.update({
+          where: { id },
+          data,
+          include: VIDEO_POST_INCLUDE,
+        }),
+      ),
+      ...params.creates.map((data) =>
+        this.prisma.videoPost.create({ data, include: VIDEO_POST_INCLUDE }),
+      ),
+    ]);
   }
 
   async delete(where: Prisma.VideoPostWhereUniqueInput): Promise<VideoPost> {
