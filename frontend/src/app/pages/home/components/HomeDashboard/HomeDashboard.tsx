@@ -62,21 +62,6 @@ export default function HomeDashboard() {
       value: formatMetric(totalAudience),
       description: 'Across connected platforms',
     },
-    {
-      label: 'TikTok Followers',
-      value: formatMetric(tiktokFollowers),
-      description: 'Current followers',
-    },
-    {
-      label: 'Instagram Followers',
-      value: formatMetric(instagramFollowers),
-      description: 'Current followers',
-    },
-    {
-      label: 'YouTube Subscribers',
-      value: formatMetric(youtubeSubscribers),
-      description: 'Current subscribers',
-    },
   ];
 
   return (
@@ -90,7 +75,7 @@ export default function HomeDashboard() {
         </Text>
       </Box>
 
-      <Grid columns={{ initial: '2', sm: '3', lg: '5' }} gap="3">
+      <Grid columns={{ initial: '1', sm: '2' }} gap="3">
         {metrics.map((metric) => (
           <Card key={metric.label} size="2">
             <Flex direction="column" gap="1">
