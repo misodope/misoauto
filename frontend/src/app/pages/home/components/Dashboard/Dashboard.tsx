@@ -6,7 +6,7 @@ import {
   useTikTokUserInfo,
   useYouTubeUserInfo,
 } from '@frontend/app/hooks/apis/integrations/use-integrations';
-import { Avatar, Flex, Grid, Heading, Text } from '@radix-ui/themes';
+import { Avatar, Flex, Grid, Heading, Skeleton, Text } from '@radix-ui/themes';
 
 type PlatformMetric = {
   label: string;
@@ -44,16 +44,22 @@ const getMetricDisplayValue = (metric: PlatformMetric) => {
 function MetricBreakdown({ metrics }: { metrics: PlatformMetric[] }) {
   return (
     <Flex direction="column" gap="2">
-      {metrics.map((metric) => (
-        <Flex key={metric.label} justify="between" align="center">
-          <Text size="2" color="gray">
-            {metric.label}
-          </Text>
-          <Text size="2" color={metric.connected ? undefined : 'gray'}>
-            {getMetricDisplayValue(metric)}
-          </Text>
-        </Flex>
-      ))}
+      {metrics.map((metric) => {
+        const isMetricLoading = metric.connected && metric.isLoading;
+
+        return (
+          <Flex key={metric.label} justify="between" align="center">
+            <Text size="2" color="gray">
+              {metric.label}
+            </Text>
+            <Skeleton loading={isMetricLoading}>
+              <Text size="2" color={metric.connected ? undefined : 'gray'}>
+                {getMetricDisplayValue(metric)}
+              </Text>
+            </Skeleton>
+          </Flex>
+        );
+      })}
     </Flex>
   );
 }
@@ -65,11 +71,17 @@ function MetricCard({
   title: string;
   metrics: PlatformMetric[];
 }) {
+  const isLoading = metrics.some(
+    (metric) => metric.connected && metric.isLoading,
+  );
+
   return (
     <DashboardCard title={title} cardSize="2">
-      <Text size="6" weight="bold" mb="1">
-        {formatMetric(getMetricValue(metrics))}
-      </Text>
+      <Skeleton loading={isLoading}>
+        <Text size="6" weight="bold" mb="1">
+          {formatMetric(getMetricValue(metrics))}
+        </Text>
+      </Skeleton>
       <MetricBreakdown metrics={metrics} />
     </DashboardCard>
   );
@@ -211,65 +223,88 @@ export const Dashboard = () => {
             <DashboardCard
               title="TikTok Account"
               description={
-                tiktokAccount
-                  ? `Connected as ${tiktokUserInfo?.user.display_name || tiktokAccount.username}`
-                  : 'Not connected'
+                <Skeleton
+                  loading={Boolean(tiktokAccount) && isTikTokUserInfoLoading}
+                >
+                  {tiktokAccount
+                    ? `Connected as ${tiktokUserInfo?.user.display_name || tiktokAccount.username}`
+                    : 'Not connected'}
+                </Skeleton>
               }
               muted={!tiktokAccount}
               compact
             >
               {tiktokAccount && (
-                <Avatar
-                  size="2"
-                  src={tiktokUserInfo?.user.avatar_url_100}
-                  fallback={
-                    tiktokUserInfo?.user.display_name || tiktokAccount.username
-                  }
-                />
+                <Skeleton loading={isTikTokUserInfoLoading}>
+                  <Avatar
+                    size="2"
+                    src={tiktokUserInfo?.user.avatar_url_100}
+                    fallback={
+                      tiktokUserInfo?.user.display_name ||
+                      tiktokAccount.username
+                    }
+                  />
+                </Skeleton>
               )}
             </DashboardCard>
 
             <DashboardCard
               title="Instagram Account"
               description={
-                instagramAccount
-                  ? `Connected as @${instagramUserInfo?.user.username || instagramAccount.username}`
-                  : 'Not connected'
+                <Skeleton
+                  loading={
+                    Boolean(instagramAccount) && isInstagramUserInfoLoading
+                  }
+                >
+                  {instagramAccount
+                    ? `Connected as @${instagramUserInfo?.user.username || instagramAccount.username}`
+                    : 'Not connected'}
+                </Skeleton>
               }
               muted={!instagramAccount}
               compact
             >
               {instagramAccount && (
-                <Avatar
-                  size="2"
-                  src={instagramUserInfo?.user.profile_picture_url}
-                  fallback={
-                    instagramUserInfo?.user.username ||
-                    instagramAccount.username
-                  }
-                />
+                <Skeleton loading={isInstagramUserInfoLoading}>
+                  <Avatar
+                    size="2"
+                    src={instagramUserInfo?.user.profile_picture_url}
+                    fallback={
+                      instagramUserInfo?.user.username ||
+                      instagramAccount.username
+                    }
+                  />
+                </Skeleton>
               )}
             </DashboardCard>
 
             <DashboardCard
               title="YouTube Account"
               description={
-                youtubeAccount
-                  ? `Connected as ${youtubeUserInfo?.channel.snippet.title || youtubeAccount.username}`
-                  : 'Not connected'
+                <Skeleton
+                  loading={Boolean(youtubeAccount) && isYouTubeUserInfoLoading}
+                >
+                  {youtubeAccount
+                    ? `Connected as ${youtubeUserInfo?.channel.snippet.title || youtubeAccount.username}`
+                    : 'Not connected'}
+                </Skeleton>
               }
               muted={!youtubeAccount}
               compact
             >
               {youtubeAccount && (
-                <Avatar
-                  size="2"
-                  src={youtubeUserInfo?.channel.snippet.thumbnails.default.url}
-                  fallback={
-                    youtubeUserInfo?.channel.snippet.title ||
-                    youtubeAccount.username
-                  }
-                />
+                <Skeleton loading={isYouTubeUserInfoLoading}>
+                  <Avatar
+                    size="2"
+                    src={
+                      youtubeUserInfo?.channel.snippet.thumbnails.default.url
+                    }
+                    fallback={
+                      youtubeUserInfo?.channel.snippet.title ||
+                      youtubeAccount.username
+                    }
+                  />
+                </Skeleton>
               )}
             </DashboardCard>
 
