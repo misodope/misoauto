@@ -28,7 +28,7 @@ export const Dashboard = () => {
 
   return (
     <Flex direction="column" gap="4">
-      <Grid columns={{ initial: '1', lg: '2' }} gap="6" align="start">
+      <Grid columns={{ initial: '1', md: '2' }} gap="6" align="start">
         <Flex direction="column" gap="4">
           <Heading size="5">Platform Connections</Heading>
           <Grid
