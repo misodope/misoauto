@@ -29,7 +29,8 @@ services:
     volumes:
       - ./backend/src:/app/backend/src
     command: >
-      sh -c "npx prisma generate --schema=src/database/schema.prisma && 
+      sh -c "npx prisma generate --schema=src/database/schema.prisma &&
+             npx prisma migrate deploy --schema=src/database/schema.prisma &&
              npx ts-node -r tsconfig-paths/register src/main.ts"
 
   frontend:

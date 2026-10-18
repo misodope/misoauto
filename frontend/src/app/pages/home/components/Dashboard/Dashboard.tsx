@@ -1,5 +1,6 @@
 import DashboardCard from '@frontend/app/components/DashboardCard';
 import { useAuth } from '@frontend/app/contexts/AuthContext';
+import { useVideoPosts } from '@frontend/app/hooks/apis/video-posts/use-video-posts';
 import {
   useInstagramUserInfo,
   useTikTokUserInfo,
@@ -59,16 +60,14 @@ function MetricBreakdown({ metrics }: { metrics: PlatformMetric[] }) {
 
 function MetricCard({
   title,
-  description,
   metrics,
 }: {
   title: string;
-  description: string;
   metrics: PlatformMetric[];
 }) {
   return (
-    <DashboardCard title={title} description={description}>
-      <Text size="8" weight="bold" mb="1">
+    <DashboardCard title={title} cardSize="2">
+      <Text size="6" weight="bold" mb="1">
         {formatMetric(getMetricValue(metrics))}
       </Text>
       <MetricBreakdown metrics={metrics} />
@@ -99,7 +98,16 @@ export const Dashboard = () => {
     isLoading: isInstagramUserInfoLoading,
     isError: isInstagramUserInfoError,
   } = useInstagramUserInfo(Boolean(instagramAccount));
-  const { data: youtubeUserInfo } = useYouTubeUserInfo(Boolean(youtubeAccount));
+  const {
+    data: youtubeUserInfo,
+    isLoading: isYouTubeUserInfoLoading,
+    isError: isYouTubeUserInfoError,
+  } = useYouTubeUserInfo(Boolean(youtubeAccount));
+  const {
+    data: videoPosts,
+    isLoading: isVideoPostsLoading,
+    isError: isVideoPostsError,
+  } = useVideoPosts();
 
   const audienceMetrics: PlatformMetric[] = [
     {
@@ -115,6 +123,15 @@ export const Dashboard = () => {
       value: instagramUserInfo?.user.followers_count,
       isLoading: isInstagramUserInfoLoading,
       isError: isInstagramUserInfoError,
+    },
+    {
+      label: 'YouTube',
+      connected: Boolean(youtubeAccount),
+      value: youtubeUserInfo
+        ? Number(youtubeUserInfo.channel.statistics.subscriberCount)
+        : undefined,
+      isLoading: isYouTubeUserInfoLoading,
+      isError: isYouTubeUserInfoError,
     },
   ];
 
@@ -133,21 +150,58 @@ export const Dashboard = () => {
       isLoading: isInstagramUserInfoLoading,
       isError: isInstagramUserInfoError,
     },
+    {
+      label: 'YouTube',
+      connected: Boolean(youtubeAccount),
+      value: youtubeUserInfo
+        ? Number(youtubeUserInfo.channel.statistics.videoCount)
+        : undefined,
+      isLoading: isYouTubeUserInfoLoading,
+      isError: isYouTubeUserInfoError,
+    },
+  ];
+
+  const publishedPostCounts = (videoPosts ?? []).reduce<Record<string, number>>(
+    (counts, post) => {
+      if (post.status !== 'PUBLISHED') return counts;
+
+      const platform = post.platform.name.toUpperCase();
+      counts[platform] = (counts[platform] ?? 0) + 1;
+      return counts;
+    },
+    {},
+  );
+
+  const publishedPostMetrics: PlatformMetric[] = [
+    {
+      label: 'TikTok',
+      connected: Boolean(tiktokAccount),
+      value: videoPosts ? (publishedPostCounts.TIKTOK ?? 0) : undefined,
+      isLoading: isVideoPostsLoading,
+      isError: isVideoPostsError,
+    },
+    {
+      label: 'Instagram',
+      connected: Boolean(instagramAccount),
+      value: videoPosts ? (publishedPostCounts.INSTAGRAM ?? 0) : undefined,
+      isLoading: isVideoPostsLoading,
+      isError: isVideoPostsError,
+    },
+    {
+      label: 'YouTube',
+      connected: Boolean(youtubeAccount),
+      value: videoPosts ? (publishedPostCounts.YOUTUBE ?? 0) : undefined,
+      isLoading: isVideoPostsLoading,
+      isError: isVideoPostsError,
+    },
   ];
 
   return (
     <Flex direction="column" gap="4">
-      <Grid columns={{ initial: '1', sm: '2' }} gap="4">
-        <MetricCard
-          title="Total Audience"
-          description="Combined followers across connected platforms"
-          metrics={audienceMetrics}
-        />
-        <MetricCard
-          title="Total Uploads"
-          description="Public content reported by connected platforms"
-          metrics={uploadMetrics}
-        />
+      <Grid columns={{ initial: '1', sm: '3' }} gap="3">
+        <MetricCard title="Total Audience" metrics={audienceMetrics} />
+        <MetricCard title="Total Uploads" metrics={uploadMetrics} />
+        <MetricCard title="Published Posts" metrics={publishedPostMetrics} />
       </Grid>
 
       <Grid columns={{ initial: '1', md: '2' }} gap="6" align="start">
@@ -255,7 +309,7 @@ export const Dashboard = () => {
               title="Upload"
               description="Upload new content to your platforms"
               actionLabel="Upload Video"
-              actionHref="/videos/upload"
+              actionHref="/videos"
             />
           </Grid>
         </Flex>

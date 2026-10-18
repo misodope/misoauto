@@ -131,11 +131,12 @@ v2 and `make` are required.
 
 4. **Initialize the database**
 
-   After the services are running, apply the Prisma schema:
+   The backend applies all pending Prisma migrations before it starts. To apply
+   migrations manually to an already-running stack, use:
 
    ```bash
    docker compose -f docker-compose.dev.yml exec backend \
-     npx prisma db push --schema=src/database/schema.prisma
+     npx prisma migrate deploy --schema=src/database/schema.prisma
    ```
 
    Seed the supported social-media platforms when needed:
