@@ -43,10 +43,12 @@ export const Dashboard = () => {
               : 'Not connected'
           }
           muted={!tiktokAccount}
+          compact
           {...(!tiktokAccount ? connectAction : {})}
         >
           {tiktokAccount && (
             <Avatar
+              size="2"
               src={tiktokUserInfo?.user.avatar_url_100}
               fallback={
                 tiktokUserInfo?.user.display_name || tiktokAccount.username
@@ -63,10 +65,12 @@ export const Dashboard = () => {
               : 'Not connected'
           }
           muted={!instagramAccount}
+          compact
           {...(!instagramAccount ? connectAction : {})}
         >
           {instagramAccount && (
             <Avatar
+              size="2"
               src={instagramUserInfo?.user.profile_picture_url}
               fallback={
                 instagramUserInfo?.user.username || instagramAccount.username
@@ -83,10 +87,12 @@ export const Dashboard = () => {
               : 'Not connected'
           }
           muted={!youtubeAccount}
+          compact
           {...(!youtubeAccount ? connectAction : {})}
         >
           {youtubeAccount && (
             <Avatar
+              size="2"
               src={youtubeUserInfo?.channel.snippet.thumbnails.default.url}
               fallback={
                 youtubeUserInfo?.channel.snippet.title ||
@@ -104,6 +110,7 @@ export const Dashboard = () => {
               : 'Not connected'
           }
           muted={!facebookAccount}
+          compact
           {...(!facebookAccount ? connectAction : {})}
         >
           {facebookAccount && (

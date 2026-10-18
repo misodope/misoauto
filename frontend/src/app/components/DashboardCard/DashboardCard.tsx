@@ -12,6 +12,7 @@ export interface DashboardCardProps {
   onAction?: () => void;
   children?: ReactNode;
   muted?: boolean;
+  compact?: boolean;
 }
 
 export default function DashboardCard({
@@ -22,37 +23,56 @@ export default function DashboardCard({
   onAction,
   children,
   muted = false,
+  compact = false,
 }: DashboardCardProps) {
   return (
     <Card
-      size="3"
-      style={
-        muted
+      size={compact ? '2' : '3'}
+      style={{
+        ...(compact ? { padding: '12px' } : {}),
+        ...(muted
           ? {
               filter: 'grayscale(0.8)',
               opacity: 0.58,
             }
-          : undefined
-      }
+          : {}),
+      }}
     >
-      <Flex direction="column" gap="3">
-        <Text size="5" weight="bold">
-          {title}
-        </Text>
-        <Text size="2" color="gray">
-          {description}
-        </Text>
-        {children}
-        {actionLabel && actionHref && (
-          <Button asChild variant="soft" mt="2">
-            <Link href={actionHref}>{actionLabel}</Link>
-          </Button>
-        )}
-        {actionLabel && !actionHref && onAction && (
-          <Button variant="soft" mt="2" onClick={onAction}>
-            {actionLabel}
-          </Button>
-        )}
+      <Flex
+        direction={compact ? 'row' : 'column'}
+        align={compact ? 'center' : undefined}
+        gap="3"
+      >
+        {compact && children}
+        <Flex direction="column" gap={compact ? '1' : '3'} style={{ flex: 1 }}>
+          <Text size={compact ? '3' : '5'} weight="bold">
+            {title}
+          </Text>
+          <Text size={compact ? '1' : '2'} color="gray">
+            {description}
+          </Text>
+          {!compact && children}
+          {actionLabel && actionHref && (
+            <Button
+              asChild
+              variant="soft"
+              size={compact ? '1' : '2'}
+              mt={compact ? '1' : '2'}
+            >
+              <Link href={actionHref}>{actionLabel}</Link>
+            </Button>
+          )}
+          {actionLabel && !actionHref && onAction && (
+            <Button
+              variant="soft"
+              size={compact ? '1' : '2'}
+              mt={compact ? '1' : '2'}
+              onClick={onAction}
+            >
+              {actionLabel}
+            </Button>
+          )}
+        </Flex>
       </Flex>
     </Card>
   );
