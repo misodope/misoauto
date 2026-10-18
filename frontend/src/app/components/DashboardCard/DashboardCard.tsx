@@ -11,6 +11,7 @@ export interface DashboardCardProps {
   actionHref?: string;
   onAction?: () => void;
   children?: ReactNode;
+  muted?: boolean;
 }
 
 export default function DashboardCard({
@@ -20,9 +21,20 @@ export default function DashboardCard({
   actionHref,
   onAction,
   children,
+  muted = false,
 }: DashboardCardProps) {
   return (
-    <Card size="3">
+    <Card
+      size="3"
+      style={
+        muted
+          ? {
+              filter: 'grayscale(0.8)',
+              opacity: 0.58,
+            }
+          : undefined
+      }
+    >
       <Flex direction="column" gap="3">
         <Text size="5" weight="bold">
           {title}

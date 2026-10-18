@@ -1,62 +1,116 @@
 import DashboardCard from '@frontend/app/components/DashboardCard';
+import { useAuth } from '@frontend/app/contexts/AuthContext';
 import {
   useInstagramUserInfo,
   useTikTokUserInfo,
+  useYouTubeUserInfo,
 } from '@frontend/app/hooks/apis/integrations/use-integrations';
-import { Avatar, Grid } from '@radix-ui/themes';
+import { Avatar, Flex, Grid, Heading } from '@radix-ui/themes';
 
 export const Dashboard = () => {
-  const {
-    data: tiktokUserInfo,
-    isLoading: isTikTokUserInfoLoading,
-    error: tiktokUserInfoError,
-  } = useTikTokUserInfo();
-  const {
-    data: instagramUserInfo,
-    isLoading: isInstagramUserInfoLoading,
-    error: instagramUserInfoError,
-  } = useInstagramUserInfo();
+  const { user } = useAuth();
+  const socialAccounts = user?.socialAccounts ?? [];
+  const getConnectedAccount = (platform: string) =>
+    socialAccounts.find(
+      (account) => account.platform.name.toUpperCase() === platform,
+    );
 
-  console.log('TikTok User Info:', {
-    data: tiktokUserInfo,
-    isLoading: isTikTokUserInfoLoading,
-    error: tiktokUserInfoError,
-  });
-  console.log('Instagram User Info:', {
-    data: instagramUserInfo,
-    isLoading: isInstagramUserInfoLoading,
-    error: instagramUserInfoError,
-  });
+  const tiktokAccount = getConnectedAccount('TIKTOK');
+  const instagramAccount = getConnectedAccount('INSTAGRAM');
+  const youtubeAccount = getConnectedAccount('YOUTUBE');
+  const facebookAccount = getConnectedAccount('FACEBOOK');
 
-  const hasTikTokIntegration = Boolean(tiktokUserInfo?.user.open_id);
-  const hasInstagramIntegration = Boolean(instagramUserInfo?.user.user_id);
+  const { data: tiktokUserInfo } = useTikTokUserInfo(Boolean(tiktokAccount));
+  const { data: instagramUserInfo } = useInstagramUserInfo(
+    Boolean(instagramAccount),
+  );
+  const { data: youtubeUserInfo } = useYouTubeUserInfo(Boolean(youtubeAccount));
+
+  const connectAction = {
+    actionHref: '/integrations',
+    actionLabel: 'Connect',
+  };
 
   return (
-    <Grid columns={{ initial: '1', sm: '2', md: '3' }} gap="4">
-      {hasTikTokIntegration && (
+    <Flex direction="column" gap="4">
+      <Heading size="5">Platform Connections</Heading>
+      <Grid columns={{ initial: '1', sm: '2', md: '3' }} gap="4">
         <DashboardCard
           title="TikTok Account"
-          description={`Connected as ${tiktokUserInfo?.user.display_name || 'Unknown User'}`}
-          actionLabel="View TikTok Profile"
+          description={
+            tiktokAccount
+              ? `Connected as ${tiktokUserInfo?.user.display_name || tiktokAccount.username}`
+              : 'Not connected'
+          }
+          muted={!tiktokAccount}
+          {...(!tiktokAccount ? connectAction : {})}
         >
-          <Avatar
-            src={tiktokUserInfo?.user.avatar_url_100}
-            fallback={tiktokUserInfo?.user.display_name || 'U'}
-          />
+          {tiktokAccount && (
+            <Avatar
+              src={tiktokUserInfo?.user.avatar_url_100}
+              fallback={
+                tiktokUserInfo?.user.display_name || tiktokAccount.username
+              }
+            />
+          )}
         </DashboardCard>
-      )}
-      {hasInstagramIntegration && (
+
         <DashboardCard
           title="Instagram Account"
-          description={`Connected as @${instagramUserInfo?.user.username || 'Unknown User'}`}
-          actionLabel="View Instagram Profile"
+          description={
+            instagramAccount
+              ? `Connected as @${instagramUserInfo?.user.username || instagramAccount.username}`
+              : 'Not connected'
+          }
+          muted={!instagramAccount}
+          {...(!instagramAccount ? connectAction : {})}
         >
-          <Avatar
-            src={instagramUserInfo?.user.profile_picture_url}
-            fallback={instagramUserInfo?.user.username || 'U'}
-          />
+          {instagramAccount && (
+            <Avatar
+              src={instagramUserInfo?.user.profile_picture_url}
+              fallback={
+                instagramUserInfo?.user.username || instagramAccount.username
+              }
+            />
+          )}
         </DashboardCard>
-      )}
-    </Grid>
+
+        <DashboardCard
+          title="YouTube Account"
+          description={
+            youtubeAccount
+              ? `Connected as ${youtubeUserInfo?.channel.snippet.title || youtubeAccount.username}`
+              : 'Not connected'
+          }
+          muted={!youtubeAccount}
+          {...(!youtubeAccount ? connectAction : {})}
+        >
+          {youtubeAccount && (
+            <Avatar
+              src={youtubeUserInfo?.channel.snippet.thumbnails.default.url}
+              fallback={
+                youtubeUserInfo?.channel.snippet.title ||
+                youtubeAccount.username
+              }
+            />
+          )}
+        </DashboardCard>
+
+        <DashboardCard
+          title="Facebook Account"
+          description={
+            facebookAccount
+              ? `Connected as ${facebookAccount.username}`
+              : 'Not connected'
+          }
+          muted={!facebookAccount}
+          {...(!facebookAccount ? connectAction : {})}
+        >
+          {facebookAccount && (
+            <Avatar fallback={facebookAccount.username || 'F'} />
+          )}
+        </DashboardCard>
+      </Grid>
+    </Flex>
   );
 };
