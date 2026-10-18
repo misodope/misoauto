@@ -22,12 +22,16 @@ const isSectionArray = (
   return items.length > 0 && isNavSection(items[0]);
 };
 
-const isNavItemActive = (pathname: string, href?: string) => {
+const isNavItemActive = (
+  pathname: string,
+  href: string | undefined,
+  hasChildren: boolean,
+) => {
   if (!href) {
     return false;
   }
 
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === href || (hasChildren && pathname.startsWith(`${href}/`));
 };
 
 interface NavItemComponentProps {
@@ -44,7 +48,7 @@ const NavItemComponent = ({
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = isNavItemActive(pathname, item.href);
+  const isActive = isNavItemActive(pathname, item.href, Boolean(hasChildren));
 
   const handleClick = useCallback(() => {
     if (hasChildren) {
