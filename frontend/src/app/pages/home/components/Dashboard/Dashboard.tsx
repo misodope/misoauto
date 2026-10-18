@@ -26,15 +26,10 @@ export const Dashboard = () => {
   );
   const { data: youtubeUserInfo } = useYouTubeUserInfo(Boolean(youtubeAccount));
 
-  const connectAction = {
-    actionHref: '/integrations',
-    actionLabel: 'Connect',
-  };
-
   return (
     <Flex direction="column" gap="4">
       <Heading size="5">Platform Connections</Heading>
-      <Grid columns={{ initial: '1', sm: '2', md: '3' }} gap="4">
+      <Grid columns="1" gap="2">
         <DashboardCard
           title="TikTok Account"
           description={
@@ -44,7 +39,6 @@ export const Dashboard = () => {
           }
           muted={!tiktokAccount}
           compact
-          {...(!tiktokAccount ? connectAction : {})}
         >
           {tiktokAccount && (
             <Avatar
@@ -66,7 +60,6 @@ export const Dashboard = () => {
           }
           muted={!instagramAccount}
           compact
-          {...(!instagramAccount ? connectAction : {})}
         >
           {instagramAccount && (
             <Avatar
@@ -88,7 +81,6 @@ export const Dashboard = () => {
           }
           muted={!youtubeAccount}
           compact
-          {...(!youtubeAccount ? connectAction : {})}
         >
           {youtubeAccount && (
             <Avatar
@@ -111,7 +103,6 @@ export const Dashboard = () => {
           }
           muted={!facebookAccount}
           compact
-          {...(!facebookAccount ? connectAction : {})}
         >
           {facebookAccount && (
             <Avatar fallback={facebookAccount.username || 'F'} />
