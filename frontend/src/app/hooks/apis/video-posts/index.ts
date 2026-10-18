@@ -1,5 +1,7 @@
 export {
   useCreateVideoPost,
+  useCreateVideoPostBatch,
+  useUpdateVideoPostDetails,
   useVideoPosts,
   useVideoPost,
   useScheduleVideoPost,
@@ -8,9 +10,15 @@ export {
   videoPostKeys,
   type VideoPost,
   type PostStatus,
+  type UploadMode,
   type Platform,
   type SocialAccount,
   type CreateVideoPostRequest,
+  type CreateVideoPostBatchRequest,
+  type CreateVideoPostBatchResponse,
+  type UpdateVideoPostDetailsRequest,
+  type VideoPostDetails,
+  type VideoPostTarget,
   type ScheduleVideoPostRequest,
   type VideoPostError,
 } from './use-video-posts';

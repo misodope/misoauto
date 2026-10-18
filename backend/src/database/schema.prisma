@@ -102,12 +102,26 @@ model VideoPost {
   status          PostStatus    @default(PENDING)
   scheduledFor    DateTime?     @map("scheduled_for")
   postedAt        DateTime?     @map("posted_at")
+  // What to post, snapshotted per platform when the post is created:
+  // - title: YouTube title
+  // - caption: Instagram caption, YouTube description, or TikTok caption
+  //   (kept for a future Direct Post)
+  // - options: platform settings — YouTube { privacyStatus, madeForKids },
+  //   Instagram { shareToFeed }, TikTok {}
+  uploadMode      UploadMode    @default(DRAFT) @map("upload_mode")
+  title           String?
+  caption         String?
+  options         Json?
+  // Groups the posts created by one schedule/publish confirmation
+  batchId         String?       @map("batch_id")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
   platform        Platform         @relation(fields: [platformId], references: [id])
   socialAccount   SocialAccount    @relation(fields: [socialAccountId], references: [id])
   video           Video            @relation(fields: [videoId], references: [id])
 
+  @@index([batchId])
+  @@index([status, scheduledFor])
   @@map("video_posts")
 }
 
@@ -137,6 +151,11 @@ enum PostStatus {
   PUBLISHING
   PUBLISHED
   FAILED
+}
+
+enum UploadMode {
+  DRAFT
+  DIRECT
 }
 
 enum PlatformType {

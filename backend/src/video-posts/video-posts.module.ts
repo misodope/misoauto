@@ -4,6 +4,7 @@ import { VideoPostWriter } from './repository/video-post-writer';
 import { VideoPostDraftReader } from './repository/video-post-draft-reader';
 import { VideoPostDraftWriter } from './repository/video-post-draft-writer';
 import { VideoPostsService } from './services/video-posts.service';
+import { VideoPostDetailsService } from './services/video-post-details.service';
 import { VideoPostsController } from './controllers/video-posts.controller';
 import { PrismaModule } from '../database/prisma.module';
 import { VideosModule } from '../videos/videos.module';
@@ -19,6 +20,7 @@ import { AuthModule } from '../auth/auth.module';
     VideoPostDraftReader,
     VideoPostDraftWriter,
     VideoPostsService,
+    VideoPostDetailsService,
   ],
   exports: [
     VideoPostReader,
@@ -26,6 +28,7 @@ import { AuthModule } from '../auth/auth.module';
     VideoPostDraftReader,
     VideoPostDraftWriter,
     VideoPostsService,
+    VideoPostDetailsService,
   ],
 })
 export class VideoPostsModule {}
