@@ -223,8 +223,7 @@ export class PlatformConnectTikTokService {
     try {
       this.logger.log('Fetching TikTok user information');
 
-      // Fields available with user.info.basic scope
-      // Additional fields require: user.info.profile (bio, profile_deep_link) or user.info.stats (follower/following counts)
+      // Stats fields require the user.info.stats scope requested during OAuth.
       const fields =
         'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,follower_count,following_count,likes_count,video_count';
 

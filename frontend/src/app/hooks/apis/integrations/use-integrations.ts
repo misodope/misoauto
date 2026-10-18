@@ -120,6 +120,7 @@ export interface InstagramUserInfo {
   account_type: string;
   profile_picture_url?: string;
   followers_count?: number;
+  media_count?: number;
 }
 
 export interface InstagramUserInfoResponse {

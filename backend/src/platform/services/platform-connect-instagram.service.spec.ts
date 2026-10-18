@@ -195,6 +195,30 @@ describe('PlatformConnectInstagramService', () => {
     );
   });
 
+  it('requests audience and published media counts with profile information', async () => {
+    const service = createService();
+    httpClient.get.mockResolvedValueOnce({
+      data: {
+        user_id: '17841400000000000001',
+        username: 'tester',
+        account_type: 'CREATOR',
+        followers_count: 45370,
+        media_count: 24,
+      },
+    });
+
+    await expect(service.getUserInfo('access-token')).resolves.toMatchObject({
+      followers_count: 45370,
+      media_count: 24,
+    });
+
+    const requestUrl = new URL(httpClient.get.mock.calls[0][0]);
+    expect(requestUrl.searchParams.get('fields')).toBe(
+      'user_id,username,account_type,profile_picture_url,followers_count,media_count',
+    );
+    expect(requestUrl.searchParams.get('access_token')).toBe('access-token');
+  });
+
   it('rejects invalid Reel videos and captions', () => {
     const service = createService();
 
