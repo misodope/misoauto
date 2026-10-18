@@ -22,6 +22,18 @@ const isSectionArray = (
   return items.length > 0 && isNavSection(items[0]);
 };
 
+const isNavItemActive = (
+  pathname: string,
+  href: string | undefined,
+  hasChildren: boolean,
+) => {
+  if (!href) {
+    return false;
+  }
+
+  return pathname === href || (hasChildren && pathname.startsWith(`${href}/`));
+};
+
 interface NavItemComponentProps {
   item: NavItem;
   collapsed: boolean;
@@ -36,7 +48,7 @@ const NavItemComponent = ({
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = item.href ? pathname === item.href : false;
+  const isActive = isNavItemActive(pathname, item.href, Boolean(hasChildren));
 
   const handleClick = useCallback(() => {
     if (hasChildren) {
@@ -77,7 +89,7 @@ const NavItemComponent = ({
   };
 
   const renderItem = () => {
-    if (item.href && !hasChildren) {
+    if (item.href && (!hasChildren || collapsed)) {
       return (
         <Link href={item.href} className={itemClasses} style={itemStyle}>
           {content}

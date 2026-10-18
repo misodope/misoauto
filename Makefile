@@ -1,8 +1,9 @@
 # Makefile for MisoAuto Docker operations
 
-.PHONY: help build up down dev dev-detached dev-down dev-logs clean logs restart backend frontend backend-logs frontend-logs
+.PHONY: help build up down dev dev-detached dev-restart dev-down dev-logs clean logs restart backend frontend backend-logs frontend-logs
 
 DEV_COMPOSE = docker compose -f docker-compose.dev.yml
+PROD_COMPOSE = docker compose -f docker-compose.prod.yml
 
 # Default target
 help:
@@ -12,11 +13,12 @@ help:
 	@echo "  make down        - Stop all services"
 	@echo "  make dev         - Build and start all services in development mode"
 	@echo "  make dev-detached - Build and start development services in the background"
+	@echo "  make dev-restart - Recreate development frontend and backend containers"
 	@echo "  make dev-down    - Stop development services"
 	@echo "  make dev-logs    - Follow logs from development services"
 	@echo "  make clean       - Remove all containers and images"
 	@echo "  make logs        - Show logs from all services"
-	@echo "  make restart     - Restart all services"
+	@echo "  make restart     - Recreate production frontend and backend containers"
 	@echo "  make backend     - Start only backend service"
 	@echo "  make frontend    - Start only frontend service"
 
@@ -40,6 +42,10 @@ dev:
 dev-detached:
 	$(DEV_COMPOSE) up --build -d
 
+# Recreate development frontend and backend containers
+dev-restart:
+	$(DEV_COMPOSE) up -d --force-recreate frontend backend
+
 # Stop development services
 dev-down:
 	$(DEV_COMPOSE) down
@@ -59,7 +65,7 @@ logs:
 
 # Restart services
 restart:
-	docker-compose restart
+	$(PROD_COMPOSE) up -d --force-recreate frontend backend
 
 # Start only backend
 backend:

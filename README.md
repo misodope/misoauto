@@ -160,6 +160,9 @@ make dev
 # Start the full development stack in the background
 make dev-detached
 
+# Recreate the development frontend and backend containers
+make dev-restart
+
 # Follow logs from all development services
 make dev-logs
 
