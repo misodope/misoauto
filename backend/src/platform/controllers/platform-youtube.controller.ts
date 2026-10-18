@@ -1,44 +1,30 @@
 import {
+  Body,
   Controller,
   Get,
+  Logger,
+  Param,
   Post,
   Query,
-  Body,
-  Param,
-  Logger,
-  Res,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { PlatformConnectYouTubeService } from '../services/platform-connect-youtube.service';
-import { VideosService } from '@backend/videos/services/videos.service';
 import {
-  JwtAuthGuard,
   CurrentUser,
-  JwtPayload,
   getOAuthCookieOptions,
+  JwtAuthGuard,
+  JwtPayload,
+  validateBody,
 } from '@backend/common';
-
-export interface TokenExchangeRequest {
-  code: string;
-}
-
-export interface TokenRequest {
-  accessToken: string;
-}
-
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
-
-export interface UploadDraftRequest {
-  videoId: number;
-}
-
-export interface PublishStatusRequest {
-  videoId: string; // YouTube's video ID (returned from upload-draft)
-}
+import { VideosService } from '@backend/videos/services/videos.service';
+import { PlatformConnectYouTubeService } from '../services/platform-connect-youtube.service';
+import {
+  YouTubePublishDto,
+  YouTubePublishStatusDto,
+  YouTubeUploadDraftDto,
+} from '../dto';
 
 export interface ChannelVideosQueryRequest {
   maxResults?: number;
@@ -115,7 +101,7 @@ export class YouTubeController {
     }
 
     if (!userId) {
-      this.logger.error('Missing user ID');
+      this.logger.warn('Missing user ID in YouTube OAuth callback');
       res.clearCookie('csrfState');
       res.clearCookie('oauthUserId');
       return res.redirect(`${frontendUrl}/integrations?error=missing_user_id`);
@@ -126,14 +112,18 @@ export class YouTubeController {
       res.clearCookie('csrfState');
       res.clearCookie('oauthUserId');
       return res.redirect(
-        `${frontendUrl}/integrations?error=${error}&error_description=${errorDescription}`,
+        `${frontendUrl}/integrations?${new URLSearchParams({
+          error,
+          error_description: errorDescription ?? '',
+        }).toString()}`,
       );
     }
 
     try {
-      const tokenResponse = await this.youtubeService.exchangeCodeForToken(code);
+      const tokenResponse =
+        await this.youtubeService.exchangeCodeForToken(code);
       await this.youtubeService.saveOAuthAccount({
-        userId: parseInt(userId),
+        userId: parseInt(userId, 10),
         tokenResponse,
       });
 
@@ -152,46 +142,9 @@ export class YouTubeController {
     }
   }
 
-  @Post('exchange-token')
-  async exchangeToken(@Body() body: TokenExchangeRequest) {
-    this.logger.log('Exchanging YouTube authorization code for token');
-    const tokenResponse = await this.youtubeService.exchangeCodeForToken(
-      body.code,
-    );
-
-    return {
-      ...tokenResponse,
-      platform: 'youtube',
-    };
-  }
-
-  @Post('refresh-token')
-  async refreshToken(@Body() body: RefreshTokenRequest) {
-    this.logger.log('Refreshing YouTube access token');
-    const refreshedToken = await this.youtubeService.refreshAccessToken(
-      body.refreshToken,
-    );
-
-    return {
-      ...refreshedToken,
-      platform: 'youtube',
-    };
-  }
-
   @Get('user')
   @UseGuards(JwtAuthGuard)
   async getUserInfo(@CurrentUser() user: JwtPayload) {
-    this.logger.log(`Fetching YouTube channel info for user ${user.sub}`);
-    const accessToken = await this.youtubeService.getAccessTokenForUser(
-      user.sub,
-    );
-    const channelInfo = await this.youtubeService.getChannelInfo(accessToken);
-    return { channel: channelInfo, platform: 'youtube' };
-  }
-
-  @Post('channel-info')
-  @UseGuards(JwtAuthGuard)
-  async getChannelInfo(@CurrentUser() user: JwtPayload) {
     this.logger.log(`Fetching YouTube channel info for user ${user.sub}`);
     const accessToken = await this.youtubeService.getAccessTokenForUser(
       user.sub,
@@ -235,24 +188,27 @@ export class YouTubeController {
   @UseGuards(JwtAuthGuard)
   async uploadDraftVideo(
     @CurrentUser() user: JwtPayload,
-    @Body() body: UploadDraftRequest,
+    @Body(validateBody) body: YouTubeUploadDraftDto,
   ) {
     this.logger.log(
       `Uploading draft video ${body.videoId} to YouTube for user ${user.sub}`,
     );
 
-    const accessToken = await this.youtubeService.getAccessTokenForUser(
-      user.sub,
-    );
-
+    const account = await this.youtubeService.getAccountForUser(user.sub);
     const video = await this.videosService.getVideo(user.sub, body.videoId);
+    const title = (body.title ?? video.title).trim();
+    const description = body.description ?? video.description ?? '';
+
+    this.youtubeService.validateYouTubeVideo(video, { title, description });
 
     const result = await this.youtubeService.initializeVideoUpload({
-      accessToken,
+      accessToken: account.accessToken,
       s3Key: video.s3Key,
       videoId: body.videoId,
-      title: video.title,
-      description: video.description ?? '',
+      title,
+      description,
+      madeForKids: body.madeForKids ?? false,
+      thumbnailKey: video.s3ThumbnailKey,
     });
 
     return { ...result, platform: 'youtube' };
@@ -262,43 +218,36 @@ export class YouTubeController {
   @UseGuards(JwtAuthGuard)
   async getPublishStatus(
     @CurrentUser() user: JwtPayload,
-    @Body() body: PublishStatusRequest,
+    @Body(validateBody) body: YouTubePublishStatusDto,
   ) {
     this.logger.log(
       `Fetching processing status for YouTube video ${body.videoId} for user ${user.sub}`,
     );
 
-    const accessToken = await this.youtubeService.getAccessTokenForUser(
+    const result = await this.youtubeService.getProcessingStatusForUser(
       user.sub,
-    );
-    const result = await this.youtubeService.getVideoProcessingStatus(
-      accessToken,
       body.videoId,
     );
 
     return { ...result, platform: 'youtube' };
   }
 
-  @Post('validate-token')
-  async validateToken(@Body() body: TokenRequest) {
-    this.logger.log('Validating YouTube access token');
-    const isValid = await this.youtubeService.validateToken(body.accessToken);
+  @Post('publish')
+  @UseGuards(JwtAuthGuard)
+  async publish(
+    @CurrentUser() user: JwtPayload,
+    @Body(validateBody) body: YouTubePublishDto,
+  ) {
+    this.logger.log(
+      `Publishing YouTube video ${body.videoId} for user ${user.sub}`,
+    );
 
-    return {
-      valid: isValid,
-      platform: 'youtube',
-    };
-  }
+    const result = await this.youtubeService.publishForUser(
+      user.sub,
+      body.videoId,
+      body.privacyStatus ?? 'public',
+    );
 
-  @Post('revoke-token')
-  async revokeToken(@Body() body: TokenRequest) {
-    this.logger.log('Revoking YouTube access token');
-    await this.youtubeService.revokeToken(body.accessToken);
-
-    return {
-      success: true,
-      platform: 'youtube',
-      message: 'Token successfully revoked',
-    };
+    return { ...result, platform: 'youtube' };
   }
 }

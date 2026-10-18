@@ -26,3 +26,22 @@ export {
   type DownloadUrlResponse,
   type VideoError,
 } from './apis/videos/use-videos';
+export {
+  useYouTubeIntegration,
+  useYouTubeUserInfo,
+  useYouTubeUploadDraft,
+  useYouTubePublishStatus,
+  useYouTubePublish,
+  youtubeKeys,
+  type YouTubeChannelInfo,
+  type YouTubeUserInfoResponse,
+  type YouTubeUploadDraftRequest,
+  type YouTubeUploadDraftResponse,
+  type YouTubeProcessingStatus,
+  type YouTubePublishStatusRequest,
+  type YouTubePublishStatusResponse,
+  type YouTubePublishPrivacyStatus,
+  type YouTubePublishRequest,
+  type YouTubePublishResponse,
+  type YouTubeApiError,
+} from './apis/integrations/use-integrations';
