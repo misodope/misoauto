@@ -5,7 +5,76 @@ import {
   useTikTokUserInfo,
   useYouTubeUserInfo,
 } from '@frontend/app/hooks/apis/integrations/use-integrations';
-import { Avatar, Flex, Grid, Heading } from '@radix-ui/themes';
+import { Avatar, Flex, Grid, Heading, Text } from '@radix-ui/themes';
+
+type PlatformMetric = {
+  label: string;
+  connected: boolean;
+  value?: number;
+  isLoading: boolean;
+  isError: boolean;
+};
+
+const numberFormatter = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+const formatMetric = (value?: number) =>
+  value === undefined ? '—' : numberFormatter.format(value);
+
+const getMetricValue = (metrics: PlatformMetric[]) => {
+  const values = metrics
+    .map((metric) => metric.value)
+    .filter((value): value is number => value !== undefined);
+
+  return values.length
+    ? values.reduce((total, value) => total + value, 0)
+    : undefined;
+};
+
+const getMetricDisplayValue = (metric: PlatformMetric) => {
+  if (!metric.connected) return 'Not connected';
+  if (metric.isLoading) return 'Loading…';
+  if (metric.isError) return 'Unavailable';
+  return formatMetric(metric.value);
+};
+
+function MetricBreakdown({ metrics }: { metrics: PlatformMetric[] }) {
+  return (
+    <Flex direction="column" gap="2">
+      {metrics.map((metric) => (
+        <Flex key={metric.label} justify="between" align="center">
+          <Text size="2" color="gray">
+            {metric.label}
+          </Text>
+          <Text size="2" color={metric.connected ? undefined : 'gray'}>
+            {getMetricDisplayValue(metric)}
+          </Text>
+        </Flex>
+      ))}
+    </Flex>
+  );
+}
+
+function MetricCard({
+  title,
+  description,
+  metrics,
+}: {
+  title: string;
+  description: string;
+  metrics: PlatformMetric[];
+}) {
+  return (
+    <DashboardCard title={title} description={description}>
+      <Text size="8" weight="bold" mb="1">
+        {formatMetric(getMetricValue(metrics))}
+      </Text>
+      <MetricBreakdown metrics={metrics} />
+    </DashboardCard>
+  );
+}
 
 export const Dashboard = () => {
   const { user } = useAuth();
@@ -20,14 +89,67 @@ export const Dashboard = () => {
   const youtubeAccount = getConnectedAccount('YOUTUBE');
   const facebookAccount = getConnectedAccount('FACEBOOK');
 
-  const { data: tiktokUserInfo } = useTikTokUserInfo(Boolean(tiktokAccount));
-  const { data: instagramUserInfo } = useInstagramUserInfo(
-    Boolean(instagramAccount),
-  );
+  const {
+    data: tiktokUserInfo,
+    isLoading: isTikTokUserInfoLoading,
+    isError: isTikTokUserInfoError,
+  } = useTikTokUserInfo(Boolean(tiktokAccount));
+  const {
+    data: instagramUserInfo,
+    isLoading: isInstagramUserInfoLoading,
+    isError: isInstagramUserInfoError,
+  } = useInstagramUserInfo(Boolean(instagramAccount));
   const { data: youtubeUserInfo } = useYouTubeUserInfo(Boolean(youtubeAccount));
+
+  const audienceMetrics: PlatformMetric[] = [
+    {
+      label: 'TikTok',
+      connected: Boolean(tiktokAccount),
+      value: tiktokUserInfo?.user.follower_count,
+      isLoading: isTikTokUserInfoLoading,
+      isError: isTikTokUserInfoError,
+    },
+    {
+      label: 'Instagram',
+      connected: Boolean(instagramAccount),
+      value: instagramUserInfo?.user.followers_count,
+      isLoading: isInstagramUserInfoLoading,
+      isError: isInstagramUserInfoError,
+    },
+  ];
+
+  const uploadMetrics: PlatformMetric[] = [
+    {
+      label: 'TikTok',
+      connected: Boolean(tiktokAccount),
+      value: tiktokUserInfo?.user.video_count,
+      isLoading: isTikTokUserInfoLoading,
+      isError: isTikTokUserInfoError,
+    },
+    {
+      label: 'Instagram',
+      connected: Boolean(instagramAccount),
+      value: instagramUserInfo?.user.media_count,
+      isLoading: isInstagramUserInfoLoading,
+      isError: isInstagramUserInfoError,
+    },
+  ];
 
   return (
     <Flex direction="column" gap="4">
+      <Grid columns={{ initial: '1', sm: '2' }} gap="4">
+        <MetricCard
+          title="Total Audience"
+          description="Combined followers across connected platforms"
+          metrics={audienceMetrics}
+        />
+        <MetricCard
+          title="Total Uploads"
+          description="Public content reported by connected platforms"
+          metrics={uploadMetrics}
+        />
+      </Grid>
+
       <Grid columns={{ initial: '1', md: '2' }} gap="6" align="start">
         <Flex direction="column" gap="4" style={{ order: 2 }}>
           <Heading size="5">Platform Connections</Heading>

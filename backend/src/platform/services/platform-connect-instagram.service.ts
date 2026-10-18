@@ -41,6 +41,7 @@ export interface InstagramUserInfo {
   account_type: string;
   profile_picture_url?: string;
   followers_count?: number;
+  media_count?: number;
 }
 
 export type InstagramContainerStatusCode =
@@ -317,7 +318,7 @@ export class PlatformConnectInstagramService {
     try {
       const params = {
         fields:
-          'user_id,username,account_type,profile_picture_url,followers_count',
+          'user_id,username,account_type,profile_picture_url,followers_count,media_count',
         access_token: accessToken,
       };
 
