@@ -226,7 +226,7 @@ export class PlatformConnectTikTokService {
       // Fields available with user.info.basic scope
       // Additional fields require: user.info.profile (bio, profile_deep_link) or user.info.stats (follower/following counts)
       const fields =
-        'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name';
+        'open_id,union_id,avatar_url,avatar_url_100,avatar_large_url,display_name,follower_count,following_count,likes_count,video_count';
 
       const response = await this.httpClient.get(
         `https://open.tiktokapis.com/v2/user/info/?fields=${fields}`,

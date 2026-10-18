@@ -1,11 +1,68 @@
 'use client';
 
-import { Flex, Heading, Text, Grid, Box } from '@radix-ui/themes';
+import { Box, Card, Flex, Grid, Heading, Text } from '@radix-ui/themes';
 import { useAuth } from '../../../../contexts/AuthContext';
-import DashboardCard from '../../../../components/DashboardCard';
+import {
+  useTikTokUserInfo,
+  useYouTubeUserInfo,
+} from '../../../../hooks/apis/integrations/use-integrations';
+
+const formatMetric = (value?: number | string) => {
+  if (value === undefined || value === null || Number.isNaN(Number(value))) {
+    return '—';
+  }
+
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(Number(value));
+};
 
 export default function HomeDashboard() {
   const { user } = useAuth();
+  const socialAccounts = user?.socialAccounts ?? [];
+  const hasTikTokAccount = socialAccounts.some(
+    (account) => account.platform.name.toUpperCase() === 'TIKTOK',
+  );
+  const hasYouTubeAccount = socialAccounts.some(
+    (account) => account.platform.name.toUpperCase() === 'YOUTUBE',
+  );
+
+  const { data: tiktokUserInfo } = useTikTokUserInfo(hasTikTokAccount);
+  const { data: youtubeUserInfo } = useYouTubeUserInfo(hasYouTubeAccount);
+
+  const tiktokFollowers = tiktokUserInfo?.user.follower_count;
+  const youtubeSubscribers =
+    youtubeUserInfo?.channel.statistics.subscriberCount;
+  const audienceValues = [tiktokFollowers, youtubeSubscribers]
+    .filter((value) => value !== undefined)
+    .map(Number);
+  const totalAudience = audienceValues.length
+    ? audienceValues.reduce((total, value) => total + value, 0)
+    : undefined;
+
+  const metrics = [
+    {
+      label: 'Connected Platforms',
+      value: formatMetric(socialAccounts.length),
+      description: 'Accounts linked',
+    },
+    {
+      label: 'Total Audience',
+      value: formatMetric(totalAudience),
+      description: 'TikTok + YouTube',
+    },
+    {
+      label: 'TikTok Followers',
+      value: formatMetric(tiktokFollowers),
+      description: 'Current followers',
+    },
+    {
+      label: 'YouTube Subscribers',
+      value: formatMetric(youtubeSubscribers),
+      description: 'Current subscribers',
+    },
+  ];
 
   return (
     <Flex direction="column" gap="6">
@@ -18,25 +75,22 @@ export default function HomeDashboard() {
         </Text>
       </Box>
 
-      <Grid columns={{ initial: '1', sm: '2', md: '3' }} gap="4">
-        <DashboardCard
-          title="Videos"
-          description="Manage and upload your video content"
-          actionLabel="View Videos"
-          actionHref="/videos"
-        />
-        <DashboardCard
-          title="Integrations"
-          description="Connect your social media accounts"
-          actionLabel="Manage Integrations"
-          actionHref="/integrations"
-        />
-        <DashboardCard
-          title="Upload"
-          description="Upload new content to your platforms"
-          actionLabel="Upload Video"
-          actionHref="/videos/upload"
-        />
+      <Grid columns={{ initial: '2', sm: '4' }} gap="3">
+        {metrics.map((metric) => (
+          <Card key={metric.label} size="2">
+            <Flex direction="column" gap="1">
+              <Text size="1" color="gray">
+                {metric.label}
+              </Text>
+              <Text size="6" weight="bold">
+                {metric.value}
+              </Text>
+              <Text size="1" color="gray">
+                {metric.description}
+              </Text>
+            </Flex>
+          </Card>
+        ))}
       </Grid>
     </Flex>
   );

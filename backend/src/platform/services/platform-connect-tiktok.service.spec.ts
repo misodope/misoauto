@@ -71,4 +71,20 @@ describe('PlatformConnectTikTokService', () => {
 
     expect(url.searchParams.get('redirect_uri')).toBe(expectedRedirectUri);
   });
+
+  it('requests TikTok audience statistics with user info', async () => {
+    const service = createService();
+    httpClient.get.mockResolvedValueOnce({
+      data: {
+        data: { user: { follower_count: 123 } },
+      },
+    });
+
+    await service.getUserInfo('access-token');
+
+    const url = new URL(httpClient.get.mock.calls[0][0]);
+    expect(url.searchParams.get('fields')).toContain('follower_count');
+    expect(url.searchParams.get('fields')).toContain('likes_count');
+    expect(url.searchParams.get('fields')).toContain('video_count');
+  });
 });
