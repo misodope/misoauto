@@ -116,6 +116,18 @@ jobs:
             docker-compose -f docker-compose.prod.yml stop backend frontend
             docker-compose -f docker-compose.prod.yml rm -f backend frontend
 
+            # Remove stale containers with the fixed Compose names if the remote
+            # Compose project did not own them. This handles interrupted deploys
+            # without touching PostgreSQL or any volumes.
+            remove_stateless_container() {
+              container="$1"
+              if docker container inspect "$container" >/dev/null 2>&1; then
+                docker container rm -f "$container"
+              fi
+            }
+            remove_stateless_container misoauto-backend
+            remove_stateless_container misoauto-frontend
+
             # Remove only unused images built from this repository. This does not
             # remove containers, volumes, or database data.
             docker image prune -af --filter "label=org.opencontainers.image.source=https://github.com/misodope/misoauto"
