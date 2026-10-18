@@ -31,11 +31,7 @@ export const Dashboard = () => {
       <Grid columns={{ initial: '1', md: '2' }} gap="6" align="start">
         <Flex direction="column" gap="4" style={{ order: 2 }}>
           <Heading size="5">Platform Connections</Heading>
-          <Grid
-            columns="1"
-            gap="2"
-            style={{ width: '100%', maxWidth: '400px' }}
-          >
+          <Grid columns="1" gap="2" style={{ width: '100%' }}>
             <DashboardCard
               title="TikTok Account"
               description={
