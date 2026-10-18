@@ -7,6 +7,10 @@ import { PlatformConnectYouTubeService } from '@backend/platform/services/platfo
 import { PlatformConnectInstagramService } from '@backend/platform/services/platform-connect-instagram.service';
 import { PlatformType } from '@backend/generated/prisma/client';
 
+const TIKTOK_REFRESH_WINDOW_MS = 18 * 60 * 60 * 1000;
+const YOUTUBE_REFRESH_WINDOW_MS = 45 * 60 * 1000;
+const INSTAGRAM_REFRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class TokenRefreshCron {
   private readonly logger = new Logger(TokenRefreshCron.name);
@@ -21,9 +25,9 @@ export class TokenRefreshCron {
 
   /**
    * Refresh expired social media tokens
-   * Runs every 12 hours to ensure tokens are refreshed before expiry
+   * Runs every 30 minutes to keep short-lived access tokens fresh
    */
-  @Cron(CronExpression.EVERY_12_HOURS, {
+  @Cron(CronExpression.EVERY_30_MINUTES, {
     name: 'refresh-expired-tokens',
     timeZone: 'America/New_York',
   })
@@ -36,15 +40,23 @@ export class TokenRefreshCron {
         where: {
           OR: [
             {
+              platform: { name: PlatformType.TIKTOK },
               refreshToken: { not: null },
               tokenExpiry: {
-                lte: new Date(now + 18 * 60 * 60 * 1000),
+                lte: new Date(now + TIKTOK_REFRESH_WINDOW_MS),
+              },
+            },
+            {
+              platform: { name: PlatformType.YOUTUBE },
+              refreshToken: { not: null },
+              tokenExpiry: {
+                lte: new Date(now + YOUTUBE_REFRESH_WINDOW_MS),
               },
             },
             {
               platform: { name: PlatformType.INSTAGRAM },
               tokenExpiry: {
-                lte: new Date(now + 7 * 24 * 60 * 60 * 1000),
+                lte: new Date(now + INSTAGRAM_REFRESH_WINDOW_MS),
                 gt: new Date(now),
               },
             },
@@ -53,7 +65,7 @@ export class TokenRefreshCron {
       });
 
       this.logger.log(
-        `Found ${soonToExpireAccounts.length} tokens to refresh (refreshable tokens within 18 hours or Instagram tokens within 7 days)`,
+        `Found ${soonToExpireAccounts.length} tokens to refresh (TikTok within 18 hours, YouTube within 45 minutes, or Instagram within 7 days)`,
       );
 
       for (const account of soonToExpireAccounts) {

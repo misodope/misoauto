@@ -77,4 +77,56 @@ describe('TokenRefreshCron', () => {
       }),
     );
   });
+
+  it('selects YouTube tokens before their one-hour expiry', async () => {
+    const cron = createCron();
+    socialAccountReader.findAll.mockResolvedValue([]);
+
+    await cron.handleTokenRefresh();
+
+    const where = socialAccountReader.findAll.mock.calls[0][0].where;
+    const youtubeCondition = where.OR.find(
+      (condition: { platform?: { name?: PlatformType } }) =>
+        condition.platform?.name === PlatformType.YOUTUBE,
+    );
+
+    expect(youtubeCondition).toEqual({
+      platform: { name: PlatformType.YOUTUBE },
+      refreshToken: { not: null },
+      tokenExpiry: { lte: expect.any(Date) },
+    });
+
+    const refreshWindowMs =
+      youtubeCondition.tokenExpiry.lte.getTime() - Date.now();
+    expect(refreshWindowMs).toBeGreaterThan(44 * 60 * 1000);
+    expect(refreshWindowMs).toBeLessThan(46 * 60 * 1000);
+  });
+
+  it('refreshes a YouTube access token and preserves its refresh token', async () => {
+    const cron = createCron();
+    const account = {
+      id: 6,
+      accessToken: 'old-youtube-token',
+      refreshToken: 'youtube-refresh-token',
+      platform: { name: PlatformType.YOUTUBE },
+    };
+    youtubeService.refreshAccessToken.mockResolvedValue({
+      access_token: 'new-youtube-token',
+      expires_in: 3600,
+    });
+
+    await (cron as any).refreshAccountToken(account);
+
+    expect(youtubeService.refreshAccessToken).toHaveBeenCalledWith(
+      'youtube-refresh-token',
+    );
+    expect(socialAccountWriter.updateTokens).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 6,
+        accessToken: 'new-youtube-token',
+        refreshToken: 'youtube-refresh-token',
+        tokenExpiry: expect.any(Date),
+      }),
+    );
+  });
 });
