@@ -6,13 +6,14 @@ import { Flex, Text, Button, Card } from '@radix-ui/themes';
 
 export interface DashboardCardProps {
   title: string;
-  description: ReactNode;
+  description?: ReactNode;
   actionLabel?: string;
   actionHref?: string;
   onAction?: () => void;
   children?: ReactNode;
   muted?: boolean;
   compact?: boolean;
+  cardSize?: '1' | '2' | '3';
 }
 
 export default function DashboardCard({
@@ -24,10 +25,11 @@ export default function DashboardCard({
   children,
   muted = false,
   compact = false,
+  cardSize,
 }: DashboardCardProps) {
   return (
     <Card
-      size={compact ? '2' : '3'}
+      size={cardSize ?? (compact ? '2' : '3')}
       style={{
         ...(compact ? { padding: '12px' } : {}),
         ...(muted
@@ -48,9 +50,11 @@ export default function DashboardCard({
           <Text size={compact ? '3' : '5'} weight="bold">
             {title}
           </Text>
-          <Text size={compact ? '1' : '2'} color="gray">
-            {description}
-          </Text>
+          {description && (
+            <Text size={compact ? '1' : '2'} color="gray">
+              {description}
+            </Text>
+          )}
           {!compact && children}
           {actionLabel && actionHref && (
             <Button
