@@ -15,13 +15,18 @@ import Drawer from '@frontend/app/components/Drawer';
 import ProgressOverlay from '@frontend/app/components/ProgressOverlay';
 import { useToast } from '@frontend/app/components/Toaster';
 import { useAuth } from '@frontend/app/contexts/AuthContext';
-import { Video } from '@frontend/app/hooks/apis/videos/use-videos';
+import {
+  Video,
+  useVideoDownloadUrl,
+} from '@frontend/app/hooks/apis/videos/use-videos';
 import { getErrorMessage } from '@frontend/app/lib/errors';
 import {
   YouTubePublishPrivacyStatus,
   useInstagramPublish,
   useInstagramPublishStatus,
   useInstagramUploadDraft,
+  useTikTokCreatorInfo,
+  useTikTokDirectPost,
   useTikTokPublishStatus,
   useTikTokUploadDraft,
   useYouTubePublish,
@@ -36,6 +41,11 @@ import YouTubeVideoFields, {
   YOUTUBE_TITLE_MAX,
   isYouTubeMetadataValid,
 } from './components/YouTubeVideoFields';
+import TikTokPostFields, {
+  DEFAULT_TIKTOK_POST_FIELDS,
+  TikTokPostFieldsValue,
+  getTikTokDirectPostBlocker,
+} from './components/TikTokPostFields';
 import WorkflowStatusCallout, {
   WorkflowState,
 } from './components/WorkflowStatusCallout';
@@ -64,13 +74,18 @@ const PLATFORM_LABEL: Record<WorkflowPlatform, string> = {
   tiktok: 'TikTok',
 };
 
-// Platforms with a separate publish step after processing. TikTok inbox
-// uploads are finished by the user in the TikTok app instead.
+// Platforms with a separate publish step after processing. TikTok has none:
+// a Direct Post goes live once TikTok finishes processing, and an inbox
+// upload is finished by the user in the TikTok app.
 const SUPPORTS_PUBLISH: Record<WorkflowPlatform, boolean> = {
   instagram: true,
   youtube: true,
   tiktok: false,
 };
+
+// TikTok posts are visible only to the creator until the app passes TikTok's
+// Content Posting API audit. Flip this once it has.
+const TIKTOK_AUDITED = false;
 
 interface PublishVideoDrawerProps {
   open: boolean;
@@ -91,6 +106,8 @@ export default function PublishVideoDrawer({
   } = useToast();
   const tiktokUploadDraft = useTikTokUploadDraft();
   const tiktokPublishStatus = useTikTokPublishStatus();
+  const tiktokDirectPost = useTikTokDirectPost();
+  const videoDownloadUrl = useVideoDownloadUrl();
   const youtubeUploadDraft = useYouTubeUploadDraft();
   const youtubePublishStatus = useYouTubePublishStatus();
   const youtubePublish = useYouTubePublish();
@@ -112,12 +129,17 @@ export default function PublishVideoDrawer({
   const [madeForKids, setMadeForKids] = useState(false);
   const [privacyStatus, setPrivacyStatus] =
     useState<YouTubePublishPrivacyStatus>('public');
+  const [tiktokFields, setTiktokFields] = useState<TikTokPostFieldsValue>(
+    DEFAULT_TIKTOK_POST_FIELDS,
+  );
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [workflowState, setWorkflowState] = useState<WorkflowState>('idle');
   const [platformMediaId, setPlatformMediaId] = useState<string | null>(null);
   const [workflowMessage, setWorkflowMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const operationRef = useRef(0);
+  const tiktokPostUrlRef = useRef<string | null>(null);
 
   // Accounts this video is already live on; republishing would create a duplicate post.
   const publishedAccountIds = useMemo(
@@ -144,6 +166,34 @@ export default function PublishVideoDrawer({
       : isTikTok
         ? 'tiktok'
         : null;
+  const isTikTokDirect = isTikTok && uploadMode === 'direct';
+
+  const tiktokCreatorInfo = useTikTokCreatorInfo(
+    isTikTokDirect && selectedAccount ? selectedAccount.id : null,
+    open,
+  );
+  const tiktokCreatorInfoError = tiktokCreatorInfo.error
+    ? getErrorMessage(
+        tiktokCreatorInfo.error,
+        'Failed to load your TikTok account settings',
+      )
+    : null;
+  const videoDurationSec = video?.duration ?? null;
+  const { mutate: fetchPreviewUrl } = videoDownloadUrl;
+  const videoId = video?.id;
+
+  useEffect(() => {
+    if (!open || !isTikTokDirect || !videoId) return;
+    let cancelled = false;
+    fetchPreviewUrl(videoId, {
+      onSuccess: (result) => {
+        if (!cancelled) setPreviewUrl(result.url);
+      },
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, isTikTokDirect, videoId, fetchPreviewUrl]);
 
   // Long-running work (upload, platform processing, publish) is underway; the
   // drawer is locked behind a progress overlay until it finishes or fails.
@@ -186,6 +236,10 @@ export default function PublishVideoDrawer({
       setDescription(video?.description ?? '');
       setMadeForKids(false);
       setPrivacyStatus('public');
+      setTiktokFields({
+        ...DEFAULT_TIKTOK_POST_FIELDS,
+        caption: video?.description ?? '',
+      });
     }
   }, [open, video]);
 
@@ -211,6 +265,7 @@ export default function PublishVideoDrawer({
     setPlatformMediaId(null);
     setWorkflowMessage(null);
     setIsSubmitting(false);
+    tiktokPostUrlRef.current = null;
   };
 
   const handleClose = (force = false) => {
@@ -225,7 +280,38 @@ export default function PublishVideoDrawer({
     setDescription('');
     setMadeForKids(false);
     setPrivacyStatus('public');
+    setTiktokFields(DEFAULT_TIKTOK_POST_FIELDS);
+    setPreviewUrl(null);
     onOpenChange(false);
+  };
+
+  const finishTikTok = (mode: UploadMode) => {
+    setWorkflowState('published');
+    if (mode === 'direct') {
+      const postUrl = tiktokPostUrlRef.current;
+      showToast({
+        title: 'Posted to TikTok',
+        description: postUrl
+          ? 'Your video is live on TikTok.'
+          : 'Your video can take a few minutes to appear on your profile.',
+        variant: 'success',
+        ...(postUrl
+          ? { action: { label: 'Open on TikTok', href: postUrl } }
+          : {}),
+      });
+    } else {
+      showSuccess('Sent to TikTok', tiktokStatusMessage('SEND_TO_USER_INBOX'));
+    }
+    handleClose(true);
+  };
+
+  const handleCopyCaption = async () => {
+    try {
+      await navigator.clipboard.writeText(tiktokFields.caption);
+      showSuccess('Caption copied', 'Paste it into TikTok when you post.');
+    } catch {
+      showError('Copy failed', 'Select the caption and copy it manually.');
+    }
   };
 
   const publishMedia = async (
@@ -309,11 +395,13 @@ export default function PublishVideoDrawer({
     if (platform === 'tiktok') {
       const result = await tiktokPublishStatus.mutateAsync({
         publishId: mediaId,
+        socialAccountId: selectedAccount?.id,
       });
       if (
         result.status === 'SEND_TO_USER_INBOX' ||
         result.status === 'PUBLISH_COMPLETE'
       ) {
+        tiktokPostUrlRef.current = result.postUrl ?? null;
         return { state: 'finished' };
       }
       const message = tiktokStatusMessage(result.status, result.fail_reason);
@@ -365,12 +453,7 @@ export default function PublishVideoDrawer({
 
       if (result.state === 'finished') {
         if (!SUPPORTS_PUBLISH[platform]) {
-          setWorkflowState('published');
-          showSuccess(
-            `Sent to ${PLATFORM_LABEL[platform]}`,
-            tiktokStatusMessage('SEND_TO_USER_INBOX'),
-          );
-          handleClose(true);
+          finishTikTok(mode);
         } else if (mode === 'direct') {
           await publishMedia(platform, mediaId, operationId);
         } else {
@@ -436,8 +519,37 @@ export default function PublishVideoDrawer({
         shareToFeed,
       });
       mediaId = result.containerId;
+    } else if (platform === 'tiktok' && uploadMode === 'direct') {
+      const { privacyLevel } = tiktokFields;
+      if (!privacyLevel || !selectedAccount) {
+        throw new Error('Choose who can view this video.');
+      }
+      const tiktokCaption = tiktokFields.caption.trim();
+      const result = await tiktokDirectPost.mutateAsync({
+        socialAccountId: selectedAccount.id,
+        videoId: video.id,
+        ...(tiktokCaption ? { caption: tiktokCaption } : {}),
+        options: {
+          privacyLevel,
+          allowComment: tiktokFields.allowComment,
+          allowDuet: tiktokFields.allowDuet,
+          allowStitch: tiktokFields.allowStitch,
+          isAigc: tiktokFields.isAigc,
+          brandOrganic:
+            tiktokFields.commercialDisclosure && tiktokFields.brandOrganic,
+          brandContent:
+            tiktokFields.commercialDisclosure && tiktokFields.brandContent,
+          ...(tiktokFields.coverTimestampMs != null
+            ? { coverTimestampMs: tiktokFields.coverTimestampMs }
+            : {}),
+        },
+      });
+      mediaId = result.publishId;
     } else if (platform === 'tiktok') {
-      const result = await tiktokUploadDraft.mutateAsync({ videoId: video.id });
+      const result = await tiktokUploadDraft.mutateAsync({
+        videoId: video.id,
+        socialAccountId: selectedAccount?.id,
+      });
       mediaId = result.publish_id;
     } else {
       const result = await youtubeUploadDraft.mutateAsync({
@@ -501,10 +613,21 @@ export default function PublishVideoDrawer({
     resetWorkflow();
     setSelectedAccountId(accountId);
     setUploadMode('draft');
+    // Visibility options differ per TikTok account.
+    setTiktokFields((fields) => ({ ...fields, privacyLevel: null }));
   };
 
   const youtubeTitleInvalid =
     isYouTube && !isYouTubeMetadataValid(title, description);
+
+  const tiktokDirectBlocker = isTikTokDirect
+    ? (tiktokCreatorInfoError ??
+      getTikTokDirectPostBlocker(
+        tiktokFields,
+        tiktokCreatorInfo.data,
+        videoDurationSec,
+      ))
+    : null;
 
   const hasConnectedAccounts = connectedAccounts.length > 0;
   const canSubmit =
@@ -513,7 +636,7 @@ export default function PublishVideoDrawer({
     !!workflowPlatform &&
     !isSubmitting &&
     !youtubeTitleInvalid &&
-    (SUPPORTS_PUBLISH[workflowPlatform] || uploadMode === 'draft') &&
+    !tiktokDirectBlocker &&
     (workflowState === 'idle' ||
       (workflowState === 'ready' && uploadMode === 'draft'));
 
@@ -529,7 +652,11 @@ export default function PublishVideoDrawer({
         ? 'Upload and publish'
         : 'Upload as private draft';
     }
-    if (isTikTok) return 'Send to TikTok inbox';
+    if (isTikTok) {
+      return uploadMode === 'direct'
+        ? 'Post to TikTok'
+        : 'Send to TikTok inbox';
+    }
     return 'Upload Draft';
   })();
 
@@ -544,7 +671,9 @@ export default function PublishVideoDrawer({
     ? 'Upload and post as a Reel'
     : isYouTube
       ? 'Upload and publish once YouTube finishes processing'
-      : 'Coming soon';
+      : isTikTok
+        ? 'Post straight to your TikTok profile'
+        : 'Coming soon';
 
   const isWorkflowLocked =
     workflowState !== 'idle' && workflowState !== 'error';
@@ -623,9 +752,7 @@ export default function PublishVideoDrawer({
             draftLabel={isInstagram ? 'Prepare' : 'Draft'}
             draftDescription={draftDescription}
             directDescription={directDescription}
-            directDisabled={
-              !workflowPlatform || !SUPPORTS_PUBLISH[workflowPlatform]
-            }
+            directDisabled={!workflowPlatform}
           />
 
           {isInstagram && (
@@ -652,6 +779,22 @@ export default function PublishVideoDrawer({
             />
           )}
 
+          {isTikTok && (
+            <TikTokPostFields
+              value={tiktokFields}
+              onChange={setTiktokFields}
+              mode={uploadMode}
+              creatorInfo={tiktokCreatorInfo.data}
+              creatorInfoLoading={tiktokCreatorInfo.isFetching}
+              creatorInfoError={tiktokCreatorInfoError}
+              previewUrl={previewUrl}
+              videoDurationSec={videoDurationSec}
+              locked={isWorkflowLocked}
+              showUnauditedNotice={!TIKTOK_AUDITED}
+              onCopyCaption={handleCopyCaption}
+            />
+          )}
+
           <WorkflowStatusCallout
             state={workflowState}
             message={workflowMessage}
@@ -663,14 +806,25 @@ export default function PublishVideoDrawer({
             message={workflowMessage}
           />
 
-          <Button
-            size="3"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            loading={isSubmitting}
-          >
-            {submitLabel}
-          </Button>
+          {tiktokDirectBlocker && workflowState === 'idle' ? (
+            <Tooltip content={tiktokDirectBlocker}>
+              {/* Disabled buttons don't fire hover events, so wrap it. */}
+              <span style={{ display: 'flex' }}>
+                <Button size="3" disabled style={{ flex: 1 }}>
+                  {submitLabel}
+                </Button>
+              </span>
+            </Tooltip>
+          ) : (
+            <Button
+              size="3"
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              loading={isSubmitting}
+            >
+              {submitLabel}
+            </Button>
+          )}
         </Flex>
       )}
     </Drawer>

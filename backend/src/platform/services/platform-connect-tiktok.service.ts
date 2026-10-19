@@ -3,8 +3,25 @@ import axios, { AxiosInstance } from 'axios';
 import { SocialAccountWriter } from '@backend/social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '@backend/social-accounts/repository/social-account-reader';
 import { PlatformReader } from '../repository/platform-reader';
-import { PlatformType } from '@backend/generated/prisma/client';
+import {
+  PlatformType,
+  PostStatus,
+  Prisma,
+  UploadMode,
+} from '@backend/generated/prisma/client';
 import { VideoPostDraftWriter } from '@backend/video-posts/repository/video-post-draft-writer';
+import { VideoPostReader } from '@backend/video-posts/repository/video-post-reader';
+import { VideoPostWriter } from '@backend/video-posts/repository/video-post-writer';
+import { SocialAccountWithRelations } from '@backend/social-accounts/repository/social-account-reader';
+import {
+  TikTokApiException,
+  TikTokCreatorInfo,
+  TikTokDirectPostOptions,
+  assertTikTokOk,
+  toTikTokApiException,
+  toTikTokPostInfo,
+  validateTikTokDirectPost,
+} from './tiktok-direct-post';
 
 export interface TikTokOAuthConfig {
   clientId: string;
@@ -98,6 +115,8 @@ export class PlatformConnectTikTokService {
     private readonly socialAccountReader: SocialAccountReader,
     private readonly platformReader: PlatformReader,
     private readonly videoPostDraftWriter: VideoPostDraftWriter,
+    private readonly videoPostWriter: VideoPostWriter,
+    private readonly videoPostReader: VideoPostReader,
   ) {
     const isDev = process.env.NODE_ENV !== 'production';
 
@@ -250,10 +269,39 @@ export class PlatformConnectTikTokService {
     }
   }
 
-  async getAccessTokenForUser(userId: number): Promise<string> {
+  async getAccessTokenForUser(
+    userId: number,
+    socialAccountId?: number,
+  ): Promise<string> {
+    const account = await this.getAccountForUser(userId, socialAccountId);
+    return account.accessToken;
+  }
+
+  /**
+   * Returns the user's TikTok account. Pass `socialAccountId` whenever the
+   * user picked an account, so posts never land on a different one.
+   */
+  async getAccountForUser(
+    userId: number,
+    socialAccountId?: number,
+  ): Promise<SocialAccountWithRelations> {
     const platform = await this.platformReader.findByName(PlatformType.TIKTOK);
     if (!platform) {
       throw new BadRequestException('TikTok platform not found');
+    }
+
+    if (socialAccountId !== undefined) {
+      const account = await this.socialAccountReader.findOne({
+        id: socialAccountId,
+      });
+      if (
+        !account ||
+        account.userId !== userId ||
+        account.platformId !== platform.id
+      ) {
+        throw new BadRequestException('TikTok account not found');
+      }
+      return account;
     }
 
     const accounts = await this.socialAccountReader.findByUserAndPlatform(
@@ -265,7 +313,7 @@ export class PlatformConnectTikTokService {
       throw new BadRequestException('No TikTok account connected');
     }
 
-    return accounts[0].accessToken;
+    return accounts[0];
   }
 
   async getVideoList(
@@ -380,11 +428,7 @@ export class PlatformConnectTikTokService {
         },
       );
 
-      if (response.data.error && response.data.error.code !== 'ok') {
-        throw new BadRequestException(
-          `TikTok API error: ${response.data.error.message}`,
-        );
-      }
+      assertTikTokOk(response.data);
 
       await this.videoPostDraftWriter.create({
         video: {
@@ -406,7 +450,10 @@ export class PlatformConnectTikTokService {
       return response.data.data;
     } catch (error) {
       this.logger.error('Failed to initialize video upload:', error);
-      throw new BadRequestException('Failed to initialize TikTok video upload');
+      throw toTikTokApiException(
+        error,
+        'Failed to initialize TikTok video upload',
+      );
     }
   }
 
@@ -428,11 +475,7 @@ export class PlatformConnectTikTokService {
         },
       );
 
-      if (response.data.error && response.data.error.code !== 'ok') {
-        throw new BadRequestException(
-          `TikTok API error: ${response.data.error.message}`,
-        );
-      }
+      assertTikTokOk(response.data);
 
       this.logger.log(
         `Publish status for ${publishId}: ${response.data.data.status}`,
@@ -440,8 +483,175 @@ export class PlatformConnectTikTokService {
       return response.data.data;
     } catch (error) {
       this.logger.error('Failed to fetch publish status:', error);
-      throw new BadRequestException('Failed to fetch TikTok publish status');
+      throw toTikTokApiException(
+        error,
+        'Failed to fetch TikTok publish status',
+      );
     }
+  }
+
+  /**
+   * Latest posting settings for the creator. TikTok requires fetching this
+   * every time the Post to TikTok screen renders, so it is never cached.
+   */
+  async queryCreatorInfo(accessToken: string): Promise<TikTokCreatorInfo> {
+    try {
+      const response = await this.httpClient.post(
+        'https://open.tiktokapis.com/v2/post/publish/creator_info/query/',
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        },
+      );
+
+      assertTikTokOk(response.data);
+      return response.data.data;
+    } catch (error) {
+      this.logger.error('Failed to query TikTok creator info:', error);
+      throw toTikTokApiException(error, 'Failed to load TikTok account info');
+    }
+  }
+
+  /**
+   * Publishes straight to the creator's profile with Direct Post. The post is
+   * recorded as PUBLISHING with TikTok's publish_id until a status check sees
+   * it finish (see syncDirectPostStatus).
+   *
+   * The init call is never retried: each successful init is a real post that
+   * counts against the creator's daily cap, and a timed-out request may still
+   * have gone through.
+   */
+  async initializeDirectPost(params: {
+    account: SocialAccountWithRelations;
+    videoId: number;
+    videoUrl: string;
+    videoDurationSec: number | null;
+    caption: string | null;
+    options: TikTokDirectPostOptions;
+  }): Promise<{ publishId: string; videoPostId: number }> {
+    const { account, videoId, videoUrl, videoDurationSec, caption, options } =
+      params;
+
+    const creatorInfo = await this.queryCreatorInfo(account.accessToken);
+    const errors = validateTikTokDirectPost({
+      caption,
+      options,
+      creatorInfo,
+      videoDurationSec,
+    });
+    if (errors.length) {
+      throw new TikTokApiException(errors.join('. '));
+    }
+
+    let publishId: string;
+    try {
+      this.logger.log(
+        `Initializing TikTok Direct Post for video ${videoId} on account ${account.id}`,
+      );
+      const response = await this.httpClient.post(
+        'https://open.tiktokapis.com/v2/post/publish/video/init/',
+        {
+          post_info: toTikTokPostInfo(caption, options, creatorInfo),
+          source_info: {
+            source: 'PULL_FROM_URL',
+            video_url: videoUrl,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${account.accessToken}`,
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+        },
+      );
+
+      assertTikTokOk(response.data);
+      publishId = response.data.data.publish_id;
+    } catch (error) {
+      this.logger.error('Failed to initialize TikTok Direct Post:', error);
+      if ((error as { code?: string })?.code === 'ECONNABORTED') {
+        throw new TikTokApiException(
+          'TikTok did not respond in time. Check your TikTok profile before trying again, as the video may still post.',
+        );
+      }
+      throw toTikTokApiException(error, 'Failed to post to TikTok');
+    }
+
+    const post = await this.videoPostWriter.create({
+      video: { connect: { id: videoId } },
+      platform: { connect: { id: account.platformId } },
+      socialAccount: { connect: { id: account.id } },
+      // Holds TikTok's publish_id until the public post id is known.
+      platformPostId: publishId,
+      status: PostStatus.PUBLISHING,
+      uploadMode: UploadMode.DIRECT,
+      caption,
+      options: options as unknown as Prisma.InputJsonValue,
+    });
+
+    this.logger.log(`TikTok Direct Post started, publish_id: ${publishId}`);
+    return { publishId, videoPostId: post.id };
+  }
+
+  /**
+   * Moves a Direct Post's record to PUBLISHED or FAILED once TikTok reports a
+   * final status. Inbox drafts have no VideoPost record and are left alone.
+   */
+  async syncDirectPostStatus(
+    userId: number,
+    publishId: string,
+    status: TikTokPublishStatusResponse,
+  ): Promise<{ postUrl: string | null }> {
+    const post = await this.videoPostReader.findByPlatformPostId(publishId);
+    if (!post || post.socialAccount.userId !== userId) {
+      return { postUrl: null };
+    }
+    if (post.status !== PostStatus.PUBLISHING) {
+      return { postUrl: post.postUrl };
+    }
+
+    if (status.status === 'FAILED') {
+      await this.videoPostWriter.update({
+        where: { id: post.id },
+        data: { status: PostStatus.FAILED },
+      });
+      return { postUrl: null };
+    }
+
+    if (status.status !== 'PUBLISH_COMPLETE') {
+      return { postUrl: null };
+    }
+
+    // Private ("Only me") posts never get a public id.
+    const publicPostId = status.publicaly_available_post_id?.[0];
+    let postUrl: string | null = null;
+    if (publicPostId) {
+      try {
+        const creatorInfo = await this.queryCreatorInfo(
+          post.socialAccount.accessToken,
+        );
+        postUrl = `https://www.tiktok.com/@${creatorInfo.creator_username}/video/${publicPostId}`;
+      } catch (error) {
+        this.logger.warn(
+          `Could not build the TikTok post URL for ${publishId}: ${String(error)}`,
+        );
+      }
+    }
+
+    await this.videoPostWriter.update({
+      where: { id: post.id },
+      data: {
+        status: PostStatus.PUBLISHED,
+        postedAt: new Date(),
+        ...(publicPostId ? { platformPostId: String(publicPostId) } : {}),
+        ...(postUrl ? { postUrl } : {}),
+      },
+    });
+
+    return { postUrl };
   }
 
   async revokeToken(accessToken: string): Promise<void> {

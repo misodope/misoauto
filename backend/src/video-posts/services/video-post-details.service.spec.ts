@@ -101,7 +101,7 @@ describe('VideoPostDetailsService', () => {
         'TikTok direct posts',
         PlatformType.TIKTOK,
         { uploadMode: UploadMode.DIRECT },
-        'TikTok only supports drafts',
+        'Scheduled TikTok posts only support drafts',
       ],
       [
         'long TikTok captions',
