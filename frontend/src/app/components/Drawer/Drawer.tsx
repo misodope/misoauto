@@ -12,14 +12,31 @@ export const Drawer = ({
   description,
   children,
   width = 400,
+  preventClose = false,
 }: DrawerProps) => {
   const panelStyle = {
     maxWidth: typeof width === 'number' ? `${width}px` : width,
   };
 
+  const blockClose = (event: Event) => {
+    if (preventClose) event.preventDefault();
+  };
+
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content className={styles.panel} style={panelStyle}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen && preventClose) return;
+        onOpenChange(isOpen);
+      }}
+    >
+      <Dialog.Content
+        className={styles.panel}
+        style={panelStyle}
+        onEscapeKeyDown={blockClose}
+        onPointerDownOutside={blockClose}
+        onInteractOutside={blockClose}
+      >
         <Flex justify="between" align="start" mb="4">
           <div>
             <Dialog.Title size="5">{title}</Dialog.Title>
@@ -30,7 +47,7 @@ export const Drawer = ({
             )}
           </div>
           <Dialog.Close>
-            <IconButton variant="ghost" size="1">
+            <IconButton variant="ghost" size="1" disabled={preventClose}>
               <Cross2Icon />
             </IconButton>
           </Dialog.Close>

@@ -23,7 +23,7 @@
     0 10px 20px -15px rgba(0, 0, 0, 0.2);
   padding: 16px;
   display: grid;
-  grid-template-areas: 'title action' 'description action';
+  grid-template-areas: 'title action' 'description action' 'link action';
   grid-template-columns: auto max-content;
   column-gap: 16px;
   align-items: center;
@@ -84,7 +84,8 @@
 }
 
 .link {
-  grid-area: description;
+  grid-area: link;
+  justify-self: start;
   margin-top: 4px;
   color: var(--accent-11);
   font-size: 13px;
