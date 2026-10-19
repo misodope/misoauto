@@ -1,9 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Button, Callout, Flex, Select, Text } from '@radix-ui/themes';
+import {
+  Box,
+  Button,
+  Callout,
+  Flex,
+  Select,
+  Text,
+  Tooltip,
+} from '@radix-ui/themes';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import Drawer from '@frontend/app/components/Drawer';
+import ProgressOverlay from '@frontend/app/components/ProgressOverlay';
 import { useToast } from '@frontend/app/components/Toaster';
 import { useAuth } from '@frontend/app/contexts/AuthContext';
 import { Video } from '@frontend/app/hooks/apis/videos/use-videos';
@@ -13,6 +22,7 @@ import {
   useInstagramPublish,
   useInstagramPublishStatus,
   useInstagramUploadDraft,
+  useTikTokPublishStatus,
   useTikTokUploadDraft,
   useYouTubePublish,
   useYouTubePublishStatus,
@@ -29,8 +39,13 @@ import YouTubeVideoFields, {
 import WorkflowStatusCallout, {
   WorkflowState,
 } from './components/WorkflowStatusCallout';
+import {
+  instagramStatusMessage,
+  tiktokStatusMessage,
+  youtubeStatusMessage,
+} from './statusText';
 
-type WorkflowPlatform = 'instagram' | 'youtube';
+type WorkflowPlatform = 'instagram' | 'youtube' | 'tiktok';
 type PollResult =
   | { state: 'finished' }
   | { state: 'failed'; message: string }
@@ -40,11 +55,21 @@ const POLL_INTERVAL_MS = 5_000;
 const POLL_TIMEOUT_MS: Record<WorkflowPlatform, number> = {
   instagram: 10 * 60 * 1_000,
   youtube: 30 * 60 * 1_000,
+  tiktok: 10 * 60 * 1_000,
 };
 
 const PLATFORM_LABEL: Record<WorkflowPlatform, string> = {
   instagram: 'Instagram',
   youtube: 'YouTube',
+  tiktok: 'TikTok',
+};
+
+// Platforms with a separate publish step after processing. TikTok inbox
+// uploads are finished by the user in the TikTok app instead.
+const SUPPORTS_PUBLISH: Record<WorkflowPlatform, boolean> = {
+  instagram: true,
+  youtube: true,
+  tiktok: false,
 };
 
 interface PublishVideoDrawerProps {
@@ -65,6 +90,7 @@ export default function PublishVideoDrawer({
     error: showError,
   } = useToast();
   const tiktokUploadDraft = useTikTokUploadDraft();
+  const tiktokPublishStatus = useTikTokPublishStatus();
   const youtubeUploadDraft = useYouTubeUploadDraft();
   const youtubePublishStatus = useYouTubePublishStatus();
   const youtubePublish = useYouTubePublish();
@@ -93,17 +119,64 @@ export default function PublishVideoDrawer({
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const operationRef = useRef(0);
 
+  // Accounts this video is already live on; republishing would create a duplicate post.
+  const publishedAccountIds = useMemo(
+    () =>
+      new Set(
+        (video?.posts ?? [])
+          .filter((post) => post.status === 'PUBLISHED')
+          .map((post) => post.socialAccountId),
+      ),
+    [video?.posts],
+  );
+
   const selectedAccount = connectedAccounts.find(
     (account) => account.id === Number(selectedAccountId),
   );
   const selectedPlatformName = selectedAccount?.platform.name.toUpperCase();
   const isInstagram = selectedPlatformName === 'INSTAGRAM';
   const isYouTube = selectedPlatformName === 'YOUTUBE';
+  const isTikTok = selectedPlatformName === 'TIKTOK';
   const workflowPlatform: WorkflowPlatform | null = isInstagram
     ? 'instagram'
     : isYouTube
       ? 'youtube'
-      : null;
+      : isTikTok
+        ? 'tiktok'
+        : null;
+
+  // Long-running work (upload, platform processing, publish) is underway; the
+  // drawer is locked behind a progress overlay until it finishes or fails.
+  const isBusy =
+    isSubmitting ||
+    workflowState === 'preparing' ||
+    workflowState === 'processing' ||
+    workflowState === 'publishing';
+
+  const platformLabel = workflowPlatform
+    ? PLATFORM_LABEL[workflowPlatform]
+    : selectedAccount?.platform.displayName || 'the platform';
+
+  // The status message carries the platform-specific detail, so the
+  // processing title stays generic to avoid repeating it.
+  const overlayTitle =
+    workflowState === 'processing'
+      ? `Waiting for ${platformLabel}…`
+      : workflowState === 'publishing'
+        ? `Publishing to ${platformLabel}…`
+        : `Sending your video to ${platformLabel}…`;
+
+  useEffect(() => {
+    if (!isBusy) return;
+
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', warnBeforeUnload);
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
+  }, [isBusy]);
 
   useEffect(() => {
     if (open) {
@@ -141,19 +214,7 @@ export default function PublishVideoDrawer({
   };
 
   const handleClose = (force = false) => {
-    const isInProgress =
-      workflowState === 'preparing' ||
-      workflowState === 'processing' ||
-      workflowState === 'publishing';
-
-    if (!force && isInProgress) {
-      const confirmed = window.confirm(
-        workflowPlatform === 'youtube'
-          ? 'This YouTube upload is still in progress. Closing stops tracking it here; any uploaded video stays private on YouTube. Continue?'
-          : 'This Instagram upload is still processing. Closing will discard it. Continue?',
-      );
-      if (!confirmed) return;
-    }
+    if (!force && isBusy) return;
 
     resetWorkflow();
     setSelectedAccountId('');
@@ -234,17 +295,30 @@ export default function PublishVideoDrawer({
         containerId: mediaId,
       });
       if (result.statusCode === 'FINISHED') return { state: 'finished' };
-      if (result.statusCode === 'ERROR' || result.statusCode === 'EXPIRED') {
-        return {
-          state: 'failed',
-          message:
-            result.status || `Instagram upload status: ${result.statusCode}`,
-        };
+      const message = instagramStatusMessage(result.statusCode, result.status);
+      if (
+        result.statusCode === 'ERROR' ||
+        result.statusCode === 'EXPIRED' ||
+        result.statusCode === 'PUBLISHED'
+      ) {
+        return { state: 'failed', message };
       }
-      return {
-        state: 'pending',
-        message: result.status || 'Instagram is processing the Reel.',
-      };
+      return { state: 'pending', message };
+    }
+
+    if (platform === 'tiktok') {
+      const result = await tiktokPublishStatus.mutateAsync({
+        publishId: mediaId,
+      });
+      if (
+        result.status === 'SEND_TO_USER_INBOX' ||
+        result.status === 'PUBLISH_COMPLETE'
+      ) {
+        return { state: 'finished' };
+      }
+      const message = tiktokStatusMessage(result.status, result.fail_reason);
+      if (result.status === 'FAILED') return { state: 'failed', message };
+      return { state: 'pending', message };
     }
 
     const result = await youtubePublishStatus.mutateAsync({ videoId: mediaId });
@@ -255,12 +329,16 @@ export default function PublishVideoDrawer({
     ) {
       return {
         state: 'failed',
-        message: result.failureReason
-          ? `YouTube processing failed: ${result.failureReason}`
-          : `YouTube processing ${result.processingStatus}.`,
+        message: youtubeStatusMessage(
+          result.processingStatus,
+          result.failureReason,
+        ),
       };
     }
-    return { state: 'pending', message: 'YouTube is processing the video.' };
+    return {
+      state: 'pending',
+      message: youtubeStatusMessage(result.processingStatus),
+    };
   };
 
   const pollProcessingStatus = async (
@@ -286,7 +364,14 @@ export default function PublishVideoDrawer({
       if (operationId !== operationRef.current) return;
 
       if (result.state === 'finished') {
-        if (mode === 'direct') {
+        if (!SUPPORTS_PUBLISH[platform]) {
+          setWorkflowState('published');
+          showSuccess(
+            `Sent to ${PLATFORM_LABEL[platform]}`,
+            tiktokStatusMessage('SEND_TO_USER_INBOX'),
+          );
+          handleClose(true);
+        } else if (mode === 'direct') {
           await publishMedia(platform, mediaId, operationId);
         } else {
           setWorkflowState('ready');
@@ -351,6 +436,9 @@ export default function PublishVideoDrawer({
         shareToFeed,
       });
       mediaId = result.containerId;
+    } else if (platform === 'tiktok') {
+      const result = await tiktokUploadDraft.mutateAsync({ videoId: video.id });
+      mediaId = result.publish_id;
     } else {
       const result = await youtubeUploadDraft.mutateAsync({
         videoId: video.id,
@@ -367,8 +455,10 @@ export default function PublishVideoDrawer({
     setWorkflowState('processing');
     setWorkflowMessage(
       platform === 'youtube'
-        ? 'YouTube is processing the video.'
-        : 'Instagram is processing the Reel.',
+        ? youtubeStatusMessage('processing')
+        : platform === 'tiktok'
+          ? tiktokStatusMessage('PROCESSING_UPLOAD')
+          : instagramStatusMessage('IN_PROGRESS'),
     );
     void pollProcessingStatus(
       platform,
@@ -385,24 +475,10 @@ export default function PublishVideoDrawer({
     setIsSubmitting(true);
 
     try {
-      if (workflowPlatform) {
-        await startPlatformUpload(workflowPlatform);
-        return;
-      }
-
-      if (uploadMode !== 'draft') return;
-
-      if (selectedPlatformName === 'TIKTOK') {
-        await tiktokUploadDraft.mutateAsync({ videoId: video.id });
-      } else {
+      if (!workflowPlatform) {
         throw new Error('This platform is not supported for uploads.');
       }
-
-      showSuccess(
-        'Draft uploaded',
-        `Video sent as draft to ${selectedAccount.platform.displayName || selectedAccount.platform.name}.`,
-      );
-      handleClose(true);
+      await startPlatformUpload(workflowPlatform);
     } catch (error) {
       if (workflowPlatform) {
         const message = getErrorMessage(
@@ -433,12 +509,13 @@ export default function PublishVideoDrawer({
   const hasConnectedAccounts = connectedAccounts.length > 0;
   const canSubmit =
     !!selectedAccount &&
+    !publishedAccountIds.has(selectedAccount.id) &&
+    !!workflowPlatform &&
     !isSubmitting &&
     !youtubeTitleInvalid &&
-    (workflowPlatform
-      ? workflowState === 'idle' ||
-        (workflowState === 'ready' && uploadMode === 'draft')
-      : uploadMode === 'draft' && workflowState === 'idle');
+    (SUPPORTS_PUBLISH[workflowPlatform] || uploadMode === 'draft') &&
+    (workflowState === 'idle' ||
+      (workflowState === 'ready' && uploadMode === 'draft'));
 
   const submitLabel = (() => {
     if (workflowState === 'ready') return 'Publish now';
@@ -452,6 +529,7 @@ export default function PublishVideoDrawer({
         ? 'Upload and publish'
         : 'Upload as private draft';
     }
+    if (isTikTok) return 'Send to TikTok inbox';
     return 'Upload Draft';
   })();
 
@@ -459,7 +537,9 @@ export default function PublishVideoDrawer({
     ? 'Upload and process on Instagram without posting. Publish within 24h.'
     : isYouTube
       ? 'Upload as a private video. Publish now or later from YouTube Studio.'
-      : 'Send to drafts for review';
+      : isTikTok
+        ? 'Send to your TikTok inbox, then finish posting in the TikTok app.'
+        : 'Send to drafts for review';
   const directDescription = isInstagram
     ? 'Upload and post as a Reel'
     : isYouTube
@@ -471,6 +551,7 @@ export default function PublishVideoDrawer({
 
   return (
     <Drawer
+      preventClose={isBusy}
       open={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) handleClose();
@@ -506,12 +587,32 @@ export default function PublishVideoDrawer({
                 mt="1"
               />
               <Select.Content>
-                {connectedAccounts.map((account) => (
-                  <Select.Item key={account.id} value={String(account.id)}>
-                    {account.platform.displayName || account.platform.name} — @
-                    {account.username}
-                  </Select.Item>
-                ))}
+                {connectedAccounts.map((account) => {
+                  const platformName =
+                    account.platform.displayName || account.platform.name;
+                  const isPublished = publishedAccountIds.has(account.id);
+                  const item = (
+                    <Select.Item
+                      key={account.id}
+                      value={String(account.id)}
+                      disabled={isPublished}
+                    >
+                      {platformName} — @{account.username}
+                      {isPublished && ' · Published'}
+                    </Select.Item>
+                  );
+
+                  return isPublished ? (
+                    <Tooltip
+                      key={account.id}
+                      content={`This video has already been published on ${platformName}.`}
+                    >
+                      {item}
+                    </Tooltip>
+                  ) : (
+                    item
+                  );
+                })}
               </Select.Content>
             </Select.Root>
           </Box>
@@ -522,7 +623,9 @@ export default function PublishVideoDrawer({
             draftLabel={isInstagram ? 'Prepare' : 'Draft'}
             draftDescription={draftDescription}
             directDescription={directDescription}
-            directDisabled={!workflowPlatform}
+            directDisabled={
+              !workflowPlatform || !SUPPORTS_PUBLISH[workflowPlatform]
+            }
           />
 
           {isInstagram && (
@@ -551,6 +654,12 @@ export default function PublishVideoDrawer({
 
           <WorkflowStatusCallout
             state={workflowState}
+            message={workflowMessage}
+          />
+
+          <ProgressOverlay
+            open={isBusy}
+            title={overlayTitle}
             message={workflowMessage}
           />
 

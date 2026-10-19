@@ -15,4 +15,6 @@ export interface DrawerProps {
   width?: number | string;
   /** Side the drawer slides in from. Default: 'right' */
   side?: 'left' | 'right';
+  /** Block closing via the close button, Escape, or outside click. Default: false */
+  preventClose?: boolean;
 }
