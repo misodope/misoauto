@@ -1,0 +1,32 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  // Radix modal dialogs set pointer-events: none outside their content;
+  // force capture so clicks can't reach anything underneath.
+  pointer-events: auto;
+  cursor: progress;
+  animation: fadeIn 150ms ease-out;
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  cursor: default;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

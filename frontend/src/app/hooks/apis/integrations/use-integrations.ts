@@ -669,8 +669,15 @@ export const useInstagramPublish = (): UseMutationResult<
   AxiosError<InstagramApiError>,
   InstagramPublishRequest
 > => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: publishToInstagram,
+    onSuccess: () => {
+      // Publishing records a VideoPost, which shows up in post and video lists.
+      queryClient.invalidateQueries({ queryKey: videoPostKeys.all });
+      queryClient.invalidateQueries({ queryKey: videoKeys.all });
+    },
     onError: (error) => {
       console.error(
         'Failed to publish Instagram Reel:',
