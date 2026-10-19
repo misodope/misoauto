@@ -76,6 +76,7 @@ export interface TikTokVideoQueryResponse {
 
 export interface TikTokUploadDraftRequest {
   videoId: number;
+  socialAccountId?: number;
 }
 
 export interface TikTokUploadDraftResponse {
@@ -93,6 +94,7 @@ export type TikTokPublishStatus =
 
 export interface TikTokPublishStatusRequest {
   publishId: string;
+  socialAccountId?: number;
 }
 
 export interface TikTokPublishStatusResponse {
@@ -101,6 +103,50 @@ export interface TikTokPublishStatusResponse {
   publicaly_available_post_id: number[];
   uploaded_bytes: number;
   downloaded_bytes: number;
+  /** Set once a Direct Post is public on TikTok. */
+  postUrl: string | null;
+  platform: 'tiktok';
+}
+
+export type TikTokPrivacyLevel =
+  | 'PUBLIC_TO_EVERYONE'
+  | 'MUTUAL_FOLLOW_FRIENDS'
+  | 'FOLLOWER_OF_CREATOR'
+  | 'SELF_ONLY';
+
+export interface TikTokCreatorInfo {
+  creator_avatar_url: string;
+  creator_username: string;
+  creator_nickname: string;
+  privacy_level_options: TikTokPrivacyLevel[];
+  comment_disabled: boolean;
+  duet_disabled: boolean;
+  stitch_disabled: boolean;
+  max_video_post_duration_sec: number;
+  platform: 'tiktok';
+}
+
+export interface TikTokDirectPostOptions {
+  privacyLevel: TikTokPrivacyLevel;
+  allowComment: boolean;
+  allowDuet: boolean;
+  allowStitch: boolean;
+  isAigc: boolean;
+  brandOrganic: boolean;
+  brandContent: boolean;
+  coverTimestampMs?: number;
+}
+
+export interface TikTokDirectPostRequest {
+  socialAccountId: number;
+  videoId: number;
+  caption?: string;
+  options: TikTokDirectPostOptions;
+}
+
+export interface TikTokDirectPostResponse {
+  publishId: string;
+  videoPostId: number;
   platform: 'tiktok';
 }
 
@@ -108,6 +154,8 @@ export interface TikTokApiError {
   message: string;
   statusCode?: number;
   error?: string;
+  /** TikTok's own error code, e.g. scope_not_authorized. */
+  tiktokCode?: string;
 }
 
 // ============================================================================
@@ -291,6 +339,22 @@ const uploadDraftToTikTok = async (
   return response.data;
 };
 
+const getTikTokCreatorInfo = async (
+  socialAccountId: number,
+): Promise<TikTokCreatorInfo> => {
+  const response = await api.post('/platform/tiktok/creator-info', {
+    socialAccountId,
+  });
+  return response.data;
+};
+
+const directPostToTikTok = async (
+  data: TikTokDirectPostRequest,
+): Promise<TikTokDirectPostResponse> => {
+  const response = await api.post('/platform/tiktok/direct-post', data);
+  return response.data;
+};
+
 const getTikTokPublishStatus = async (
   params: TikTokPublishStatusRequest,
 ): Promise<TikTokPublishStatusResponse> => {
@@ -388,6 +452,8 @@ export const tiktokKeys = {
     [...tiktokKeys.videos(), 'query', ...videoIds] as const,
   publishStatus: (publishId: string) =>
     [...tiktokKeys.all, 'publish-status', publishId] as const,
+  creatorInfo: (socialAccountId: number) =>
+    [...tiktokKeys.all, 'creator-info', socialAccountId] as const,
 };
 
 export const instagramKeys = {
@@ -474,13 +540,61 @@ export const useTikTokUploadDraft = (): UseMutationResult<
   });
 };
 
+/**
+ * TikTok requires the latest creator info each time the post screen renders,
+ * so this never serves cached data.
+ */
+export const useTikTokCreatorInfo = (
+  socialAccountId: number | null,
+  enabled = true,
+): UseQueryResult<TikTokCreatorInfo, AxiosError<TikTokApiError>> => {
+  return useQuery({
+    queryKey: tiktokKeys.creatorInfo(socialAccountId ?? 0),
+    queryFn: () => getTikTokCreatorInfo(socialAccountId as number),
+    enabled: enabled && socialAccountId !== null,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+};
+
+export const useTikTokDirectPost = (): UseMutationResult<
+  TikTokDirectPostResponse,
+  AxiosError<TikTokApiError>,
+  TikTokDirectPostRequest
+> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: directPostToTikTok,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: videoPostKeys.all });
+      void queryClient.invalidateQueries({ queryKey: videoKeys.all });
+    },
+    onError: (error) => {
+      console.error(
+        'Failed to post to TikTok:',
+        error.response?.data?.message || error.message,
+      );
+    },
+  });
+};
+
 export const useTikTokPublishStatus = (): UseMutationResult<
   TikTokPublishStatusResponse,
   AxiosError<TikTokApiError>,
   TikTokPublishStatusRequest
 > => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: getTikTokPublishStatus,
+    onSuccess: (data) => {
+      // Direct Post records move to PUBLISHED or FAILED on a final status.
+      if (data.status === 'PUBLISH_COMPLETE' || data.status === 'FAILED') {
+        void queryClient.invalidateQueries({ queryKey: videoPostKeys.all });
+      }
+    },
     onError: (error) => {
       console.error(
         'Failed to fetch TikTok publish status:',

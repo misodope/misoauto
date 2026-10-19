@@ -17,7 +17,9 @@ import {
   CurrentUser,
   JwtPayload,
   getOAuthCookieOptions,
+  validateBody,
 } from '@backend/common';
+import { TikTokCreatorInfoDto, TikTokDirectPostDto } from '../dto';
 
 export interface TokenExchangeRequest {
   code: string;
@@ -42,10 +44,12 @@ export interface VideoQueryRequest {
 
 export interface UploadDraftRequest {
   videoId: number;
+  socialAccountId?: number;
 }
 
 export interface PublishStatusRequest {
   publishId: string;
+  socialAccountId?: number;
 }
 
 const isDev = () => process.env.NODE_ENV !== 'production';
@@ -266,6 +270,7 @@ export class TikTokController {
 
     const accessToken = await this.tiktokService.getAccessTokenForUser(
       user.sub,
+      body.socialAccountId,
     );
 
     // Get public CDN URL for TikTok to pull from (custom domain required for TikTok verification)
@@ -286,6 +291,59 @@ export class TikTokController {
     };
   }
 
+  @Post('creator-info')
+  @UseGuards(JwtAuthGuard)
+  async getCreatorInfo(
+    @CurrentUser() user: JwtPayload,
+    @Body(validateBody) body: TikTokCreatorInfoDto,
+  ) {
+    const accessToken = await this.tiktokService.getAccessTokenForUser(
+      user.sub,
+      body.socialAccountId,
+    );
+    const creatorInfo = await this.tiktokService.queryCreatorInfo(accessToken);
+
+    return {
+      ...creatorInfo,
+      platform: 'tiktok',
+    };
+  }
+
+  @Post('direct-post')
+  @UseGuards(JwtAuthGuard)
+  async directPost(
+    @CurrentUser() user: JwtPayload,
+    @Body(validateBody) body: TikTokDirectPostDto,
+  ) {
+    this.logger.log(
+      `Direct posting video ${body.videoId} to TikTok account ${body.socialAccountId} for user ${user.sub}`,
+    );
+
+    const account = await this.tiktokService.getAccountForUser(
+      user.sub,
+      body.socialAccountId,
+    );
+    const video = await this.videosService.getVideo(user.sub, body.videoId);
+    const videoUrl = await this.videosService.getVideoPublicUrl(
+      user.sub,
+      body.videoId,
+    );
+
+    const result = await this.tiktokService.initializeDirectPost({
+      account,
+      videoId: body.videoId,
+      videoUrl,
+      videoDurationSec: video.duration ?? null,
+      caption: body.caption?.trim() || null,
+      options: body.options,
+    });
+
+    return {
+      ...result,
+      platform: 'tiktok',
+    };
+  }
+
   @Post('publish-status')
   @UseGuards(JwtAuthGuard)
   async getPublishStatus(
@@ -297,14 +355,21 @@ export class TikTokController {
     );
     const accessToken = await this.tiktokService.getAccessTokenForUser(
       user.sub,
+      body.socialAccountId,
     );
     const result = await this.tiktokService.getPublishStatus(
       accessToken,
       body.publishId,
     );
+    const { postUrl } = await this.tiktokService.syncDirectPostStatus(
+      user.sub,
+      body.publishId,
+      result,
+    );
 
     return {
       ...result,
+      postUrl,
       platform: 'tiktok',
     };
   }

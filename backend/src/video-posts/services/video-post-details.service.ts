@@ -71,8 +71,11 @@ export class VideoPostDetailsService {
   ): NormalizeVideoPostDetailsResult {
     const errors: string[] = [];
     const uploadMode = input.uploadMode ?? UploadMode.DRAFT;
+    // Direct Post goes through POST /platform/tiktok/direct-post, which checks
+    // TikTok's live creator settings right before posting. Scheduled posts
+    // stay drafts until the publish worker can run those checks at post time.
     if (uploadMode !== UploadMode.DRAFT) {
-      errors.push('TikTok only supports drafts');
+      errors.push('Scheduled TikTok posts only support drafts');
     }
 
     const caption = input.caption ?? null;
