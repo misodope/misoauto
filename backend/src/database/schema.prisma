@@ -84,6 +84,7 @@ model SocialAccount {
   refreshToken String?     @map("refresh_token")
   tokenExpiry  DateTime?   @map("token_expiry")
   accountId    String      @map("account_id")
+  appScopedUserId String?  @map("app_scoped_user_id")
   username     String
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
@@ -97,6 +98,7 @@ model SocialAccount {
   posts        VideoPost[]
 
   @@unique([platformId, accountId])
+  @@index([platformId, appScopedUserId])
   @@map("social_accounts")
 }
 
@@ -181,4 +183,27 @@ enum PlatformType {
   YOUTUBE
   INSTAGRAM
   FACEBOOK
+}
+
+model DataDeletionRequest {
+  id               Int                @id @default(autoincrement())
+  confirmationCode String             @unique @map("confirmation_code")
+  platform         PlatformType
+  source           DataDeletionSource
+  status           DataDeletionStatus @default(PENDING)
+  dataFound        Boolean            @default(false) @map("data_found")
+  requestedAt      DateTime           @default(now()) @map("requested_at")
+  completedAt      DateTime?          @map("completed_at")
+
+  @@map("data_deletion_requests")
+}
+
+enum DataDeletionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum DataDeletionSource {
+  META_DATA_DELETION
 }

@@ -12,6 +12,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
 import { QueueModule } from './system/queue';
 import { BlobStorageModule } from './system/blob-storage';
 import { NotificationsModule } from './system/notifications';
+import { DataDeletionModule } from './data-deletion/data-deletion.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { NotificationsModule } from './system/notifications';
         defaultFrom: process.env.TWILIO_PHONE_NUMBER || '',
       },
     }),
+    DataDeletionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

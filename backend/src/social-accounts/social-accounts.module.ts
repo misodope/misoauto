@@ -6,6 +6,7 @@ import { SocialAccountsController } from './controllers/social-accounts.controll
 import { SocialAccountDisconnectService } from './services/social-account-disconnect.service';
 import { SocialAccountProviderRevoker } from './services/social-account-provider-revoker';
 import { AuthModule } from '../auth/auth.module';
+import { AccountRemovalService } from './services/account-removal.service';
 
 @Module({
   imports: [PrismaModule, AuthModule],
@@ -15,7 +16,8 @@ import { AuthModule } from '../auth/auth.module';
     SocialAccountWriter,
     SocialAccountDisconnectService,
     SocialAccountProviderRevoker,
+    AccountRemovalService,
   ],
-  exports: [SocialAccountReader, SocialAccountWriter],
+  exports: [SocialAccountReader, SocialAccountWriter, AccountRemovalService],
 })
 export class SocialAccountsModule {}

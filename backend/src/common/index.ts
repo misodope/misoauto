@@ -3,5 +3,6 @@ export * from './filters/global-exception.filter';
 export * from './guards/jwt-auth.guard';
 export * from './interfaces/jwt-payload.interface';
 export * from './utils/cookie.utils';
+export * from './utils/meta-signed-request';
 export * from './utils/oauth-state';
 export * from './pipes/validate-body.pipe';

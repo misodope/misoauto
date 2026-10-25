@@ -113,6 +113,20 @@ export class SocialAccountReader {
     });
   }
 
+  async findByPlatformAndInstagramUserId(
+    platformId: number,
+    userId: string,
+  ): Promise<SocialAccountWithRelations[]> {
+    return this.prisma.socialAccount.findMany({
+      where: {
+        platformId,
+        deletedAt: null,
+        OR: [{ accountId: userId }, { appScopedUserId: userId }],
+      },
+      include: SOCIAL_ACCOUNT_INCLUDE,
+    });
+  }
+
   async findIncludingDeletedByPlatformAndAccountId(
     platformId: number,
     accountId: string,

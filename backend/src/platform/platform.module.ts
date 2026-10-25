@@ -12,6 +12,7 @@ import { SocialAccountsModule } from '../social-accounts/social-accounts.module'
 import { AuthModule } from '../auth/auth.module';
 import { VideosModule } from '../videos/videos.module';
 import { VideoPostsModule } from '@backend/video-posts/video-posts.module';
+import { DataDeletionModule } from '@backend/data-deletion/data-deletion.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { VideoPostsModule } from '@backend/video-posts/video-posts.module';
     AuthModule,
     VideosModule,
     VideoPostsModule,
+    DataDeletionModule,
   ],
   controllers: [InstagramController, TikTokController, YouTubeController],
   providers: [
