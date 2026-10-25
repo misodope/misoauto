@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma, PostStatus } from '@backend/generated/prisma/client';
+import { SOCIAL_ACCOUNT_PUBLIC_SELECT } from '@backend/social-accounts/repository/social-account-reader';
 
 export type VideoPostWithRelations = Prisma.VideoPostGetPayload<{
-  include: { video: true; platform: true; socialAccount: true };
+  include: {
+    video: true;
+    platform: true;
+    socialAccount: { select: typeof SOCIAL_ACCOUNT_PUBLIC_SELECT };
+  };
 }>;
 
 export const VIDEO_POST_INCLUDE = {
   video: true,
   platform: true,
-  socialAccount: true,
+  socialAccount: { select: SOCIAL_ACCOUNT_PUBLIC_SELECT },
 } as const;
 
 @Injectable()
@@ -28,7 +33,7 @@ export class VideoPostReader {
       skip,
       take,
       cursor,
-      where,
+      where: { ...where, deletedAt: null },
       orderBy,
       include: VIDEO_POST_INCLUDE,
     });
@@ -37,15 +42,15 @@ export class VideoPostReader {
   async findOne(
     where: Prisma.VideoPostWhereUniqueInput,
   ): Promise<VideoPostWithRelations | null> {
-    return this.prisma.videoPost.findUnique({
-      where,
+    return this.prisma.videoPost.findFirst({
+      where: { ...where, deletedAt: null },
       include: VIDEO_POST_INCLUDE,
     });
   }
 
   async findByVideoId(videoId: number): Promise<VideoPostWithRelations[]> {
     return this.prisma.videoPost.findMany({
-      where: { videoId },
+      where: { videoId, deletedAt: null },
       include: VIDEO_POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -56,7 +61,11 @@ export class VideoPostReader {
     socialAccountIds: number[],
   ): Promise<VideoPostWithRelations[]> {
     return this.prisma.videoPost.findMany({
-      where: { videoId, socialAccountId: { in: socialAccountIds } },
+      where: {
+        videoId,
+        socialAccountId: { in: socialAccountIds },
+        deletedAt: null,
+      },
       include: VIDEO_POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -66,7 +75,7 @@ export class VideoPostReader {
     platformId: number,
   ): Promise<VideoPostWithRelations[]> {
     return this.prisma.videoPost.findMany({
-      where: { platformId },
+      where: { platformId, deletedAt: null },
       include: VIDEO_POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -76,7 +85,7 @@ export class VideoPostReader {
     socialAccountId: number,
   ): Promise<VideoPostWithRelations[]> {
     return this.prisma.videoPost.findMany({
-      where: { socialAccountId },
+      where: { socialAccountId, deletedAt: null },
       include: VIDEO_POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -84,7 +93,7 @@ export class VideoPostReader {
 
   async findByStatus(status: PostStatus): Promise<VideoPostWithRelations[]> {
     return this.prisma.videoPost.findMany({
-      where: { status },
+      where: { status, deletedAt: null },
       include: VIDEO_POST_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -95,6 +104,7 @@ export class VideoPostReader {
     return this.prisma.videoPost.findMany({
       where: {
         status: PostStatus.SCHEDULED,
+        deletedAt: null,
         scheduledFor: {
           lte: scheduledBefore,
         },
@@ -108,6 +118,7 @@ export class VideoPostReader {
     return this.prisma.videoPost.findMany({
       where: {
         status: PostStatus.PENDING,
+        deletedAt: null,
       },
       include: VIDEO_POST_INCLUDE,
       orderBy: { createdAt: 'asc' },
@@ -115,11 +126,15 @@ export class VideoPostReader {
   }
 
   async count(where?: Prisma.VideoPostWhereInput): Promise<number> {
-    return this.prisma.videoPost.count({ where });
+    return this.prisma.videoPost.count({
+      where: { ...where, deletedAt: null },
+    });
   }
 
   async exists(where: Prisma.VideoPostWhereInput): Promise<boolean> {
-    const count = await this.prisma.videoPost.count({ where });
+    const count = await this.prisma.videoPost.count({
+      where: { ...where, deletedAt: null },
+    });
     return count > 0;
   }
 
@@ -127,7 +142,7 @@ export class VideoPostReader {
     platformPostId: string,
   ): Promise<VideoPostWithRelations | null> {
     return this.prisma.videoPost.findFirst({
-      where: { platformPostId },
+      where: { platformPostId, deletedAt: null },
       include: VIDEO_POST_INCLUDE,
     });
   }

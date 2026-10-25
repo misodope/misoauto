@@ -24,7 +24,10 @@ describe('PlatformConnectTikTokService', () => {
     findByUserAndPlatform: jest.fn(),
   };
   const platformReader = { findByName: jest.fn() };
-  const videoPostWriter = { create: jest.fn(), update: jest.fn() };
+  const videoPostWriter = {
+    createForActiveAccount: jest.fn(),
+    update: jest.fn(),
+  };
   const videoPostReader = { findByPlatformPostId: jest.fn() };
 
   const createService = () => {
@@ -166,7 +169,7 @@ describe('PlatformConnectTikTokService', () => {
         .mockResolvedValueOnce({
           data: { data: { publish_id: 'pub-1' }, error: { code: 'ok' } },
         });
-      videoPostWriter.create.mockResolvedValue({ id: 99 });
+      videoPostWriter.createForActiveAccount.mockResolvedValue({ id: 99 });
 
       const result =
         await createService().initializeDirectPost(directPostParams);
@@ -194,7 +197,7 @@ describe('PlatformConnectTikTokService', () => {
         },
       });
       expect(config.headers.Authorization).toBe('Bearer account-token');
-      expect(videoPostWriter.create).toHaveBeenCalledWith(
+      expect(videoPostWriter.createForActiveAccount).toHaveBeenCalledWith(
         expect.objectContaining({
           platformPostId: 'pub-1',
           status: 'PUBLISHING',
@@ -202,6 +205,7 @@ describe('PlatformConnectTikTokService', () => {
           caption: 'Hello #miso',
           socialAccount: { connect: { id: 7 } },
         }),
+        7,
       );
     });
 
@@ -220,7 +224,7 @@ describe('PlatformConnectTikTokService', () => {
         }),
       ).rejects.toThrow('That visibility option is not available');
       expect(httpClient.post).toHaveBeenCalledTimes(1);
-      expect(videoPostWriter.create).not.toHaveBeenCalled();
+      expect(videoPostWriter.createForActiveAccount).not.toHaveBeenCalled();
     });
 
     it('surfaces posting caps from creator info', async () => {
@@ -254,7 +258,7 @@ describe('PlatformConnectTikTokService', () => {
         createService().initializeDirectPost(directPostParams),
       ).rejects.toThrow('direct posts only work on private TikTok accounts');
       expect(httpClient.post).toHaveBeenCalledTimes(2);
-      expect(videoPostWriter.create).not.toHaveBeenCalled();
+      expect(videoPostWriter.createForActiveAccount).not.toHaveBeenCalled();
     });
 
     it('warns instead of retrying when the init request times out', async () => {
@@ -276,7 +280,7 @@ describe('PlatformConnectTikTokService', () => {
       id: 99,
       status: 'PUBLISHING',
       postUrl: null,
-      socialAccount: { userId: 1, accessToken: 'account-token' },
+      socialAccount: { id: 7, userId: 1 },
     };
 
     it('ignores inbox drafts', async () => {
@@ -292,7 +296,7 @@ describe('PlatformConnectTikTokService', () => {
     it("ignores another user's post", async () => {
       videoPostReader.findByPlatformPostId.mockResolvedValue({
         ...publishingPost,
-        socialAccount: { userId: 2, accessToken: 't' },
+        socialAccount: { id: 7, userId: 2 },
       });
       await createService().syncDirectPostStatus(1, 'pub-1', {
         status: 'FAILED',
@@ -313,6 +317,10 @@ describe('PlatformConnectTikTokService', () => {
 
     it('saves the public post id and URL when publishing completes', async () => {
       videoPostReader.findByPlatformPostId.mockResolvedValue(publishingPost);
+      socialAccountReader.findOne.mockResolvedValue({
+        id: 7,
+        accessToken: 'account-token',
+      });
       httpClient.post.mockResolvedValueOnce({
         data: { data: creatorInfo, error: { code: 'ok' } },
       });

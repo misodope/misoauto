@@ -17,19 +17,21 @@ export class RefreshTokenReader {
       where: {
         tokenHash,
         expiresAt: { gt: new Date() },
+        revokedAt: null,
+        user: { deletedAt: null },
       },
     });
   }
 
   async findAllByUserId(userId: number): Promise<RefreshToken[]> {
     return this.prisma.refreshToken.findMany({
-      where: { userId },
+      where: { userId, revokedAt: null },
     });
   }
 
   async countByUserId(userId: number): Promise<number> {
     return this.prisma.refreshToken.count({
-      where: { userId },
+      where: { userId, revokedAt: null },
     });
   }
 }

@@ -18,6 +18,9 @@ import {
   JwtAuthGuard,
   JwtPayload,
   validateBody,
+  createDevelopmentOAuthState,
+  createOAuthNonce,
+  parseDevelopmentOAuthState,
 } from '@backend/common';
 import { VideosService } from '@backend/videos/services/videos.service';
 import { VideoPostDraftReader } from '@backend/video-posts/repository/video-post-draft-reader';
@@ -45,8 +48,8 @@ export class InstagramController {
       `Initiating Instagram OAuth flow for user ${user.sub} (${user.email})`,
     );
 
-    const csrfState = Math.random().toString(36).substring(2);
-    const state = isDev() ? `${csrfState}:${user.sub}` : csrfState;
+    const csrfState = createOAuthNonce();
+    const state = isDev() ? createDevelopmentOAuthState(user.sub) : csrfState;
 
     if (!isDev()) {
       res.cookie('csrfState', csrfState, {
@@ -78,9 +81,9 @@ export class InstagramController {
     let userId: string | undefined;
 
     if (isDev()) {
-      const stateParts = state?.split(':');
-      if (stateParts?.length === 2) {
-        userId = stateParts[1];
+      const parsedUserId = parseDevelopmentOAuthState(state);
+      if (parsedUserId) {
+        userId = parsedUserId.toString();
         this.logger.log(`Dev mode: extracted userId ${userId} from state`);
       }
     } else {

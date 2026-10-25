@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import {
   VideoPost,
@@ -18,6 +18,24 @@ export class VideoPostWriter {
     return this.prisma.videoPost.create({
       data,
       include: VIDEO_POST_INCLUDE,
+    });
+  }
+
+  /**
+   * Creates a post while holding the account row lock. This makes account
+   * disconnect and post creation serialize instead of allowing a post to be
+   * created after disconnect has cancelled the account's future work.
+   */
+  async createForActiveAccount(
+    data: Prisma.VideoPostCreateInput,
+    socialAccountId: number,
+  ): Promise<VideoPost> {
+    return this.prisma.$transaction(async (tx) => {
+      await this.lockActiveSocialAccounts(tx, [socialAccountId]);
+      return tx.videoPost.create({
+        data,
+        include: VIDEO_POST_INCLUDE,
+      });
     });
   }
 
@@ -73,7 +91,11 @@ export class VideoPostWriter {
     data: Prisma.VideoPostUpdateManyMutationInput;
   }): Promise<number> {
     const result = await this.prisma.videoPost.updateMany({
-      where: { id: params.id, status: { in: params.allowedStatuses } },
+      where: {
+        id: params.id,
+        deletedAt: null,
+        status: { in: params.allowedStatuses },
+      },
       data: params.data,
     });
     return result.count;
@@ -83,29 +105,63 @@ export class VideoPostWriter {
   async saveBatch(params: {
     creates: Prisma.VideoPostCreateInput[];
     updates: { id: number; data: Prisma.VideoPostUpdateInput }[];
+    activeSocialAccountIds: number[];
   }): Promise<VideoPostWithRelations[]> {
-    return this.prisma.$transaction([
-      ...params.updates.map(({ id, data }) =>
-        this.prisma.videoPost.update({
-          where: { id },
-          data,
-          include: VIDEO_POST_INCLUDE,
-        }),
-      ),
-      ...params.creates.map((data) =>
-        this.prisma.videoPost.create({ data, include: VIDEO_POST_INCLUDE }),
-      ),
-    ]);
+    return this.prisma.$transaction(async (tx) => {
+      await this.lockActiveSocialAccounts(tx, params.activeSocialAccountIds);
+
+      return Promise.all([
+        ...params.updates.map(({ id, data }) =>
+          tx.videoPost.update({
+            where: { id },
+            data,
+            include: VIDEO_POST_INCLUDE,
+          }),
+        ),
+        ...params.creates.map((data) =>
+          tx.videoPost.create({ data, include: VIDEO_POST_INCLUDE }),
+        ),
+      ]);
+    });
   }
 
   async delete(where: Prisma.VideoPostWhereUniqueInput): Promise<VideoPost> {
-    return this.prisma.videoPost.delete({
+    return this.prisma.videoPost.update({
       where,
+      data: { deletedAt: new Date() },
     });
   }
 
   async deleteMany(where: Prisma.VideoPostWhereInput): Promise<number> {
-    const result = await this.prisma.videoPost.deleteMany({ where });
+    const result = await this.prisma.videoPost.updateMany({
+      where: { ...where, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
     return result.count;
+  }
+
+  private async lockActiveSocialAccounts(
+    tx: Prisma.TransactionClient,
+    socialAccountIds: number[],
+  ): Promise<void> {
+    const uniqueIds = [...new Set(socialAccountIds)];
+    if (uniqueIds.length === 0) {
+      return;
+    }
+
+    const activeAccounts = await tx.$queryRaw<Array<{ id: number }>>(
+      Prisma.sql`
+        SELECT id
+        FROM "social_accounts"
+        WHERE id IN (${Prisma.join(uniqueIds)})
+          AND deleted_at IS NULL
+          AND disconnect_state = 'ACTIVE'
+        FOR UPDATE
+      `,
+    );
+
+    if (activeAccounts.length !== uniqueIds.length) {
+      throw new NotFoundException('Social account not found');
+    }
   }
 }

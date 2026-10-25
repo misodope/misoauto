@@ -18,8 +18,9 @@ export class RefreshTokenWriter {
 
   async deleteByTokenHash(tokenHash: string): Promise<RefreshToken | null> {
     try {
-      return await this.prisma.refreshToken.delete({
+      return await this.prisma.refreshToken.update({
         where: { tokenHash },
+        data: { revokedAt: new Date() },
       });
     } catch {
       return null;
@@ -27,17 +28,20 @@ export class RefreshTokenWriter {
   }
 
   async deleteAllByUserId(userId: number): Promise<number> {
-    const result = await this.prisma.refreshToken.deleteMany({
-      where: { userId },
+    const result = await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
     });
     return result.count;
   }
 
   async deleteExpired(): Promise<number> {
-    const result = await this.prisma.refreshToken.deleteMany({
+    const result = await this.prisma.refreshToken.updateMany({
       where: {
         expiresAt: { lt: new Date() },
+        revokedAt: null,
       },
+      data: { revokedAt: new Date() },
     });
     return result.count;
   }

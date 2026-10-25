@@ -15,7 +15,7 @@ import api from '@frontend/app/lib/axios';
 export type VideoStatus = 'PROCESSING' | 'READY' | 'FAILED';
 
 export type PostStatus =
-  'PENDING' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED';
+  'PENDING' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED' | 'CANCELLED';
 
 export type PlatformType = 'TIKTOK' | 'YOUTUBE' | 'INSTAGRAM' | 'FACEBOOK';
 

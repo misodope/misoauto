@@ -304,6 +304,12 @@ export interface YouTubeApiError {
   error?: string;
 }
 
+export interface SocialAccountApiError {
+  message: string;
+  statusCode?: number;
+  error?: string;
+}
+
 // ============================================================================
 // API Functions
 // ============================================================================
@@ -410,6 +416,10 @@ const getInstagramPublishingLimit =
 const connectYouTube = async () => {
   const response = await api.get('/platform/youtube/oauth');
   return response.data;
+};
+
+const disconnectSocialAccount = async (accountId: number): Promise<void> => {
+  await api.delete(`/social-accounts/${accountId}`);
 };
 
 const getYouTubeUserInfo = async (): Promise<YouTubeUserInfoResponse> => {
@@ -719,6 +729,16 @@ export const useYouTubeIntegration = () => {
     onError: (error) => {
       console.error(`Error connecting YouTube account: ${error.message}`);
     },
+  });
+};
+
+export const useDisconnectSocialAccount = (): UseMutationResult<
+  void,
+  AxiosError<SocialAccountApiError>,
+  number
+> => {
+  return useMutation({
+    mutationFn: disconnectSocialAccount,
   });
 };
 

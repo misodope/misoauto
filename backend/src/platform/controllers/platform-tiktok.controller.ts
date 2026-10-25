@@ -18,15 +18,14 @@ import {
   JwtPayload,
   getOAuthCookieOptions,
   validateBody,
+  createDevelopmentOAuthState,
+  createOAuthNonce,
+  parseDevelopmentOAuthState,
 } from '@backend/common';
 import { TikTokCreatorInfoDto, TikTokDirectPostDto } from '../dto';
 
 export interface TokenExchangeRequest {
   code: string;
-}
-
-export interface TokenRequest {
-  accessToken: string;
 }
 
 export interface RefreshTokenRequest {
@@ -71,11 +70,11 @@ export class TikTokController {
     );
 
     // Generate CSRF state token
-    const csrfState = Math.random().toString(36).substring(2);
+    const csrfState = createOAuthNonce();
 
     // In dev mode: encode userId in state to avoid cookie issues with ngrok
     // In prod mode: use cookies for CSRF validation
-    const state = isDev() ? `${csrfState}:${user.sub}` : csrfState;
+    const state = isDev() ? createDevelopmentOAuthState(user.sub) : csrfState;
 
     if (!isDev()) {
       // Store CSRF state and userId in cookies for redirect validation (production only)
@@ -111,9 +110,9 @@ export class TikTokController {
 
     if (isDev()) {
       // In dev mode: extract userId from state parameter (format: "csrf:userId")
-      const stateParts = state?.split(':');
-      if (stateParts?.length === 2) {
-        userId = stateParts[1];
+      const parsedUserId = parseDevelopmentOAuthState(state);
+      if (parsedUserId) {
+        userId = parsedUserId.toString();
         this.logger.log(`Dev mode: extracted userId ${userId} from state`);
       }
     } else {
@@ -371,18 +370,6 @@ export class TikTokController {
       ...result,
       postUrl,
       platform: 'tiktok',
-    };
-  }
-
-  @Post('revoke-token')
-  async revokeToken(@Body() body: TokenRequest) {
-    this.logger.log('Revoking TikTok access token');
-    await this.tiktokService.revokeToken(body.accessToken);
-
-    return {
-      success: true,
-      platform: 'tiktok',
-      message: 'Token successfully revoked',
     };
   }
 }

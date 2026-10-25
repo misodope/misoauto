@@ -160,16 +160,7 @@ export class VideosService {
 
   async deleteVideo(userId: number, videoId: number) {
     const video = await this.getVideo(userId, videoId);
-
-    // Delete from storage
-    await Promise.all([
-      this.blobStorage.delete(video.s3Key),
-      ...(video.s3ThumbnailKey
-        ? [this.blobStorage.delete(video.s3ThumbnailKey)]
-        : []),
-    ]);
-
-    // Delete from database
+    // Keep both database metadata and storage objects recoverable.
     return this.videoWriter.delete({ id: videoId });
   }
 }

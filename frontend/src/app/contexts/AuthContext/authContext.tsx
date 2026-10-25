@@ -39,6 +39,7 @@ type AuthContextType = {
   isLoading: boolean;
   login: (user: User) => void;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,14 +52,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const isLoggedIn = user !== null;
 
+  const refreshUser = useCallback(async (): Promise<User | null> => {
+    const profileResponse = await api.get<User>('/auth/me');
+    setUser(profileResponse.data);
+    return profileResponse.data;
+  }, []);
+
   // Rehydrate session on mount
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         // If we already have an access token (e.g., just logged in/register), skip refresh
         if (getAccessToken()) {
-          const profileResponse = await api.get<User>('/auth/me');
-          setUser(profileResponse.data);
+          await refreshUser();
           return;
         }
 
@@ -69,8 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setAccessToken(refreshResponse.data.accessToken);
 
         // Fetch user profile with the new token
-        const profileResponse = await api.get<User>('/auth/me');
-        setUser(profileResponse.data);
+        await refreshUser();
       } catch {
         // No valid session, user needs to login
         clearAccessToken();
@@ -81,19 +86,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     initializeAuth();
-  }, []);
+  }, [refreshUser]);
 
-  const login = useCallback(async (userData: User) => {
-    // Optimistically set user so UI updates immediately after login/register
-    setUser(userData);
-    // Best-effort fetch to hydrate full profile (e.g., social accounts)
-    try {
-      const profileResponse = await api.get<User>('/auth/me');
-      setUser(profileResponse.data);
-    } catch {
-      // Ignore — interceptor will handle refresh if needed
-    }
-  }, []);
+  const login = useCallback(
+    async (userData: User) => {
+      // Optimistically set user so UI updates immediately after login/register
+      setUser(userData);
+      // Best-effort fetch to hydrate full profile (e.g., social accounts)
+      try {
+        await refreshUser();
+      } catch {
+        // Ignore — interceptor will handle refresh if needed
+      }
+    },
+    [refreshUser],
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -108,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoggedIn, isLoading, login, logout }}
+      value={{ user, isLoggedIn, isLoading, login, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { SocialAccountWriter } from '../../social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '../../social-accounts/repository/social-account-reader';
@@ -281,21 +286,40 @@ export class PlatformConnectInstagramService {
         Date.now() + longLivedTokenResponse.expires_in * 1000,
       );
       const existingAccount =
-        await this.socialAccountReader.findByPlatformAndAccountId(
+        await this.socialAccountReader.findIncludingDeletedByPlatformAndAccountId(
           platform.id,
           userInfo.user_id,
         );
 
       if (existingAccount) {
+        if (existingAccount.userId !== params.userId) {
+          throw new ConflictException('Instagram account is already connected');
+        }
+
         this.logger.log(
           `Updating existing Instagram account ${existingAccount.id}`,
         );
-        return await this.socialAccountWriter.updateTokens({
-          id: existingAccount.id,
-          accessToken: longLivedTokenResponse.access_token,
-          refreshToken: undefined,
-          tokenExpiry,
-        });
+        const savedAccount = existingAccount.deletedAt
+          ? await this.socialAccountWriter.reactivateWithTokens({
+              id: existingAccount.id,
+              userId: params.userId,
+              accessToken: longLivedTokenResponse.access_token,
+              tokenExpiry,
+            })
+          : await this.socialAccountWriter.updateTokens({
+              id: existingAccount.id,
+              accessToken: longLivedTokenResponse.access_token,
+              tokenExpiry,
+              expectedTokenVersion: existingAccount.tokenVersion,
+            });
+
+        if (!savedAccount) {
+          throw new ConflictException(
+            'Instagram account changed while connecting; please try again',
+          );
+        }
+
+        return savedAccount;
       }
 
       this.logger.log('Creating new Instagram account');
@@ -309,6 +333,9 @@ export class PlatformConnectInstagramService {
         username: userInfo.username,
       });
     } catch (error) {
+      if (error instanceof ConflictException) {
+        throw error;
+      }
       this.logger.error('Failed to save Instagram account:', error);
       throw new BadRequestException('Failed to save Instagram account');
     }
@@ -344,10 +371,16 @@ export class PlatformConnectInstagramService {
 
   async getAccessTokenForUser(userId: number): Promise<string> {
     const account = await this.getAccountForUser(userId);
+    if (!account.accessToken) {
+      throw new BadRequestException('Instagram account has no usable token');
+    }
+
     return account.accessToken;
   }
 
-  async getAccountForUser(userId: number): Promise<SocialAccountWithRelations> {
+  async getAccountForUser(
+    userId: number,
+  ): Promise<SocialAccountWithRelations & { accessToken: string }> {
     const platform = await this.platformReader.findByName(
       PlatformType.INSTAGRAM,
     );
@@ -364,7 +397,11 @@ export class PlatformConnectInstagramService {
       throw new BadRequestException('No Instagram account connected');
     }
 
-    return accounts[0];
+    if (!accounts[0].accessToken) {
+      throw new BadRequestException('Instagram account has no usable token');
+    }
+
+    return accounts[0] as SocialAccountWithRelations & { accessToken: string };
   }
 
   async createReelContainer(params: {
@@ -517,15 +554,18 @@ export class PlatformConnectInstagramService {
         );
       }
 
-      await this.videoPostWriter.create({
-        video: { connect: { id: params.videoId } },
-        platform: { connect: { id: params.platformId } },
-        socialAccount: { connect: { id: params.socialAccountId } },
-        platformPostId: mediaId,
-        postUrl: permalink,
-        status: PostStatus.PUBLISHED,
-        postedAt: new Date(),
-      });
+      await this.videoPostWriter.createForActiveAccount(
+        {
+          video: { connect: { id: params.videoId } },
+          platform: { connect: { id: params.platformId } },
+          socialAccount: { connect: { id: params.socialAccountId } },
+          platformPostId: mediaId,
+          postUrl: permalink,
+          status: PostStatus.PUBLISHED,
+          postedAt: new Date(),
+        },
+        params.socialAccountId,
+      );
 
       return { mediaId, permalink };
     } catch (error) {

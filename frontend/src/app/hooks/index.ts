@@ -28,6 +28,7 @@ export {
 } from './apis/videos/use-videos';
 export {
   useYouTubeIntegration,
+  useDisconnectSocialAccount,
   useYouTubeUserInfo,
   useYouTubeUploadDraft,
   useYouTubePublishStatus,
@@ -44,6 +45,7 @@ export {
   type YouTubePublishRequest,
   type YouTubePublishResponse,
   type YouTubeApiError,
+  type SocialAccountApiError,
 } from './apis/integrations/use-integrations';
 export {
   useCreateVideoPost,

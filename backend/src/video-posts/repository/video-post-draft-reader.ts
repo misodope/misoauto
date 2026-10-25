@@ -27,7 +27,7 @@ export class VideoPostDraftReader {
       skip,
       take,
       cursor,
-      where,
+      where: { ...where, deletedAt: null, video: { deletedAt: null } },
       orderBy,
       include: VIDEO_POST_DRAFT_INCLUDE,
     });
@@ -36,15 +36,15 @@ export class VideoPostDraftReader {
   async findOne(
     where: Prisma.VideoPostDraftWhereUniqueInput,
   ): Promise<VideoPostDraftWithRelations | null> {
-    return this.prisma.videoPostDraft.findUnique({
-      where,
+    return this.prisma.videoPostDraft.findFirst({
+      where: { ...where, deletedAt: null, video: { deletedAt: null } },
       include: VIDEO_POST_DRAFT_INCLUDE,
     });
   }
 
   async findByVideoId(videoId: number): Promise<VideoPostDraftWithRelations[]> {
     return this.prisma.videoPostDraft.findMany({
-      where: { videoId },
+      where: { videoId, deletedAt: null, video: { deletedAt: null } },
       include: VIDEO_POST_DRAFT_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -54,25 +54,33 @@ export class VideoPostDraftReader {
     platformVideoId: string,
   ): Promise<VideoPostDraftWithRelations | null> {
     return this.prisma.videoPostDraft.findFirst({
-      where: { platformVideoId },
+      where: { platformVideoId, deletedAt: null, video: { deletedAt: null } },
       include: VIDEO_POST_DRAFT_INCLUDE,
     });
   }
 
   async findPending(): Promise<VideoPostDraftWithRelations[]> {
     return this.prisma.videoPostDraft.findMany({
-      where: { uploadCompletedAt: null },
+      where: {
+        uploadCompletedAt: null,
+        deletedAt: null,
+        video: { deletedAt: null },
+      },
       include: VIDEO_POST_DRAFT_INCLUDE,
       orderBy: { createdAt: 'asc' },
     });
   }
 
   async count(where?: Prisma.VideoPostDraftWhereInput): Promise<number> {
-    return this.prisma.videoPostDraft.count({ where });
+    return this.prisma.videoPostDraft.count({
+      where: { ...where, deletedAt: null, video: { deletedAt: null } },
+    });
   }
 
   async exists(where: Prisma.VideoPostDraftWhereInput): Promise<boolean> {
-    const count = await this.prisma.videoPostDraft.count({ where });
+    const count = await this.prisma.videoPostDraft.count({
+      where: { ...where, deletedAt: null, video: { deletedAt: null } },
+    });
     return count > 0;
   }
 }

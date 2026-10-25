@@ -43,8 +43,9 @@ export class PlatformWriter {
   }
 
   async delete(where: Prisma.PlatformWhereUniqueInput): Promise<Platform> {
-    return this.prisma.platform.delete({
+    return this.prisma.platform.update({
       where,
+      data: { isActive: false },
     });
   }
 }

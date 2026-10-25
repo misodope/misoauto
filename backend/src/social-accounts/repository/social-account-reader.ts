@@ -10,6 +10,22 @@ export type SocialAccountWithPlatform = Prisma.SocialAccountGetPayload<{
   include: { platform: true };
 }>;
 
+export const SOCIAL_ACCOUNT_PUBLIC_SELECT = {
+  id: true,
+  platformId: true,
+  userId: true,
+  accountId: true,
+  username: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+  disconnectState: true,
+} as const;
+
+export type SocialAccountPublic = Prisma.SocialAccountGetPayload<{
+  select: typeof SOCIAL_ACCOUNT_PUBLIC_SELECT;
+}>;
+
 const SOCIAL_ACCOUNT_INCLUDE = {
   platform: true,
   user: true,
@@ -32,13 +48,22 @@ export class SocialAccountReader {
       skip,
       take,
       cursor,
-      where,
+      where: { ...where, deletedAt: null },
       orderBy,
       include: SOCIAL_ACCOUNT_INCLUDE,
     });
   }
 
   async findOne(
+    where: Prisma.SocialAccountWhereUniqueInput,
+  ): Promise<SocialAccountWithRelations | null> {
+    return this.prisma.socialAccount.findFirst({
+      where: { ...where, deletedAt: null },
+      include: SOCIAL_ACCOUNT_INCLUDE,
+    });
+  }
+
+  async findIncludingDeleted(
     where: Prisma.SocialAccountWhereUniqueInput,
   ): Promise<SocialAccountWithRelations | null> {
     return this.prisma.socialAccount.findUnique({
@@ -52,14 +77,14 @@ export class SocialAccountReader {
     ids: number[],
   ): Promise<SocialAccountWithPlatform[]> {
     return this.prisma.socialAccount.findMany({
-      where: { userId, id: { in: ids } },
+      where: { userId, id: { in: ids }, deletedAt: null },
       include: { platform: true },
     });
   }
 
   async findByUserId(userId: number): Promise<SocialAccountWithRelations[]> {
     return this.prisma.socialAccount.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       include: SOCIAL_ACCOUNT_INCLUDE,
     });
   }
@@ -68,7 +93,7 @@ export class SocialAccountReader {
     platformId: number,
   ): Promise<SocialAccountWithRelations[]> {
     return this.prisma.socialAccount.findMany({
-      where: { platformId },
+      where: { platformId, deletedAt: null },
       include: SOCIAL_ACCOUNT_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -78,13 +103,22 @@ export class SocialAccountReader {
     platformId: number,
     accountId: string,
   ): Promise<SocialAccountWithRelations | null> {
-    return this.prisma.socialAccount.findUnique({
+    return this.prisma.socialAccount.findFirst({
       where: {
-        platformId_accountId: {
-          platformId,
-          accountId,
-        },
+        platformId,
+        accountId,
+        deletedAt: null,
       },
+      include: SOCIAL_ACCOUNT_INCLUDE,
+    });
+  }
+
+  async findIncludingDeletedByPlatformAndAccountId(
+    platformId: number,
+    accountId: string,
+  ): Promise<SocialAccountWithRelations | null> {
+    return this.prisma.socialAccount.findUnique({
+      where: { platformId_accountId: { platformId, accountId } },
       include: SOCIAL_ACCOUNT_INCLUDE,
     });
   }
@@ -97,23 +131,30 @@ export class SocialAccountReader {
       where: {
         userId,
         platformId,
+        deletedAt: null,
       },
       include: SOCIAL_ACCOUNT_INCLUDE,
     });
   }
 
   async count(where?: Prisma.SocialAccountWhereInput): Promise<number> {
-    return this.prisma.socialAccount.count({ where });
+    return this.prisma.socialAccount.count({
+      where: { ...where, deletedAt: null },
+    });
   }
 
   async exists(where: Prisma.SocialAccountWhereInput): Promise<boolean> {
-    const count = await this.prisma.socialAccount.count({ where });
+    const count = await this.prisma.socialAccount.count({
+      where: { ...where, deletedAt: null },
+    });
     return count > 0;
   }
 
   async findExpiredTokens(): Promise<SocialAccountWithRelations[]> {
     return this.prisma.socialAccount.findMany({
       where: {
+        deletedAt: null,
+        accessToken: { not: null },
         tokenExpiry: {
           lte: new Date(),
         },

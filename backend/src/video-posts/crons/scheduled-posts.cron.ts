@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { VideoPostReader } from '@backend/video-posts/repository/video-post-reader';
+import { VideoPostWriter } from '@backend/video-posts/repository/video-post-writer';
+import { PostStatus } from '@backend/generated/prisma/client';
 
 @Injectable()
 export class ScheduledPostsCron {
   private readonly logger = new Logger(ScheduledPostsCron.name);
 
-  constructor(private readonly videoPostReader: VideoPostReader) {}
+  constructor(
+    private readonly videoPostReader: VideoPostReader,
+    private readonly videoPostWriter: VideoPostWriter,
+  ) {}
 
   /**
    * Check for scheduled posts that are ready to publish
@@ -29,6 +34,19 @@ export class ScheduledPostsCron {
         );
 
         for (const post of scheduledPosts) {
+          if (post.socialAccount.deletedAt) {
+            await this.videoPostWriter.updateIfStatus({
+              id: post.id,
+              allowedStatuses: [PostStatus.SCHEDULED],
+              data: {
+                status: PostStatus.CANCELLED,
+                scheduledFor: null,
+                cancellationReason: 'ACCOUNT_DISCONNECTED',
+              },
+            });
+            continue;
+          }
+
           this.logger.log(
             `Publishing post ${post.id} to platform ${post.platformId}`,
           );

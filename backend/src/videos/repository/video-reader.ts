@@ -8,8 +8,9 @@ export type VideoWithRelations = Prisma.VideoGetPayload<{
 
 const VIDEO_INCLUDE = {
   user: true,
-  drafts: true,
+  drafts: { where: { deletedAt: null } },
   posts: {
+    where: { deletedAt: null },
     include: {
       platform: true,
     },
@@ -32,7 +33,7 @@ export class VideoReader {
       skip,
       take,
       cursor,
-      where,
+      where: { ...where, deletedAt: null },
       orderBy,
       include: VIDEO_INCLUDE,
     });
@@ -41,15 +42,15 @@ export class VideoReader {
   async findOne(
     where: Prisma.VideoWhereUniqueInput,
   ): Promise<VideoWithRelations | null> {
-    return this.prisma.video.findUnique({
-      where,
+    return this.prisma.video.findFirst({
+      where: { ...where, deletedAt: null },
       include: VIDEO_INCLUDE,
     });
   }
 
   async findByUserId(userId: number): Promise<VideoWithRelations[]> {
     return this.prisma.video.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       include: VIDEO_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -57,24 +58,28 @@ export class VideoReader {
 
   async findByStatus(status: VideoStatus): Promise<VideoWithRelations[]> {
     return this.prisma.video.findMany({
-      where: { status },
+      where: { status, deletedAt: null },
       include: VIDEO_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async count(where?: Prisma.VideoWhereInput): Promise<number> {
-    return this.prisma.video.count({ where });
+    return this.prisma.video.count({
+      where: { ...where, deletedAt: null },
+    });
   }
 
   async exists(where: Prisma.VideoWhereInput): Promise<boolean> {
-    const count = await this.prisma.video.count({ where });
+    const count = await this.prisma.video.count({
+      where: { ...where, deletedAt: null },
+    });
     return count > 0;
   }
 
   async findByS3Key(s3Key: string): Promise<VideoWithRelations | null> {
     return this.prisma.video.findFirst({
-      where: { s3Key },
+      where: { s3Key, deletedAt: null },
       include: VIDEO_INCLUDE,
     });
   }

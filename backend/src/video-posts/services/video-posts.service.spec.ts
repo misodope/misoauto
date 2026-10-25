@@ -17,6 +17,7 @@ describe('VideoPostsService', () => {
     findByVideoAndAccounts: jest.fn(),
   };
   const videoPostWriter = {
+    createForActiveAccount: jest.fn(),
     updateIfStatus: jest.fn(),
     saveBatch: jest.fn(),
   };

@@ -44,13 +44,17 @@ export class VideoPostDraftWriter {
   async delete(
     where: Prisma.VideoPostDraftWhereUniqueInput,
   ): Promise<VideoPostDraft> {
-    return this.prisma.videoPostDraft.delete({
+    return this.prisma.videoPostDraft.update({
       where,
+      data: { deletedAt: new Date() },
     });
   }
 
   async deleteMany(where: Prisma.VideoPostDraftWhereInput): Promise<number> {
-    const result = await this.prisma.videoPostDraft.deleteMany({ where });
+    const result = await this.prisma.videoPostDraft.updateMany({
+      where: { ...where, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
     return result.count;
   }
 }

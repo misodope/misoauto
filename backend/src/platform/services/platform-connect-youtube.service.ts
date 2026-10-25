@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -337,13 +338,17 @@ export class PlatformConnectYouTubeService {
 
       // Check if account already exists
       const existingAccount =
-        await this.socialAccountReader.findByPlatformAndAccountId(
+        await this.socialAccountReader.findIncludingDeletedByPlatformAndAccountId(
           platform.id,
           channelInfo.id,
         );
 
       let savedAccount;
       if (existingAccount) {
+        if (existingAccount.userId !== params.userId) {
+          throw new ConflictException('YouTube account is already connected');
+        }
+
         // Update existing account with new tokens
         this.logger.log(
           `Updating existing YouTube account ${existingAccount.id}`,
@@ -355,12 +360,27 @@ export class PlatformConnectYouTubeService {
           existingAccount.refreshToken ||
           undefined;
 
-        savedAccount = await this.socialAccountWriter.updateTokens({
-          id: existingAccount.id,
-          accessToken: params.tokenResponse.access_token,
-          refreshToken: newRefreshToken,
-          tokenExpiry,
-        });
+        savedAccount = existingAccount.deletedAt
+          ? await this.socialAccountWriter.reactivateWithTokens({
+              id: existingAccount.id,
+              userId: params.userId,
+              accessToken: params.tokenResponse.access_token,
+              refreshToken: newRefreshToken,
+              tokenExpiry,
+            })
+          : await this.socialAccountWriter.updateTokens({
+              id: existingAccount.id,
+              accessToken: params.tokenResponse.access_token,
+              refreshToken: newRefreshToken,
+              tokenExpiry,
+              expectedTokenVersion: existingAccount.tokenVersion,
+            });
+
+        if (!savedAccount) {
+          throw new ConflictException(
+            'YouTube account changed while connecting; please try again',
+          );
+        }
       } else {
         // Create new account
         this.logger.log('Creating new YouTube account');
@@ -378,6 +398,9 @@ export class PlatformConnectYouTubeService {
       this.logger.log('Successfully saved YouTube account');
       return savedAccount;
     } catch (error) {
+      if (error instanceof ConflictException) {
+        throw error;
+      }
       this.logger.error('Failed to save YouTube account:', error);
       throw new BadRequestException('Failed to save YouTube account');
     }
@@ -543,7 +566,9 @@ export class PlatformConnectYouTubeService {
    * access tokens live for one hour while the refresh cron only runs every
    * 12 hours, so tokens that are expired (or about to be) are refreshed here.
    */
-  async getAccountForUser(userId: number): Promise<SocialAccountWithRelations> {
+  async getAccountForUser(
+    userId: number,
+  ): Promise<SocialAccountWithRelations & { accessToken: string }> {
     const platform = await this.platformReader.findByName(PlatformType.YOUTUBE);
     if (!platform) {
       throw new BadRequestException('YouTube platform not found');
@@ -563,8 +588,12 @@ export class PlatformConnectYouTubeService {
       !account.tokenExpiry ||
       account.tokenExpiry.getTime() - Date.now() <= TOKEN_REFRESH_SKEW_MS;
 
+    if (!account.accessToken) {
+      throw new BadRequestException('YouTube account has no usable token');
+    }
+
     if (!expiresSoon || !account.refreshToken) {
-      return account;
+      return account as SocialAccountWithRelations & { accessToken: string };
     }
 
     this.logger.log(
@@ -574,19 +603,24 @@ export class PlatformConnectYouTubeService {
     const tokenExpiry = new Date(Date.now() + tokenResponse.expires_in * 1000);
     const refreshToken = tokenResponse.refresh_token || account.refreshToken;
 
-    await this.socialAccountWriter.updateTokens({
+    const updated = await this.socialAccountWriter.updateTokens({
       id: account.id,
       accessToken: tokenResponse.access_token,
       refreshToken,
       tokenExpiry,
+      expectedTokenVersion: account.tokenVersion,
     });
+
+    if (!updated) {
+      throw new BadRequestException('YouTube account changed during refresh');
+    }
 
     return {
       ...account,
       accessToken: tokenResponse.access_token,
       refreshToken,
       tokenExpiry,
-    };
+    } as SocialAccountWithRelations & { accessToken: string };
   }
 
   async initializeVideoUpload(params: {
@@ -824,15 +858,18 @@ export class PlatformConnectYouTubeService {
 
       const url = `https://www.youtube.com/watch?v=${youtubeVideoId}`;
 
-      await this.videoPostWriter.create({
-        video: { connect: { id: params.videoId } },
-        platform: { connect: { id: params.platformId } },
-        socialAccount: { connect: { id: params.socialAccountId } },
-        platformPostId: youtubeVideoId,
-        postUrl: url,
-        status: PostStatus.PUBLISHED,
-        postedAt: new Date(),
-      });
+      await this.videoPostWriter.createForActiveAccount(
+        {
+          video: { connect: { id: params.videoId } },
+          platform: { connect: { id: params.platformId } },
+          socialAccount: { connect: { id: params.socialAccountId } },
+          platformPostId: youtubeVideoId,
+          postUrl: url,
+          status: PostStatus.PUBLISHED,
+          postedAt: new Date(),
+        },
+        params.socialAccountId,
+      );
 
       return { videoId: youtubeVideoId, url, privacyStatus };
     } catch (error) {
