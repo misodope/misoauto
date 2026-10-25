@@ -43,8 +43,9 @@ export class VideoWriter {
   }
 
   async delete(where: Prisma.VideoWhereUniqueInput): Promise<Video> {
-    return this.prisma.video.delete({
+    return this.prisma.video.update({
       where,
+      data: { deletedAt: new Date() },
     });
   }
 }

@@ -38,6 +38,7 @@ export class TokenRefreshCron {
       const now = Date.now();
       const soonToExpireAccounts = await this.socialAccountReader.findAll({
         where: {
+          deletedAt: null,
           OR: [
             {
               platform: { name: PlatformType.TIKTOK },
@@ -129,12 +130,20 @@ export class TokenRefreshCron {
     // IMPORTANT: The refresh token may change! Always use the new one
     const newRefreshToken = tokenResponse.refresh_token || account.refreshToken;
 
-    await this.socialAccountWriter.updateTokens({
+    const updated = await this.socialAccountWriter.updateTokens({
       id: account.id,
       accessToken: tokenResponse.access_token,
       refreshToken: newRefreshToken,
       tokenExpiry,
+      expectedTokenVersion: account.tokenVersion,
     });
+
+    if (!updated) {
+      this.logger.warn(
+        `Skipped stale TikTok refresh for account ${account.id}`,
+      );
+      return;
+    }
 
     this.logger.log(
       `Successfully refreshed TikTok token for account ${account.id}. Token expires at ${tokenExpiry.toISOString()}`,
@@ -151,12 +160,20 @@ export class TokenRefreshCron {
     // YouTube may return a new refresh token, use it if provided
     const newRefreshToken = tokenResponse.refresh_token || account.refreshToken;
 
-    await this.socialAccountWriter.updateTokens({
+    const updated = await this.socialAccountWriter.updateTokens({
       id: account.id,
       accessToken: tokenResponse.access_token,
       refreshToken: newRefreshToken,
       tokenExpiry,
+      expectedTokenVersion: account.tokenVersion,
     });
+
+    if (!updated) {
+      this.logger.warn(
+        `Skipped stale YouTube refresh for account ${account.id}`,
+      );
+      return;
+    }
 
     this.logger.log(
       `Successfully refreshed YouTube token for account ${account.id}. Token expires at ${tokenExpiry.toISOString()}`,
@@ -164,6 +181,13 @@ export class TokenRefreshCron {
   }
 
   private async refreshInstagramToken(account: any) {
+    if (!account.accessToken) {
+      this.logger.warn(
+        `Account ${account.id} has no Instagram access token, skipping`,
+      );
+      return;
+    }
+
     const tokenResponse = await this.instagramService.refreshLongLivedToken(
       account.accessToken,
     );
@@ -171,12 +195,20 @@ export class TokenRefreshCron {
     const tokenExpiry = new Date(Date.now() + tokenResponse.expires_in * 1000);
 
     // Instagram doesn't rotate refresh tokens, but we keep the same pattern
-    await this.socialAccountWriter.updateTokens({
+    const updated = await this.socialAccountWriter.updateTokens({
       id: account.id,
       accessToken: tokenResponse.access_token,
       refreshToken: account.refreshToken,
       tokenExpiry,
+      expectedTokenVersion: account.tokenVersion,
     });
+
+    if (!updated) {
+      this.logger.warn(
+        `Skipped stale Instagram refresh for account ${account.id}`,
+      );
+      return;
+    }
 
     this.logger.log(
       `Successfully refreshed Instagram token for account ${account.id}. Token expires at ${tokenExpiry.toISOString()}`,

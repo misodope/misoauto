@@ -32,8 +32,13 @@ export class UserWriter {
   }
 
   async delete(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    return this.prisma.user.delete({
+    return this.prisma.user.update({
       where,
+      data: { deletedAt: new Date() },
+      include: {
+        socialAccounts: { where: { deletedAt: null } },
+        videos: { where: { deletedAt: null } },
+      },
     });
   }
 }

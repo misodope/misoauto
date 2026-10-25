@@ -3,13 +3,38 @@ import { PrismaService } from '../../database/prisma.service';
 import { Prisma, PlatformType } from '@backend/generated/prisma/client';
 
 export type PlatformWithRelations = Prisma.PlatformGetPayload<{
-  include: { accounts: true; posts: true; drafts: true };
+  include: {
+    accounts: {
+      select: {
+        id: true;
+        userId: true;
+        platformId: true;
+        accountId: true;
+        username: true;
+        deletedAt: true;
+        disconnectState: true;
+      };
+    };
+    posts: true;
+    drafts: true;
+  };
 }>;
 
 const PLATFORM_INCLUDE = {
-  accounts: true,
-  posts: true,
-  drafts: true,
+  accounts: {
+    where: { deletedAt: null },
+    select: {
+      id: true,
+      userId: true,
+      platformId: true,
+      accountId: true,
+      username: true,
+      deletedAt: true,
+      disconnectState: true,
+    },
+  },
+  posts: { where: { deletedAt: null } },
+  drafts: { where: { deletedAt: null } },
 } as const;
 
 @Injectable()
@@ -37,15 +62,15 @@ export class PlatformReader {
   async findOne(
     where: Prisma.PlatformWhereUniqueInput,
   ): Promise<PlatformWithRelations | null> {
-    return this.prisma.platform.findUnique({
+    return this.prisma.platform.findFirst({
       where,
       include: PLATFORM_INCLUDE,
     });
   }
 
   async findByName(name: PlatformType): Promise<PlatformWithRelations | null> {
-    return this.prisma.platform.findUnique({
-      where: { name },
+    return this.prisma.platform.findFirst({
+      where: { name, isActive: true },
       include: PLATFORM_INCLUDE,
     });
   }

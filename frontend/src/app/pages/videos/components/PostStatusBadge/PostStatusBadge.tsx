@@ -16,6 +16,7 @@ const STATUS_CONFIG: Record<
   PUBLISHING: { color: 'yellow', label: 'Publishing' },
   PUBLISHED: { color: 'green', label: 'Published' },
   FAILED: { color: 'red', label: 'Failed' },
+  CANCELLED: { color: 'yellow', label: 'Cancelled' },
 };
 
 export default function PostStatusBadge({ status }: PostStatusBadgeProps) {

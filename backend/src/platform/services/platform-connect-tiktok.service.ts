@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { SocialAccountWriter } from '@backend/social-accounts/repository/social-account-writer';
 import { SocialAccountReader } from '@backend/social-accounts/repository/social-account-reader';
@@ -274,6 +279,9 @@ export class PlatformConnectTikTokService {
     socialAccountId?: number,
   ): Promise<string> {
     const account = await this.getAccountForUser(userId, socialAccountId);
+    if (!account.accessToken) {
+      throw new BadRequestException('TikTok account has no usable token');
+    }
     return account.accessToken;
   }
 
@@ -301,6 +309,9 @@ export class PlatformConnectTikTokService {
       ) {
         throw new BadRequestException('TikTok account not found');
       }
+      if (!account.accessToken) {
+        throw new BadRequestException('TikTok account has no usable token');
+      }
       return account;
     }
 
@@ -311,6 +322,10 @@ export class PlatformConnectTikTokService {
 
     if (!accounts.length) {
       throw new BadRequestException('No TikTok account connected');
+    }
+
+    if (!accounts[0].accessToken) {
+      throw new BadRequestException('TikTok account has no usable token');
     }
 
     return accounts[0];
@@ -535,7 +550,11 @@ export class PlatformConnectTikTokService {
     const { account, videoId, videoUrl, videoDurationSec, caption, options } =
       params;
 
-    const creatorInfo = await this.queryCreatorInfo(account.accessToken);
+    if (!account.accessToken) {
+      throw new BadRequestException('TikTok account has no usable token');
+    }
+    const accessToken = account.accessToken;
+    const creatorInfo = await this.queryCreatorInfo(accessToken);
     const errors = validateTikTokDirectPost({
       caption,
       options,
@@ -562,7 +581,7 @@ export class PlatformConnectTikTokService {
         },
         {
           headers: {
-            Authorization: `Bearer ${account.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json; charset=UTF-8',
           },
         },
@@ -580,17 +599,20 @@ export class PlatformConnectTikTokService {
       throw toTikTokApiException(error, 'Failed to post to TikTok');
     }
 
-    const post = await this.videoPostWriter.create({
-      video: { connect: { id: videoId } },
-      platform: { connect: { id: account.platformId } },
-      socialAccount: { connect: { id: account.id } },
-      // Holds TikTok's publish_id until the public post id is known.
-      platformPostId: publishId,
-      status: PostStatus.PUBLISHING,
-      uploadMode: UploadMode.DIRECT,
-      caption,
-      options: options as unknown as Prisma.InputJsonValue,
-    });
+    const post = await this.videoPostWriter.createForActiveAccount(
+      {
+        video: { connect: { id: videoId } },
+        platform: { connect: { id: account.platformId } },
+        socialAccount: { connect: { id: account.id } },
+        // Holds TikTok's publish_id until the public post id is known.
+        platformPostId: publishId,
+        status: PostStatus.PUBLISHING,
+        uploadMode: UploadMode.DIRECT,
+        caption,
+        options: options as unknown as Prisma.InputJsonValue,
+      },
+      account.id,
+    );
 
     this.logger.log(`TikTok Direct Post started, publish_id: ${publishId}`);
     return { publishId, videoPostId: post.id };
@@ -630,10 +652,13 @@ export class PlatformConnectTikTokService {
     let postUrl: string | null = null;
     if (publicPostId) {
       try {
-        const creatorInfo = await this.queryCreatorInfo(
-          post.socialAccount.accessToken,
-        );
-        postUrl = `https://www.tiktok.com/@${creatorInfo.creator_username}/video/${publicPostId}`;
+        const account = await this.socialAccountReader.findOne({
+          id: post.socialAccount.id,
+        });
+        if (account?.accessToken) {
+          const creatorInfo = await this.queryCreatorInfo(account.accessToken);
+          postUrl = `https://www.tiktok.com/@${creatorInfo.creator_username}/video/${publicPostId}`;
+        }
       } catch (error) {
         this.logger.warn(
           `Could not build the TikTok post URL for ${publishId}: ${String(error)}`,
@@ -708,23 +733,44 @@ export class PlatformConnectTikTokService {
 
       // Check if account already exists
       const existingAccount =
-        await this.socialAccountReader.findByPlatformAndAccountId(
+        await this.socialAccountReader.findIncludingDeletedByPlatformAndAccountId(
           platform.id,
           params.tokenResponse.open_id,
         );
 
       let savedAccount;
       if (existingAccount) {
+        if (existingAccount.userId !== params.userId) {
+          throw new ConflictException('TikTok account is already connected');
+        }
+
         // Update existing account with new tokens
         this.logger.log(
           `Updating existing TikTok account ${existingAccount.id}`,
         );
-        savedAccount = await this.socialAccountWriter.updateTokens({
-          id: existingAccount.id,
-          accessToken: params.tokenResponse.access_token,
-          refreshToken: params.tokenResponse.refresh_token,
-          tokenExpiry,
-        });
+        if (existingAccount.deletedAt) {
+          savedAccount = await this.socialAccountWriter.reactivateWithTokens({
+            id: existingAccount.id,
+            userId: params.userId,
+            accessToken: params.tokenResponse.access_token,
+            refreshToken: params.tokenResponse.refresh_token,
+            tokenExpiry,
+          });
+        } else {
+          savedAccount = await this.socialAccountWriter.updateTokens({
+            id: existingAccount.id,
+            accessToken: params.tokenResponse.access_token,
+            refreshToken: params.tokenResponse.refresh_token,
+            tokenExpiry,
+            expectedTokenVersion: existingAccount.tokenVersion,
+          });
+        }
+
+        if (!savedAccount) {
+          throw new ConflictException(
+            'TikTok account changed while connecting; please try again',
+          );
+        }
       } else {
         // Create new account
         this.logger.log('Creating new TikTok account');
@@ -741,6 +787,9 @@ export class PlatformConnectTikTokService {
 
       return savedAccount;
     } catch (error) {
+      if (error instanceof ConflictException) {
+        throw error;
+      }
       this.logger.error('Failed to save TikTok account:', error);
       throw new BadRequestException('Failed to save TikTok account');
     }

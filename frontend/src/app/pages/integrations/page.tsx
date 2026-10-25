@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Box,
@@ -13,18 +13,18 @@ import {
   Grid,
 } from '@radix-ui/themes';
 import ProtectedRoute from '../../components/ProtectedRoute/ProtectedRoute';
+import Modal from '../../components/Modal';
 import { useToast } from '../../components/Toaster';
 import {
+  useDisconnectSocialAccount,
   useInstagramIntegration,
   useTikTokIntegration,
   useYouTubeIntegration,
 } from '@frontend/app/hooks/apis/integrations/use-integrations';
-import { useAuth } from '@frontend/app/contexts/AuthContext';
+import { SocialAccount, useAuth } from '@frontend/app/contexts/AuthContext';
 
 interface Integration {
   platform: Platform;
-  connected: boolean;
-  lastSync?: string;
 }
 
 enum Platform {
@@ -34,26 +34,28 @@ enum Platform {
   FACEBOOK = 'Facebook',
 }
 
+const INTEGRATIONS: Integration[] = [
+  { platform: Platform.TIKTOK },
+  { platform: Platform.INSTAGRAM },
+  { platform: Platform.YOUTUBE },
+  { platform: Platform.FACEBOOK },
+];
+
 function IntegrationsContent() {
   const searchParams = useSearchParams();
-
   const { success, error } = useToast();
   const toastShownRef = useRef(false);
-
-  const { user } = useAuth();
-
-  const [integrations, setIntegrations] = useState<Integration[]>([
-    { platform: Platform.TIKTOK, connected: false },
-    { platform: Platform.INSTAGRAM, connected: false },
-    { platform: Platform.YOUTUBE, connected: false },
-    { platform: Platform.FACEBOOK, connected: false },
-  ]);
+  const { user, refreshUser } = useAuth();
+  const [selectedAccount, setSelectedAccount] = useState<SocialAccount | null>(
+    null,
+  );
 
   const { mutate: connectTikTok } = useTikTokIntegration();
   const { mutate: connectYouTube } = useYouTubeIntegration();
   const { mutate: connectInstagram } = useInstagramIntegration();
+  const { mutateAsync: disconnectSocialAccount, isPending: isDisconnecting } =
+    useDisconnectSocialAccount();
 
-  // Handle OAuth callback results from URL params
   useEffect(() => {
     if (toastShownRef.current) return;
 
@@ -63,59 +65,24 @@ function IntegrationsContent() {
     if (errorParam) {
       error('Connection failed', 'Please try again.');
       toastShownRef.current = true;
-    } else if (successParam === 'tiktok_connected') {
-      success('TikTok connected', 'Your account was linked successfully.');
-      setIntegrations((prev) =>
-        prev.map((i) =>
-          i.platform === Platform.TIKTOK ? { ...i, connected: true } : i,
-        ),
+    } else if (
+      successParam === 'tiktok_connected' ||
+      successParam === 'youtube_connected' ||
+      successParam === 'instagram_connected'
+    ) {
+      const platform = successParam.replace('_connected', '');
+      success(
+        `${platform.charAt(0).toUpperCase()}${platform.slice(1)} connected`,
+        'Your account was linked successfully.',
       );
-      toastShownRef.current = true;
-    } else if (successParam === 'youtube_connected') {
-      success('YouTube connected', 'Your account was linked successfully.');
-      setIntegrations((prev) =>
-        prev.map((i) =>
-          i.platform === Platform.YOUTUBE ? { ...i, connected: true } : i,
-        ),
-      );
-      toastShownRef.current = true;
-    } else if (successParam === 'instagram_connected') {
-      success('Instagram connected', 'Your account was linked successfully.');
-      setIntegrations((prev) =>
-        prev.map((i) =>
-          i.platform === Platform.INSTAGRAM ? { ...i, connected: true } : i,
-        ),
-      );
+      void refreshUser();
       toastShownRef.current = true;
     }
 
-    // Clear URL params after reading
     if (errorParam || successParam) {
       window.history.replaceState({}, '', '/integrations');
     }
-  }, [searchParams, success, error]);
-
-  useEffect(() => {
-    if (!user) return;
-    const activePlatforms =
-      user.socialAccounts?.flatMap((account) =>
-        Object.values(Platform).some(
-          (p) => p.toLowerCase() === account.platform.name.toLowerCase(),
-        )
-          ? account.platform.name
-          : [],
-      ) || [];
-
-    setIntegrations((prev) =>
-      prev.map((i) => {
-        const isConnected = activePlatforms.some(
-          (p) => p.toLowerCase() === i.platform.toLowerCase(),
-        );
-
-        return { ...i, connected: isConnected };
-      }),
-    );
-  }, [user]);
+  }, [searchParams, success, error, refreshUser]);
 
   const isSupported = (platform: Platform): boolean => {
     return (
@@ -125,8 +92,13 @@ function IntegrationsContent() {
     );
   };
 
-  const isConnected = (platform: Platform): boolean => {
-    return integrations.some((i) => i.platform === platform && i.connected);
+  const getConnectedAccount = (platform: Platform): SocialAccount | null => {
+    return (
+      user?.socialAccounts?.find(
+        (account) =>
+          account.platform.name.toLowerCase() === platform.toLowerCase(),
+      ) ?? null
+    );
   };
 
   const handleConnect = (platform: Platform) => {
@@ -141,12 +113,32 @@ function IntegrationsContent() {
         connectInstagram();
         break;
       default:
-        console.log('Unsupported Integration');
+        break;
     }
   };
 
-  const handleDisconnect = () => {
-    console.log('Implement Disconnect');
+  const confirmDisconnect = async () => {
+    if (!selectedAccount) return;
+
+    try {
+      await disconnectSocialAccount(selectedAccount.id);
+      await refreshUser();
+      success(
+        `${selectedAccount.platform.displayName} disconnected`,
+        'Stored credentials were cleared and future posts were stopped.',
+      );
+      setSelectedAccount(null);
+    } catch (requestError) {
+      const responseMessage = (
+        requestError as {
+          response?: { data?: { message?: string | string[] } };
+        }
+      ).response?.data?.message;
+      const message = Array.isArray(responseMessage)
+        ? responseMessage.join(', ')
+        : responseMessage || 'Please try again.';
+      error('Disconnect failed', message);
+    }
   };
 
   return (
@@ -155,43 +147,80 @@ function IntegrationsContent() {
         Platform Integrations
       </Heading>
       <Grid columns="2" gap="4">
-        {integrations.map((integration) => (
-          <Card key={integration.platform} size="3" style={{ padding: '24px' }}>
-            <Flex direction="column" gap="4">
-              <Flex justify="between" align="center" gap="2">
-                <Heading size="5">{integration.platform}</Heading>
-                {!isSupported(integration.platform) && (
-                  <Badge color="gray" size="1">
-                    Coming Soon
-                  </Badge>
+        {INTEGRATIONS.map((integration) => {
+          const account = getConnectedAccount(integration.platform);
+          const isConnected = account !== null;
+          const isThisAccountDisconnecting =
+            isDisconnecting && selectedAccount?.id === account?.id;
+
+          return (
+            <Card
+              key={integration.platform}
+              size="3"
+              style={{ padding: '24px' }}
+            >
+              <Flex direction="column" gap="4">
+                <Flex justify="between" align="center" gap="2">
+                  <Heading size="5">{integration.platform}</Heading>
+                  {!isSupported(integration.platform) && (
+                    <Badge color="gray" size="1">
+                      Coming Soon
+                    </Badge>
+                  )}
+                  {isConnected && (
+                    <Badge color="green" size="1">
+                      Connected
+                    </Badge>
+                  )}
+                </Flex>
+                {account && (
+                  <Text size="2" color="gray">
+                    {account.username}
+                  </Text>
                 )}
-                {isConnected(integration.platform) && (
-                  <Badge color="green" size="1">
-                    Connected
-                  </Badge>
-                )}
+                <Button
+                  onClick={() =>
+                    account
+                      ? setSelectedAccount(account)
+                      : handleConnect(integration.platform)
+                  }
+                  variant={isConnected ? 'outline' : 'solid'}
+                  size="3"
+                  disabled={
+                    !isSupported(integration.platform) || isDisconnecting
+                  }
+                >
+                  {isThisAccountDisconnecting
+                    ? 'Disconnecting…'
+                    : isConnected
+                      ? 'Disconnect'
+                      : 'Connect'}
+                </Button>
               </Flex>
-              <Button
-                onClick={() =>
-                  integration.connected
-                    ? handleDisconnect()
-                    : handleConnect(integration.platform)
-                }
-                variant={integration.connected ? 'outline' : 'solid'}
-                size="3"
-                disabled={!isSupported(integration.platform)}
-              >
-                {integration.connected ? 'Disconnect' : 'Connect'}
-              </Button>
-              {integration.lastSync && (
-                <Text size="2" color="gray">
-                  Last synced: {integration.lastSync}
-                </Text>
-              )}
-            </Flex>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </Grid>
+
+      <Modal
+        isOpen={selectedAccount !== null}
+        title="Disconnect account"
+        onOpenChange={(open) => {
+          if (!open && !isDisconnecting) setSelectedAccount(null);
+        }}
+        onConfirm={() => void confirmDisconnect()}
+        confirmLabel="Disconnect"
+        confirmColor="red"
+        confirmLoading={isDisconnecting}
+        confirmDisabled={!selectedAccount}
+      >
+        <Text>
+          Disconnect {selectedAccount?.platform.displayName} account{' '}
+          <strong>{selectedAccount?.username}</strong>? Stored credentials will
+          be cleared and scheduled posts for this account will be cancelled.
+          Historical post records will remain available.
+        </Text>
+      </Modal>
     </Box>
   );
 }

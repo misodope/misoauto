@@ -26,6 +26,7 @@ describe('PlatformConnectInstagramService', () => {
   };
   const socialAccountReader = {
     findByPlatformAndAccountId: jest.fn(),
+    findIncludingDeletedByPlatformAndAccountId: jest.fn(),
     findByUserAndPlatform: jest.fn(),
   };
   const platformReader = {
@@ -39,7 +40,7 @@ describe('PlatformConnectInstagramService', () => {
     findByPlatformVideoId: jest.fn(),
   };
   const videoPostWriter = {
-    create: jest.fn(),
+    createForActiveAccount: jest.fn(),
   };
 
   const createService = () => {
@@ -62,6 +63,9 @@ describe('PlatformConnectInstagramService', () => {
     process.env.INSTAGRAM_REDIRECT_URI = 'https://prod.example/redirect';
     process.env.INSTAGRAM_REDIRECT_URI_DEV = 'https://dev.example/redirect';
     jest.clearAllMocks();
+    socialAccountReader.findIncludingDeletedByPlatformAndAccountId.mockResolvedValue(
+      null,
+    );
   });
 
   afterAll(() => {
@@ -165,7 +169,6 @@ describe('PlatformConnectInstagramService', () => {
     const service = createService();
     const platform = { id: 7, name: PlatformType.INSTAGRAM };
     platformReader.findByName.mockResolvedValue(platform);
-    socialAccountReader.findByPlatformAndAccountId.mockResolvedValue(null);
     socialAccountWriter.create.mockResolvedValue({ id: 42 });
     jest.spyOn(service, 'exchangeForLongLivedToken').mockResolvedValue({
       access_token: 'long-lived-token',
@@ -183,10 +186,9 @@ describe('PlatformConnectInstagramService', () => {
       shortLivedToken: 'short-lived-token',
     });
 
-    expect(socialAccountReader.findByPlatformAndAccountId).toHaveBeenCalledWith(
-      7,
-      '17841400000000000001',
-    );
+    expect(
+      socialAccountReader.findIncludingDeletedByPlatformAndAccountId,
+    ).toHaveBeenCalledWith(7, '17841400000000000001');
     expect(socialAccountWriter.create).toHaveBeenCalledWith(
       expect.objectContaining({
         accountId: '17841400000000000001',
@@ -312,7 +314,7 @@ describe('PlatformConnectInstagramService', () => {
     httpClient.get.mockResolvedValueOnce({
       data: { permalink: 'https://instagram.com/reel/media-1' },
     });
-    videoPostWriter.create.mockResolvedValueOnce({ id: 12 });
+    videoPostWriter.createForActiveAccount.mockResolvedValueOnce({ id: 12 });
 
     await expect(
       service.publishContainer({
@@ -328,7 +330,7 @@ describe('PlatformConnectInstagramService', () => {
       permalink: 'https://instagram.com/reel/media-1',
     });
 
-    expect(videoPostWriter.create).toHaveBeenCalledWith(
+    expect(videoPostWriter.createForActiveAccount).toHaveBeenCalledWith(
       expect.objectContaining({
         platformPostId: 'media-1',
         postUrl: 'https://instagram.com/reel/media-1',
@@ -338,6 +340,7 @@ describe('PlatformConnectInstagramService', () => {
         socialAccount: { connect: { id: 8 } },
         postedAt: expect.any(Date),
       }),
+      8,
     );
   });
 });

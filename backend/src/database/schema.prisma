@@ -16,6 +16,7 @@ model User {
   smsConsent     Boolean         @default(false) @map("sms_consent")
   emailConsent   Boolean         @default(false) @map("email_consent")
   approvedAt     DateTime?       @map("approved_at")
+  deletedAt      DateTime?       @map("deleted_at")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
   socialAccounts SocialAccount[]
@@ -30,6 +31,7 @@ model RefreshToken {
   tokenHash String   @unique @map("token_hash")
   userId    Int      @map("user_id")
   expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
   createdAt DateTime @default(now()) @map("created_at")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -52,6 +54,7 @@ model Video {
   userId      Int         @map("user_id")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
+  deletedAt   DateTime?   @map("deleted_at")
   user        User             @relation(fields: [userId], references: [id])
   posts       VideoPost[]
   drafts      VideoPostDraft[]
@@ -77,13 +80,18 @@ model SocialAccount {
   id           Int         @id @default(autoincrement())
   platformId   Int         @map("platform_id")
   userId       Int         @map("user_id")
-  accessToken  String      @map("access_token")
+  accessToken  String?     @map("access_token")
   refreshToken String?     @map("refresh_token")
   tokenExpiry  DateTime?   @map("token_expiry")
   accountId    String      @map("account_id")
   username     String
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
+  deletedAt    DateTime?   @map("deleted_at")
+  disconnectState SocialAccountDisconnectState @default(ACTIVE) @map("disconnect_state")
+  disconnectStartedAt DateTime? @map("disconnect_started_at")
+  disconnectError String? @map("disconnect_error")
+  tokenVersion Int @default(0) @map("token_version")
   platform     Platform    @relation(fields: [platformId], references: [id])
   user         User        @relation(fields: [userId], references: [id])
   posts        VideoPost[]
@@ -116,6 +124,8 @@ model VideoPost {
   batchId         String?       @map("batch_id")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
+  deletedAt       DateTime?     @map("deleted_at")
+  cancellationReason String?    @map("cancellation_reason")
   platform        Platform         @relation(fields: [platformId], references: [id])
   socialAccount   SocialAccount    @relation(fields: [socialAccountId], references: [id])
   video           Video            @relation(fields: [videoId], references: [id])
@@ -133,6 +143,7 @@ model VideoPostDraft {
   uploadCompletedAt DateTime? @map("upload_completed_at")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
   video             Video     @relation(fields: [videoId], references: [id])
   platform          Platform? @relation(fields: [platformId], references: [id])
 
@@ -151,6 +162,13 @@ enum PostStatus {
   PUBLISHING
   PUBLISHED
   FAILED
+  CANCELLED
+}
+
+enum SocialAccountDisconnectState {
+  ACTIVE
+  DISCONNECTING
+  DISCONNECTED
 }
 
 enum UploadMode {

@@ -76,13 +76,16 @@ export class VideoPostsService {
       dto.scheduledFor && new Date(dto.scheduledFor) > new Date();
     const status = isScheduled ? PostStatus.SCHEDULED : PostStatus.PENDING;
 
-    const videoPost = await this.videoPostWriter.create({
-      video: { connect: { id: dto.videoId } },
-      platform: { connect: { id: socialAccount.platformId } },
-      socialAccount: { connect: { id: dto.socialAccountId } },
-      status,
-      scheduledFor: dto.scheduledFor ? new Date(dto.scheduledFor) : null,
-    });
+    const videoPost = await this.videoPostWriter.createForActiveAccount(
+      {
+        video: { connect: { id: dto.videoId } },
+        platform: { connect: { id: socialAccount.platformId } },
+        socialAccount: { connect: { id: dto.socialAccountId } },
+        status,
+        scheduledFor: dto.scheduledFor ? new Date(dto.scheduledFor) : null,
+      },
+      dto.socialAccountId,
+    );
 
     return videoPost as VideoPostWithRelations;
   }
@@ -180,7 +183,11 @@ export class VideoPostsService {
       throw new BadRequestException(errors);
     }
 
-    const posts = await this.videoPostWriter.saveBatch({ creates, updates });
+    const posts = await this.videoPostWriter.saveBatch({
+      creates,
+      updates,
+      activeSocialAccountIds: accountIds,
+    });
     this.logger.log(
       `Created batch ${batchId} with ${posts.length} posts for video ${video.id}`,
     );

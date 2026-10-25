@@ -14,7 +14,7 @@ import { Video, videoKeys } from '../videos/use-videos';
 // ============================================================================
 
 export type PostStatus =
-  'PENDING' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED';
+  'PENDING' | 'SCHEDULED' | 'PUBLISHING' | 'PUBLISHED' | 'FAILED' | 'CANCELLED';
 
 export type UploadMode = 'DRAFT' | 'DIRECT';
 

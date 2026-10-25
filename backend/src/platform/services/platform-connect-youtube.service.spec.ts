@@ -28,9 +28,11 @@ describe('PlatformConnectYouTubeService', () => {
   const socialAccountWriter = {
     create: jest.fn(),
     updateTokens: jest.fn(),
+    reactivateWithTokens: jest.fn(),
   };
   const socialAccountReader = {
     findByPlatformAndAccountId: jest.fn(),
+    findIncludingDeletedByPlatformAndAccountId: jest.fn(),
     findByUserAndPlatform: jest.fn(),
   };
   const platformReader = {
@@ -44,7 +46,7 @@ describe('PlatformConnectYouTubeService', () => {
     findByPlatformVideoId: jest.fn(),
   };
   const videoPostWriter = {
-    create: jest.fn(),
+    createForActiveAccount: jest.fn(),
   };
   const blobStorage = {
     downloadStream: jest.fn(),
@@ -73,6 +75,7 @@ describe('PlatformConnectYouTubeService', () => {
     process.env.YOUTUBE_REDIRECT_URI = 'https://prod.example/redirect';
     process.env.YOUTUBE_REDIRECT_URI_DEV = 'https://dev.example/redirect';
     jest.clearAllMocks();
+    socialAccountWriter.updateTokens.mockResolvedValue({ id: 8 });
     platformReader.findByName.mockResolvedValue({
       id: 3,
       name: PlatformType.YOUTUBE,
@@ -487,7 +490,7 @@ describe('PlatformConnectYouTubeService', () => {
       },
       expect.anything(),
     );
-    expect(videoPostWriter.create).toHaveBeenCalledWith(
+    expect(videoPostWriter.createForActiveAccount).toHaveBeenCalledWith(
       expect.objectContaining({
         platformPostId: 'yt-video-1',
         postUrl: 'https://www.youtube.com/watch?v=yt-video-1',
@@ -497,6 +500,7 @@ describe('PlatformConnectYouTubeService', () => {
         socialAccount: { connect: { id: 8 } },
         postedAt: expect.any(Date),
       }),
+      8,
     );
   });
 });

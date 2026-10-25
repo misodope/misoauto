@@ -1,47 +1,26 @@
-import {
-  PrismaClient,
-  PlatformType,
-  VideoStatus,
-  PostStatus,
-} from '../generated/prisma/client';
+import { PrismaClient, PlatformType } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  await prisma.platform.deleteMany();
+  const platformSeeds = [
+    [PlatformType.YOUTUBE, 'YouTube'],
+    [PlatformType.TIKTOK, 'TikTok'],
+    [PlatformType.INSTAGRAM, 'Instagram'],
+    [PlatformType.FACEBOOK, 'Facebook'],
+  ] as const;
 
-  const platforms = await Promise.all([
-    prisma.platform.create({
-      data: {
-        name: PlatformType.YOUTUBE,
-        displayName: 'YouTube',
-        isActive: true,
-      },
-    }),
-    prisma.platform.create({
-      data: {
-        name: PlatformType.TIKTOK,
-        displayName: 'TikTok',
-        isActive: true,
-      },
-    }),
-    prisma.platform.create({
-      data: {
-        name: PlatformType.INSTAGRAM,
-        displayName: 'Instagram',
-        isActive: true,
-      },
-    }),
-    prisma.platform.create({
-      data: {
-        name: PlatformType.FACEBOOK,
-        displayName: 'Facebook',
-        isActive: true,
-      },
-    }),
-  ]);
+  const platforms = await Promise.all(
+    platformSeeds.map(([name, displayName]) =>
+      prisma.platform.upsert({
+        where: { name },
+        update: { displayName, isActive: true },
+        create: { name, displayName, isActive: true },
+      }),
+    ),
+  );
 
   console.log('Seed data created successfully!');
 }
