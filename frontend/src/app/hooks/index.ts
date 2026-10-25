@@ -1,5 +1,13 @@
 export { useProtectedRoute } from './useProtectedRoute';
 export {
+  getDataDeletionStatus,
+  useDataDeletionStatus,
+  dataDeletionKeys,
+  type DataDeletionStatus,
+  type DataDeletionStatusValue,
+  type DataDeletionApiError,
+} from './apis/data-deletion/use-data-deletion';
+export {
   useRegister,
   useLogin,
   useLogout,

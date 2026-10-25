@@ -54,6 +54,10 @@ const nextConfig = {
         destination: '/pages/legal/privacy',
       },
       {
+        source: '/data-deletion',
+        destination: '/pages/data-deletion',
+      },
+      {
         source: '/settings',
         destination: '/pages/settings',
       },

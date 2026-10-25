@@ -22,11 +22,14 @@ describe('PlatformConnectInstagramService', () => {
   };
   const socialAccountWriter = {
     create: jest.fn(),
+    update: jest.fn(),
     updateTokens: jest.fn(),
+    reactivateWithTokens: jest.fn(),
   };
   const socialAccountReader = {
     findByPlatformAndAccountId: jest.fn(),
     findIncludingDeletedByPlatformAndAccountId: jest.fn(),
+    findByPlatformAndInstagramUserId: jest.fn(),
     findByUserAndPlatform: jest.fn(),
   };
   const platformReader = {
@@ -142,6 +145,7 @@ describe('PlatformConnectInstagramService', () => {
     const service = createService();
     httpClient.get.mockResolvedValueOnce({
       data: {
+        id: 'app-scoped-id',
         user_id: '17841400000000000001',
         username: 'tester',
         account_type: 'CREATOR',
@@ -151,6 +155,7 @@ describe('PlatformConnectInstagramService', () => {
     });
 
     await expect(service.getUserInfo('access-token')).resolves.toEqual({
+      id: 'app-scoped-id',
       user_id: '17841400000000000001',
       username: 'tester',
       account_type: 'CREATOR',
@@ -160,7 +165,7 @@ describe('PlatformConnectInstagramService', () => {
 
     expect(httpClient.get).toHaveBeenCalledWith(
       expect.stringContaining(
-        '/me?fields=user_id%2Cusername%2Caccount_type%2Cprofile_picture_url%2Cfollowers_count',
+        '/me?fields=id%2Cuser_id%2Cusername%2Caccount_type%2Cprofile_picture_url%2Cfollowers_count',
       ),
     );
   });
@@ -176,6 +181,7 @@ describe('PlatformConnectInstagramService', () => {
       expires_in: 5_183_944,
     });
     jest.spyOn(service, 'getUserInfo').mockResolvedValue({
+      id: 'app-scoped-id',
       user_id: '17841400000000000001',
       username: 'tester',
       account_type: 'CREATOR',
@@ -192,15 +198,89 @@ describe('PlatformConnectInstagramService', () => {
     expect(socialAccountWriter.create).toHaveBeenCalledWith(
       expect.objectContaining({
         accountId: '17841400000000000001',
+        appScopedUserId: 'app-scoped-id',
         refreshToken: undefined,
       }),
     );
+  });
+
+  it('updates the app-scoped ID when reconnecting an active account', async () => {
+    const service = createService();
+    const platform = { id: 7, name: PlatformType.INSTAGRAM };
+    platformReader.findByName.mockResolvedValue(platform);
+    socialAccountReader.findIncludingDeletedByPlatformAndAccountId.mockResolvedValue(
+      {
+        id: 42,
+        userId: 123,
+        deletedAt: null,
+        tokenVersion: 2,
+      },
+    );
+    socialAccountWriter.update.mockResolvedValue({ id: 42 });
+    jest.spyOn(service, 'exchangeForLongLivedToken').mockResolvedValue({
+      access_token: 'long-lived-token',
+      token_type: 'bearer',
+      expires_in: 5_183_944,
+    });
+    jest.spyOn(service, 'getUserInfo').mockResolvedValue({
+      id: 'app-scoped-id',
+      user_id: '17841400000000000001',
+      username: 'tester',
+      account_type: 'CREATOR',
+    });
+
+    await service.saveOAuthAccount({
+      userId: 123,
+      shortLivedToken: 'short-lived-token',
+    });
+
+    expect(socialAccountWriter.update).toHaveBeenCalledWith({
+      where: { id: 42 },
+      data: expect.objectContaining({
+        accessToken: 'long-lived-token',
+        appScopedUserId: 'app-scoped-id',
+        tokenExpiry: expect.any(Date),
+      }),
+    });
+  });
+
+  it('matches callback IDs against the Instagram account ID or app-scoped ID', async () => {
+    const service = createService();
+    platformReader.findByName.mockResolvedValue({
+      id: 7,
+      name: PlatformType.INSTAGRAM,
+    });
+    socialAccountReader.findByPlatformAndInstagramUserId.mockResolvedValue([
+      { id: 1, accountId: 'callback-user' },
+      { id: 2, accountId: 'other-user', appScopedUserId: 'callback-user' },
+    ]);
+
+    await expect(
+      service.findAccountsBySignedRequestUserId('callback-user'),
+    ).resolves.toEqual([
+      {
+        account: { id: 1, accountId: 'callback-user' },
+        matchedOn: 'accountId',
+      },
+      {
+        account: {
+          id: 2,
+          accountId: 'other-user',
+          appScopedUserId: 'callback-user',
+        },
+        matchedOn: 'appScopedUserId',
+      },
+    ]);
+    expect(
+      socialAccountReader.findByPlatformAndInstagramUserId,
+    ).toHaveBeenCalledWith(7, 'callback-user');
   });
 
   it('requests audience and published media counts with profile information', async () => {
     const service = createService();
     httpClient.get.mockResolvedValueOnce({
       data: {
+        id: 'app-scoped-id',
         user_id: '17841400000000000001',
         username: 'tester',
         account_type: 'CREATOR',
@@ -216,7 +296,7 @@ describe('PlatformConnectInstagramService', () => {
 
     const requestUrl = new URL(httpClient.get.mock.calls[0][0]);
     expect(requestUrl.searchParams.get('fields')).toBe(
-      'user_id,username,account_type,profile_picture_url,followers_count,media_count',
+      'id,user_id,username,account_type,profile_picture_url,followers_count,media_count',
     );
     expect(requestUrl.searchParams.get('access_token')).toBe('access-token');
   });

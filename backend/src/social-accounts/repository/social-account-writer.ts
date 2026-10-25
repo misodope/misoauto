@@ -116,6 +116,7 @@ export class SocialAccountWriter {
     accessToken: string;
     refreshToken?: string;
     tokenExpiry?: Date;
+    appScopedUserId?: string;
   }): Promise<SocialAccount | null> {
     const result = await this.prisma.socialAccount.updateMany({
       where: {
@@ -128,6 +129,7 @@ export class SocialAccountWriter {
         accessToken: params.accessToken,
         refreshToken: params.refreshToken,
         tokenExpiry: params.tokenExpiry,
+        appScopedUserId: params.appScopedUserId,
         deletedAt: null,
         disconnectState: SocialAccountDisconnectState.ACTIVE,
         disconnectStartedAt: null,

@@ -41,6 +41,7 @@ export interface InstagramLongLivedTokenResponse {
 }
 
 export interface InstagramUserInfo {
+  id: string;
   user_id: string;
   username: string;
   account_type: string;
@@ -62,6 +63,14 @@ export interface InstagramPublishingLimit {
   config?: number;
   quota_usage?: number;
   [key: string]: unknown;
+}
+
+export type InstagramSignedRequestAccountMatch =
+  'accountId' | 'appScopedUserId';
+
+export interface InstagramSignedRequestAccount {
+  account: SocialAccountWithRelations;
+  matchedOn: InstagramSignedRequestAccountMatch;
 }
 
 interface InstagramApiErrorResponse {
@@ -305,12 +314,16 @@ export class PlatformConnectInstagramService {
               userId: params.userId,
               accessToken: longLivedTokenResponse.access_token,
               tokenExpiry,
+              appScopedUserId: userInfo.id,
             })
-          : await this.socialAccountWriter.updateTokens({
-              id: existingAccount.id,
-              accessToken: longLivedTokenResponse.access_token,
-              tokenExpiry,
-              expectedTokenVersion: existingAccount.tokenVersion,
+          : await this.socialAccountWriter.update({
+              where: { id: existingAccount.id },
+              data: {
+                accessToken: longLivedTokenResponse.access_token,
+                tokenExpiry,
+                appScopedUserId: userInfo.id,
+                tokenVersion: { increment: 1 },
+              },
             });
 
         if (!savedAccount) {
@@ -330,6 +343,7 @@ export class PlatformConnectInstagramService {
         refreshToken: undefined,
         tokenExpiry,
         accountId: userInfo.user_id,
+        appScopedUserId: userInfo.id,
         username: userInfo.username,
       });
     } catch (error) {
@@ -345,7 +359,7 @@ export class PlatformConnectInstagramService {
     try {
       const params = {
         fields:
-          'user_id,username,account_type,profile_picture_url,followers_count,media_count',
+          'id,user_id,username,account_type,profile_picture_url,followers_count,media_count',
         access_token: accessToken,
       };
 
@@ -402,6 +416,28 @@ export class PlatformConnectInstagramService {
     }
 
     return accounts[0] as SocialAccountWithRelations & { accessToken: string };
+  }
+
+  async findAccountsBySignedRequestUserId(
+    userId: string,
+  ): Promise<InstagramSignedRequestAccount[]> {
+    const platform = await this.platformReader.findByName(
+      PlatformType.INSTAGRAM,
+    );
+    if (!platform) {
+      return [];
+    }
+
+    const accounts =
+      await this.socialAccountReader.findByPlatformAndInstagramUserId(
+        platform.id,
+        userId,
+      );
+
+    return accounts.map((account) => ({
+      account,
+      matchedOn: account.accountId === userId ? 'accountId' : 'appScopedUserId',
+    }));
   }
 
   async createReelContainer(params: {

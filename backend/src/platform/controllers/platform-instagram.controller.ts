@@ -1,7 +1,10 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Logger,
   NotFoundException,
   Post,
@@ -11,7 +14,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { PlatformType } from '@backend/generated/prisma/client';
+import {
+  DataDeletionSource,
+  PlatformType,
+} from '@backend/generated/prisma/client';
 import {
   CurrentUser,
   getOAuthCookieOptions,
@@ -21,9 +27,12 @@ import {
   createDevelopmentOAuthState,
   createOAuthNonce,
   parseDevelopmentOAuthState,
+  verifyMetaSignedRequest,
 } from '@backend/common';
 import { VideosService } from '@backend/videos/services/videos.service';
 import { VideoPostDraftReader } from '@backend/video-posts/repository/video-post-draft-reader';
+import { AccountRemovalService } from '@backend/social-accounts/services/account-removal.service';
+import { DataDeletionService } from '@backend/data-deletion/services/data-deletion.service';
 import { PlatformReader } from '../repository/platform-reader';
 import { PlatformConnectInstagramService } from '../services/platform-connect-instagram.service';
 import { InstagramContainerDto, InstagramUploadDraftDto } from '../dto';
@@ -39,6 +48,8 @@ export class InstagramController {
     private readonly videosService: VideosService,
     private readonly platformReader: PlatformReader,
     private readonly videoPostDraftReader: VideoPostDraftReader,
+    private readonly dataDeletionService: DataDeletionService,
+    private readonly accountRemovalService: AccountRemovalService,
   ) {}
 
   @Get('oauth')
@@ -138,6 +149,33 @@ export class InstagramController {
       res.clearCookie('oauthUserId');
       res.redirect(`${frontendUrl}/integrations?error=connection_failed`);
     }
+  }
+
+  @Post('data-deletion')
+  @HttpCode(HttpStatus.OK)
+  async dataDeletion(@Body('signed_request') signedRequest?: string) {
+    const { userId } = this.verify(signedRequest, 'data-deletion');
+    const request = await this.dataDeletionService.handleRequest({
+      platform: PlatformType.INSTAGRAM,
+      source: DataDeletionSource.META_DATA_DELETION,
+      remove: () => this.removeInstagramAccounts(userId),
+    });
+    const frontendUrl = (
+      process.env.FRONTEND_URL || 'http://localhost:4000'
+    ).replace(/\/$/, '');
+
+    return {
+      url: `${frontendUrl}/data-deletion?code=${request.confirmationCode}`,
+      confirmation_code: request.confirmationCode,
+    };
+  }
+
+  @Post('deauthorize')
+  @HttpCode(HttpStatus.OK)
+  async deauthorize(@Body('signed_request') signedRequest?: string) {
+    const { userId } = this.verify(signedRequest, 'deauthorize');
+    await this.removeInstagramAccounts(userId);
+    return {};
   }
 
   @Get('user')
@@ -263,5 +301,41 @@ export class InstagramController {
     }
 
     return draft;
+  }
+
+  private verify(signedRequest: string | undefined, callback: string) {
+    try {
+      const { payload, secretIndex } = verifyMetaSignedRequest(signedRequest, [
+        process.env.INSTAGRAM_CLIENT_SECRET ?? '',
+        process.env.META_APP_SECRET ?? '',
+      ]);
+
+      this.logger.log(
+        `Meta ${callback} callback verified with ${secretIndex === 0 ? 'INSTAGRAM_CLIENT_SECRET' : 'META_APP_SECRET'}`,
+      );
+      return { userId: payload.user_id };
+    } catch (error) {
+      this.logger.warn(
+        `Rejected Meta ${callback} callback: ${(error as Error).message}`,
+      );
+      throw new BadRequestException('Invalid signed_request');
+    }
+  }
+
+  private async removeInstagramAccounts(userId: string): Promise<boolean> {
+    const matches =
+      await this.instagramService.findAccountsBySignedRequestUserId(userId);
+    let dataFound = false;
+
+    for (const { account, matchedOn } of matches) {
+      this.logger.log(
+        `Meta callback matched social account ${account.id} on ${matchedOn}`,
+      );
+      dataFound =
+        (await this.accountRemovalService.removeAccount(account.id)) ||
+        dataFound;
+    }
+
+    return dataFound;
   }
 }
